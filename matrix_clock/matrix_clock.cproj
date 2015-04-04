@@ -1,0 +1,288 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>6.2</ProjectVersion>
+    <ToolchainName>com.Atmel.AVRGCC8.C</ToolchainName>
+    <ProjectGuid>{75cbc8d1-6c86-4243-b63e-77d698a77779}</ProjectGuid>
+    <avrdevice>ATxmega64A4U</avrdevice>
+    <avrdeviceseries>none</avrdeviceseries>
+    <OutputType>Executable</OutputType>
+    <Language>C</Language>
+    <OutputFileName>$(MSBuildProjectName)</OutputFileName>
+    <OutputFileExtension>.elf</OutputFileExtension>
+    <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
+    <AssemblyName>matrix_clock</AssemblyName>
+    <Name>matrix_clock</Name>
+    <RootNamespace>matrix_clock</RootNamespace>
+    <ToolchainFlavour>Native</ToolchainFlavour>
+    <KeepTimersRunning>true</KeepTimersRunning>
+    <OverrideVtor>false</OverrideVtor>
+    <CacheFlash>true</CacheFlash>
+    <ProgFlashFromRam>true</ProgFlashFromRam>
+    <RamSnippetAddress>0x20000000</RamSnippetAddress>
+    <UncachedRange />
+    <OverrideVtorValue>exception_table</OverrideVtorValue>
+    <BootSegment>2</BootSegment>
+    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <AsfFrameworkConfig>
+      <framework-data xmlns="">
+        <options />
+        <configurations />
+        <files />
+        <documentation help="" />
+        <offline-documentation help="" />
+        <dependencies>
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.17.0" />
+        </dependencies>
+      </framework-data>
+    </AsfFrameworkConfig>
+    <avrtool>com.atmel.avrdbg.tool.jtagice3plus</avrtool>
+    <avrtoolinterface>PDI</avrtoolinterface>
+    <com_atmel_avrdbg_tool_edbg>
+      <ToolOptions>
+        <InterfaceProperties>
+          <PdiClock>4000000</PdiClock>
+        </InterfaceProperties>
+        <InterfaceName>PDI</InterfaceName>
+      </ToolOptions>
+      <ToolType>com.atmel.avrdbg.tool.edbg</ToolType>
+      <ToolNumber>ATML1802021800002070</ToolNumber>
+      <ToolName>EDBG</ToolName>
+    </com_atmel_avrdbg_tool_edbg>
+    <com_atmel_avrdbg_tool_jtagice3plus>
+      <ToolOptions>
+        <InterfaceProperties>
+          <PdiClock>4000000</PdiClock>
+        </InterfaceProperties>
+        <InterfaceName>PDI</InterfaceName>
+      </ToolOptions>
+      <ToolType>com.atmel.avrdbg.tool.jtagice3plus</ToolType>
+      <ToolNumber>J30200018473</ToolNumber>
+      <ToolName>JTAGICE3</ToolName>
+    </com_atmel_avrdbg_tool_jtagice3plus>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <ToolchainSettings>
+      <AvrGcc>
+        <avrgcc.common.optimization.RelaxBranches>True</avrgcc.common.optimization.RelaxBranches>
+        <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+        <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+        <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+        <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+        <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+        <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+        <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+        <avrgcc.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>NDEBUG</Value>
+          </ListValues>
+        </avrgcc.compiler.symbols.DefSymbols>
+        <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
+        <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+        <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+        <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+        <avrgcc.linker.libraries.Libraries>
+          <ListValues>
+            <Value>libm</Value>
+          </ListValues>
+        </avrgcc.linker.libraries.Libraries>
+      </AvrGcc>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <ToolchainSettings>
+      <AvrGcc>
+  <avrgcc.common.optimization.RelaxBranches>True</avrgcc.common.optimization.RelaxBranches>
+  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+  <avrgcc.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>DEBUG</Value>
+    </ListValues>
+  </avrgcc.compiler.symbols.DefSymbols>
+  <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
+  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+  <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
+  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+  <avrgcc.linker.libraries.Libraries>
+    <ListValues>
+      <Value>libm</Value>
+    </ListValues>
+  </avrgcc.linker.libraries.Libraries>
+  <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
+</AvrGcc>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="4x6_font.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="adc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="adc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="clock.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="clock.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="esp8266.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="esp8266.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fatfs\diskio.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fatfs\ff.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fatfs\ff.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fatfs\ffconf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fatfs\integer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fatfs\mmc_avr.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fatfs\sound.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fatfs\sound.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\fft.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\fft.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\sampling.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\sampling.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\complexToDecibel.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\complexToDecibel.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\complexToReal.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\complexToReal.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\fht.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\fht.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\fhtConfig.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\fhtDebug.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\fhtDebug.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\fhtLibraryVersion.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\generateTables.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\generateTables.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\windowing.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="fft\wff_fht\windowing.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ht1632c.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ht1632c.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="json\jsmn.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="json\jsmn.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="main.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="port.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="port.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="power.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="power.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="rtc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="rtc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sercom.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="sercom.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="si114x.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="si114x.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="uart.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="uart.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="usb.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="usb.h">
+      <SubType>compile</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="fatfs" />
+    <Folder Include="fft" />
+    <Folder Include="fft\wff_fht" />
+    <Folder Include="json" />
+  </ItemGroup>
+  <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
+</Project>
