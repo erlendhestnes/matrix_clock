@@ -48,6 +48,16 @@ sercom.c
 
 si114x.c
 
+si114x\Si114x_functions.c
+
+si114x\Si114x_handler.c
+
+si114x\Si114x_init.c
+
+si114x\Si114x_sys_out.c
+
+si114x\slider_algorithm.c
+
 uart.c
 
 usb.c

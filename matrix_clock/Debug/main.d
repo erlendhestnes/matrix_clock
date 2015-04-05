@@ -29,7 +29,9 @@ main.d main.o: .././main.c \
  .././fft/wff_fht/fhtLibraryVersion.h .././fft/wff_fht/windowing.h \
  .././fft/wff_fht/fht.h .././fft/wff_fht/complexToReal.h \
  .././fft/wff_fht/complexToDecibel.h .././fft/wff_fht/fhtDebug.h \
- .././fft/sampling.h .././power.h .././esp8266.h .././port.h .././usb.h
+ .././fft/sampling.h .././power.h .././esp8266.h .././port.h .././usb.h \
+ .././si114x/Si114x_functions.h .././si114x/Si114x_types.h \
+ .././si114x/Si114x_handler.h .././si114x/Si114x_functions.h
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h:
 
@@ -122,3 +124,11 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 .././port.h:
 
 .././usb.h:
+
+.././si114x/Si114x_functions.h:
+
+.././si114x/Si114x_types.h:
+
+.././si114x/Si114x_handler.h:
+
+.././si114x/Si114x_functions.h:

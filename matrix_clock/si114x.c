@@ -9,11 +9,11 @@
 #include <util/delay.h>
 
 uint16_t si114x_write_to_register(uint8_t addr, uint8_t data) {
-	return i2c_write(SI114X_ADDR, addr,data);
+	//return i2c_write(SI114X_ADDR, addr,data);
 }
 
 uint16_t si114x_read_from_register(uint8_t addr) {
-	return i2c_read(SI114X_ADDR, addr);
+	//return i2c_read(SI114X_ADDR, addr);
 }
 
 uint16_t si114x_block_write(uint8_t address, uint8_t length, uint8_t *values) {
