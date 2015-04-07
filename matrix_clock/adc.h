@@ -5,4 +5,9 @@
  *  Author: Administrator
  */ 
 
-void adc_init(void);
+#ifndef _ADC_H_
+#define _ADC_H_
+
+void adc_setup(void);
+
+#endif

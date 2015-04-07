@@ -1,7 +1,5 @@
 #include "Si114x_handler.h"
-
-//#define GENERAL 1
-#define INDOORS 1
+#include "User_defs.h"
 
 u8 xdata initial_baseline_counter=128;
 u16 xdata maxLeakage[2] = { 0, 0};
@@ -19,7 +17,7 @@ u16 code scale           =  1;
 u8  code ircorrection[3] =  { 17, 35, 29 };
 #endif
 
-void ProcessSi114xSamples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
+void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
 {
     if ((maxLeakage[0]==0)&&(maxLeakage[1]==0)&&(initial_baseline_counter==128))
     {

@@ -1,4 +1,4 @@
-port.d port.o: .././port.c .././port.h \
+port.d port.o: .././port.c .././port.h .././ht1632c.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\inttypes.h \
@@ -10,9 +10,12 @@ port.d port.o: .././port.c .././port.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\version.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\xmega.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\fuse.h \
- c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\lock.h
+ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\lock.h \
+ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\interrupt.h
 
 .././port.h:
+
+.././ht1632c.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h:
 
@@ -37,3 +40,5 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\fuse.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\lock.h:
+
+c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\interrupt.h:

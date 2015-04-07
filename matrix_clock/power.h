@@ -5,6 +5,9 @@
  *  Author: Administrator
  */ 
 
+#ifndef _POWER_H_
+#define _POWER_H_
+
 #include <avr/io.h>
 
 #define __PORT_PULLUP(port, mask) { \
@@ -41,3 +44,5 @@
 	__PORT_PULLUP(PORTE, 0x0F); \
 	__PORT_PULLUP(PORTR, 0x03); \
 }
+
+#endif

@@ -88,7 +88,7 @@ ISR(TCC0_OVF_vect)
 	fcb->ct = ct;
 	fcb->ri = ri & (fcb->sz_buff - 1);
 	
-	uint8_t data = smooth(l1,0.35,data);
+	uint8_t data = l1;//smooth(l1,0.35,data);
 	//uint8_t data = l1*0.2;
 	
 	DACB.CH0DATA = data;

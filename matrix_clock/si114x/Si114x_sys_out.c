@@ -4,7 +4,6 @@
 //#include "Si114x_PGM_Toolkit.h"
 #include "Si114x_functions.h"
 #include "../sercom.h"
-#include "../si114x.h"
 #include <util/delay.h>
 
 extern HANDLE mcu_handle;

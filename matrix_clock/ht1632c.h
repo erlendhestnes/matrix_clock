@@ -5,8 +5,8 @@
  *  Author: Administrator
  */ 
 
-#ifndef HT1632_H_
-#define HT1632_H_
+#ifndef _HT1632_H_
+#define _HT1632_H_
 
 #include <avr/io.h>
 

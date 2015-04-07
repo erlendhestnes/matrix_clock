@@ -20,17 +20,17 @@ main.d main.o: .././main.c \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stddef.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\sleep.h \
- .././ht1632c.h .././rtc.h .././sercom.h .././si114x.h .././uart.h \
- .././fatfs/ff.h .././fatfs/integer.h .././fatfs/ffconf.h \
- .././fatfs/sound.h .././fatfs/ff.h .././fft/fft.h \
- .././fft/wff_fht/fhtConfig.h \
+ .././ht1632c.h .././rtc.h .././sercom.h .././uart.h .././fatfs/ff.h \
+ .././fatfs/integer.h .././fatfs/ffconf.h .././fatfs/sound.h \
+ .././fatfs/ff.h .././fft/fft.h .././fft/wff_fht/fhtConfig.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\pgmspace.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
  .././fft/wff_fht/fhtLibraryVersion.h .././fft/wff_fht/windowing.h \
  .././fft/wff_fht/fht.h .././fft/wff_fht/complexToReal.h \
  .././fft/wff_fht/complexToDecibel.h .././fft/wff_fht/fhtDebug.h \
  .././fft/sampling.h .././power.h .././esp8266.h .././port.h .././usb.h \
- .././si114x/Si114x_functions.h .././si114x/Si114x_types.h \
+ .././si114x/User_defs.h .././si114x/Si114x_functions.h \
+ .././si114x/Si114x_types.h .././si114x/User_defs.h \
  .././si114x/Si114x_handler.h .././si114x/Si114x_functions.h
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h:
@@ -81,8 +81,6 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 .././sercom.h:
 
-.././si114x.h:
-
 .././uart.h:
 
 .././fatfs/ff.h:
@@ -125,9 +123,13 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 .././usb.h:
 
+.././si114x/User_defs.h:
+
 .././si114x/Si114x_functions.h:
 
 .././si114x/Si114x_types.h:
+
+.././si114x/User_defs.h:
 
 .././si114x/Si114x_handler.h:
 

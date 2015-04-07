@@ -6,17 +6,28 @@
  */ 
 
 #include "port.h"
+#include "ht1632c.h"
 
 #include <avr/io.h>
 #include <stdint.h>
+#include <avr/interrupt.h>
 
 void btn_setup(void) {
 	
 	PORTA.DIRCLR = PIN5_bm | PIN6_bm | PIN7_bm;
 	PORTB.DIRCLR = PIN0_bm;
+	
 	//PORTA.PIN2CTRL = PORT_OPC_PULLDOWN_gc | PORT_ISC_RISING_gc;
-	//PORTA.INT0MASK = PIN2_bm;
-	//PORTA.INTCTRL = PORT_INT0LVL_LO_gc;
+	
+	/*
+	
+	PORTA.INT0MASK = PIN5_bm | PIN6_bm | PIN7_bm;
+	PORTB.INT0MASK = PIN0_bm;
+	
+	PORTA.INTCTRL = PORT_INT0LVL_LO_gc;
+	PORTB.INTCTRL = PORT_INT0LVL_LO_gc;
+	
+	*/
 }
 
 void btn_top_setup(void) {
@@ -40,4 +51,8 @@ button_t btn_check_press(void) {
 	} else {
 		return NONE;
 	}
+}
+
+ISR(PORTA_INT0_vect) {
+	ht1632c_clearScreen();
 }

@@ -1,4 +1,5 @@
 #include "slider_algorithm.h"
+#include "../ht1632c.h"
 //-----------------------------------------------------------------------------
 // QS_Counts_to_Distance
 //-----------------------------------------------------------------------------
@@ -70,6 +71,9 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
     static u16 xdata LED_flash_timeout;
     static u16 xdata Pause_gesture_timeout;
     static u16 xdata SwipeStartTime;
+	
+	//My implementation
+	static u16 previous_led = 0;
 
     // QS_GlobalCounterOverflow assumes milliseconds. Samples->timestamp is in 100 us.
     u16 xdata QS_GlobalCounterOverflow = samples->timestamp / 10;
@@ -95,6 +99,7 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
     u16 xdata r1; 
     u16 xdata r2; 
     uu32 xdata x; 
+	uu32 xdata y; 
     u16 xdata z; 
 
     // Variables to calculate current "bucket" and store previous one (LED and Pause)
@@ -207,6 +212,14 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
          z = r1;
       }
    }
+   
+   ht1632c_drawPixel(5,previous_led,0);
+   uint16_t tmp = 15-((x.u16[LSB])/73);
+   ht1632c_drawPixel(5,tmp,1);
+   ht1632c_writeScreen();
+   previous_led = tmp;
+   
+   /*
 
    // Set raw channel data for x (channel 2) and z (channel 3)
    //REPLACE_0_PS3( x.u16[LSB] );
@@ -275,7 +288,8 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
    else     // indicate position, test for PAUSE gesture
    {
       // Write to Port 1 of the MCU
-      PortSet( 1, LED_P1_Vals[xbucket]);
+      //PortSet( 1, LED_P1_Vals[xbucket]);
+	  //printf("x: %d \r\n",x.u16[LSB]);
 
 
       // check time stamp for pause
@@ -307,7 +321,7 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
        // It is best to display this than printf. Use AUX and PS3 channels
        //REPLACE_0_PS3( x.u16[LSB] );
        //REPLACE_0_AUX( z ); 
-	   printf("out of range \r\n");
+	   //printf("out of range \r\n");
    }
    else
    {
@@ -315,9 +329,9 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
        // It is best to display this than printf. Use AUX and PS3 channels
        //REPLACE_0_PS3( 0 );
        //REPLACE_0_AUX( 0 ); 
-	    printf("no touch \r\n");
+	    //printf("no touch \r\n");
    }
-
+	*/
 }
 
 

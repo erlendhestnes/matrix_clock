@@ -5,6 +5,9 @@
  *  Author: Administrator
  */ 
 
+#ifndef _UART_H_
+#define _UART_H_
+
 #define TIMEOUT 3000
 
 void uart_setup(void);
@@ -12,3 +15,5 @@ void uart_put_char(char c);
 char uart_get_char(void);
 void uart_write_str(char *str);
 void uwrite_hex(unsigned char n);
+
+#endif

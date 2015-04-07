@@ -5,6 +5,9 @@
  *  Author: Administrator
  */ 
 
+#ifndef _SERCOM_H_
+#define _SERCOM_H_
+
 #include <avr/io.h>
 #include <stdint.h>
 
@@ -41,3 +44,5 @@ uint8_t i2c_read_data(uint8_t slave_addr, uint8_t register_addr);
 
 uint8_t i2c_write_data_block(uint8_t slave_addr, uint8_t register_addr, uint8_t *data, uint8_t length);
 uint8_t i2c_read_data_block(uint8_t slave_addr, uint8_t register_addr, uint8_t *data, uint8_t length);
+
+#endif

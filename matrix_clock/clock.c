@@ -14,10 +14,12 @@ void clock_setup_1_mhz(void) {
 	CLK.PSCTRL = CLK_PSADIV1_bm;
 }
 
-void clock_setup_32_mhz(void) {
+void clock_setup_8_mhz(void) {
 	
-	OSC.CTRL |= OSC_RC32MEN_bm;
+	OSC.CTRL |= OSC_RC32MEN_bm; //Setup 32Mhz crystal
 	while(!(OSC.STATUS & OSC_RC32MRDY_bm));
+	CCP = CCP_IOREG_gc; //Trigger protection mechanism
+	CLK.PSCTRL = CLK_PSADIV0_bm | CLK_PSADIV1_bm;
 	CCP = CCP_IOREG_gc; //Trigger protection mechanism
 	CLK.CTRL = CLK_SCLKSEL_RC32M_gc; //Enable internal  32Mhz crystal
 }
@@ -34,12 +36,10 @@ void clock_setup_16_mhz(void) {
 	CLK.CTRL = CLK_SCLKSEL_RC32M_gc; //Enable internal  32Mhz crystal
 }
 
-void clock_setup_8_mhz(void) {
+void clock_setup_32_mhz(void) {
 	
-	OSC.CTRL |= OSC_RC32MEN_bm; //Setup 32Mhz crystal
+	OSC.CTRL |= OSC_RC32MEN_bm;
 	while(!(OSC.STATUS & OSC_RC32MRDY_bm));
-	CCP = CCP_IOREG_gc; //Trigger protection mechanism
-	CLK.PSCTRL = CLK_PSADIV0_bm | CLK_PSADIV1_bm;
 	CCP = CCP_IOREG_gc; //Trigger protection mechanism
 	CLK.CTRL = CLK_SCLKSEL_RC32M_gc; //Enable internal  32Mhz crystal
 }

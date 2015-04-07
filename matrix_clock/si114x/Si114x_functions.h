@@ -18,10 +18,14 @@
 #define SI114X_FUNCTIONS_H
 
 #include "Si114x_types.h"
+#include "User_defs.h"
 
 //
 // Function Prototypes
 //
+
+s16 si114x_init(HANDLE si114x_handle);
+void si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data);
 
 // Byte Read/Write Access to Si114x I2C Registers
 s16 Si114xWriteToRegister (HANDLE si114x_handle, u8 address, u8 value);
@@ -32,7 +36,7 @@ s16 Si114xBlockWrite(HANDLE si114x_handle, u8 address, u8 length, u8 *values);
 s16 Si114xBlockRead(HANDLE si114x_handle, u8 address, u8 length, u8 *values);
 
 // Commands to the Si114x
-s16 Si114xReset      (HANDLE si114x_handle);
+s16 si114x_reset      (HANDLE si114x_handle);
 s16 Si114xPauseAll   (HANDLE si114x_handle);
 s16 Si114xNop        (HANDLE si114x_handle);
 s16 Si114xPsForce    (HANDLE si114x_handle);
@@ -51,6 +55,8 @@ u8 Si114xCompress(u16 input);
 //
 // I2C Registers
 //
+#define SI114X_ADDR				  0x5A
+
 #define REG_PART_ID               0x00
 #define REG_REV_ID                0x01
 #define REG_SEQ_ID                0x02

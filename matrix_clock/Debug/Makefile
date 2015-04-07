@@ -63,7 +63,6 @@ C_SRCS +=  \
 ../power.c \
 ../rtc.c \
 ../sercom.c \
-../si114x.c \
 ../si114x/Si114x_functions.c \
 ../si114x/Si114x_handler.c \
 ../si114x/Si114x_init.c \
@@ -102,7 +101,6 @@ port.o \
 power.o \
 rtc.o \
 sercom.o \
-si114x.o \
 si114x/Si114x_functions.o \
 si114x/Si114x_handler.o \
 si114x/Si114x_init.o \
@@ -134,7 +132,6 @@ port.o \
 power.o \
 rtc.o \
 sercom.o \
-si114x.o \
 si114x/Si114x_functions.o \
 si114x/Si114x_handler.o \
 si114x/Si114x_init.o \
@@ -166,7 +163,6 @@ port.d \
 power.d \
 rtc.d \
 sercom.d \
-si114x.d \
 si114x/Si114x_functions.d \
 si114x/Si114x_handler.d \
 si114x/Si114x_init.d \
@@ -198,7 +194,6 @@ port.d \
 power.d \
 rtc.d \
 sercom.d \
-si114x.d \
 si114x/Si114x_functions.d \
 si114x/Si114x_handler.d \
 si114x/Si114x_init.d \
@@ -218,8 +213,6 @@ OUTPUT_FILE_DEP:= ./makedep.mk
 LIB_DEP+= 
 
 # AVR32/GNU C Compiler
-
-
 
 
 

@@ -5,6 +5,9 @@
  *  Author: Administrator
  */ 
 
+#ifndef _ESP8266_H_
+#define _ESP8266_H_
+
 #define F_CPU 32000000UL
 
 #include <avr/io.h>
@@ -34,3 +37,5 @@ void esp8266_on(void);
 void esp8266_off(void);
 void esp8266_connect(void);
 esp8266_status_t connectWiFi(void);
+
+#endif

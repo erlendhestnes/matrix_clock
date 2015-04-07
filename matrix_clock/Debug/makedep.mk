@@ -46,8 +46,6 @@ rtc.c
 
 sercom.c
 
-si114x.c
-
 si114x\Si114x_functions.c
 
 si114x\Si114x_handler.c
