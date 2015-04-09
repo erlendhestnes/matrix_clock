@@ -28,6 +28,7 @@
 #include "esp8266.h"
 #include "port.h"
 #include "usb.h"
+#include "adc.h"
 
 #include "si114x/User_defs.h"
 #include "si114x/Si114x_functions.h"
@@ -57,24 +58,9 @@ void play_sound(char *name) {
 	}	
 }
 
-int main(void) {
-
+void sd_card(void) {
 	UINT bw;
-	char *ptr;
 	
-	clock_setup_32_mhz();
-	ht1632c_begin(HT1632_COMMON_16NMOS);
-	ht1632c_setBrightness(15);
-	ht1632c_clearScreen();
-	//ht1632c_fillScreen();
-	uart_setup();
-	pmic_setup();
-	i2c_setup();
-	btn_setup();
-	rtc_setup();
-	
-	stdout = stdin = &mystdout;
-
 	f_mount(&FatFs, "", 0);		/* Give a work area to the default drive */
 	
 	if (f_open(&Fil, "newfilea.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {	/* Create a file */
@@ -83,30 +69,79 @@ int main(void) {
 		
 		f_close(&Fil);								/* Close the file */
 	}
-	
+}
+
+int main(void) {
+
+	time_t user_time;
 	SI114X_IRQ_SAMPLE sensor_data;
+	
+	clock_setup_32_mhz();
+	ht1632c_begin(HT1632_COMMON_16NMOS);
+	ht1632c_setBrightness(0);
+	ht1632c_clearScreen();
+	//ht1632c_fillScreen();
+	//adc_setup();
+	uart_setup();
+	pmic_setup();
+	i2c_setup();
+	btn_setup();
+	rtc_setup();
+	
+	stdout = stdin = &mystdout;
+	
+	sd_card();
 	
 	//_delay_ms(5000);
 	
 	si114x_reset(SI114X_ADDR);
-	//si114x_init(SI114X_ADDR);
+	si114x_init(SI114X_ADDR);
 	
 	TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
 	TCC1.PERL = 0x80;
 	TCC1.PERH = 0x0C;
 	TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
 	
-	init_time();
+	//init_time();
+	
+	user_time.seconds = 0;
+	user_time.minutes = 0;
+	user_time.hours = 0;
 	
 	sei();
 	
 	while (1) {
 		
+		/*
 		update_time();
 		
-		//sensor_data.timestamp = counter;
-		//si114x_get_data(&sensor_data);
-		//si114x_process_samples(SI114X_ADDR,&sensor_data);
+		switch(btn_check_press()) {
+			case BTN1:
+				user_time.minutes++;
+				set_time(&user_time);
+				_delay_ms(250);
+				break;
+			case BTN2:
+				user_time.minutes--;
+				set_time(&user_time);
+				_delay_ms(250);
+				break;
+			case BTN3:
+				user_time.hours++;
+				set_time(&user_time);
+				_delay_ms(250);
+				break;
+			case BTN4:
+				user_time.hours--;
+				set_time(&user_time);
+				_delay_ms(250);
+				break;
+		}
+		*/
+		
+		sensor_data.timestamp = counter;
+		si114x_get_data(&sensor_data);
+		si114x_process_samples(SI114X_ADDR,&sensor_data);
 	}
 	
 }

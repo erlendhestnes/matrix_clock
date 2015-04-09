@@ -9,15 +9,10 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-volatile uint8_t seconds = 0;
-volatile uint8_t minutes = 0;
-volatile uint8_t hours = 0;
+time_t time;
 
-char str_min[2];
-char str_min_prev[2];
-
-char str_hour[2];
-char str_hour_prev[2];
+#define TOP		0
+#define BOTTOM  9
 
 void rtc_setup(void) {
 	CCP = CCP_IOREG_gc;
@@ -33,72 +28,71 @@ void rtc_setup(void) {
 }
 
 void init_time(void) {
-	
 	ht1632c_clearScreen();
 	
-	hours = 18;
-	minutes = 4;
+	time.hours = 0;
+	time.minutes = 0;
+	time.seconds = 0;
+	time.days = 0;
+	time.years = 0;
 	
-	str_min[0] = str_min_prev[0] = '0';
-	str_min[1] = str_min_prev[1] = '4';
+	int_to_string(BOTTOM,time.minutes);
+	int_to_string(TOP,time.hours);
+}
+
+void set_time(time_t *t) {
 	
-	str_hour[0] = str_hour_prev[0] = '1';
-	str_hour[1] = str_hour_prev[1] = '8';
+	cli();
 	
-	ht1632c_drawChar(2,0,'1',1,1);
-	ht1632c_drawChar(9,0,'8',1,1);
-	ht1632c_drawChar(2,9,'0',1,1);
-	ht1632c_drawChar(9,9,'4',1,1);
+	time.hours = t->hours;
+	time.minutes = t->minutes;
+	time.seconds = t->seconds;
+	time.days = t->days;
+	time.years = t->years;
+	
+	int_to_string(BOTTOM,time.minutes);
+	int_to_string(TOP,time.hours);
+	
+	sei();
+}
+
+void update_time(void) {
+	if (time.seconds == 59) {
+		int_to_string(BOTTOM,time.minutes);
+	}
+	if (time.minutes == 59) {
+		int_to_string(TOP,time.hours);
+	}
+}
+
+void int_to_string(uint8_t pos, uint8_t t) {
+	
+	char buffer[2];
+	char temp;
+	
+	sprintf(buffer, "%d", t);
+	
+	/*
+	if (t < 10) {
+		temp = buffer[0];
+		buffer[0] = '0';
+		buffer[1] = temp;
+	}
+	*/
+
+	ht1632c_fillRect(pos,0,8,16,0);
+	
+	//Write new numbers
+	ht1632c_drawChar(2,pos,buffer[0],1,1);
+	ht1632c_drawChar(9,pos,buffer[1],1,1);
+	
 	ht1632c_writeScreen();
 }
 
-void update_time(void) 
-{	
-	if (seconds == 59) {
-		sprintf(str_min, "%d", minutes);
-		if (minutes < 10) {
-			char temp = str_min[0];
-			str_min[0] = '0';
-			str_min[1] = temp;
-		}
-		
-		ht1632c_drawChar(2,9,str_min_prev[0],0,1);
-		ht1632c_drawChar(9,9,str_min_prev[1],0,1);
-		
-		ht1632c_drawChar(2,9,str_min[0],1,1);
-		ht1632c_drawChar(9,9,str_min[1],1,1);
-		
-		str_min_prev[0] = str_min[0];
-		str_min_prev[1] = str_min[1];
-		
-		ht1632c_writeScreen();
-	}
-	
-	if (minutes == 59) {
-		sprintf(str_hour, "%d", hours);
-		if (hours < 10) {
-			char temp = str_hour[0];
-			str_hour[0] = '0';
-			str_hour[1] = temp;
-		}
-		ht1632c_drawChar(2,0,str_hour_prev[0],0,1);
-		ht1632c_drawChar(9,0,str_hour_prev[1],0,1);
-		
-		ht1632c_drawChar(2,0,str_hour[0],1,1);
-		ht1632c_drawChar(9,0,str_hour[1],1,1);
-		
-		str_hour_prev[0] = str_hour[0];
-		str_hour_prev[1] = str_hour[1];
-		
-		ht1632c_writeScreen();
-	}
-	
-}
-
 ISR(RTC_OVF_vect) {
-	seconds++;
-	minutes += seconds / 60;
-	seconds %= 60;
-	hours += minutes / 60;
-	minutes %= 60;
+	time.seconds++;
+	time.minutes += time.seconds / 60;
+	time.seconds %= 60;
+	time.hours += time.minutes / 60;
+	time.minutes %= 60;
 }

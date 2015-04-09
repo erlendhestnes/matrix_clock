@@ -73,7 +73,8 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
     static u16 xdata SwipeStartTime;
 	
 	//My implementation
-	static u16 previous_led = 0;
+	static u16 previous_led_x = 0;
+	static u16 previous_led_y = 0;
 
     // QS_GlobalCounterOverflow assumes milliseconds. Samples->timestamp is in 100 us.
     u16 xdata QS_GlobalCounterOverflow = samples->timestamp / 10;
@@ -98,6 +99,7 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
     // Position calculation variables
     u16 xdata r1; 
     u16 xdata r2; 
+	u16 xdata r3;
     uu32 xdata x; 
 	uu32 xdata y; 
     u16 xdata z; 
@@ -136,6 +138,15 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
     ps *= (u32)scale;
 
     r2 = QS_Counts_to_Distance ((u16)ps, 2);
+	
+	//PS3 Sensor
+	ps = (u32) samples->ps3 - (u32)baseline[1];
+	if (ps < 0) ps = 0;
+
+	// Scale it
+	ps *= (u32)scale;
+
+	r3 = QS_Counts_to_Distance ((u16)ps, 2);
 
     //REPLACE_0_PS1(samples->ps1); 
     //REPLACE_0_PS2(samples->ps2);
@@ -160,6 +171,23 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
    if (x.u16[LSB] > 1101)
    {
      x.u16[LSB] = 1101;
+   }
+   
+   // Calculate y
+   //y = (r2^2 - r3^2 + d^2) / (2 * d) + offset
+   y.u32 = (u32)r2 * (u32)r2;
+   y.u32 = y.u32 + 33000;
+   y.s32 = y.u32 - ((u32)r3 * (u32)r3);
+   if (y.s32 < 0)
+   {
+	   y.s32 = 0;
+   }
+   y.u32 = y.u32 / 60;
+
+   // limit x to maximum for pad
+   if (y.u16[LSB] > 1101)
+   {
+	   y.u16[LSB] = 1101;
    }
 
    
@@ -212,12 +240,15 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
          z = r1;
       }
    }
-   
-   ht1632c_drawPixel(5,previous_led,0);
-   uint16_t tmp = 15-((x.u16[LSB])/73);
-   ht1632c_drawPixel(5,tmp,1);
+   //ht1632c_fillCircle(previous_led_y,previous_led_x,1,1);
+   ht1632c_drawPixel(previous_led_y,previous_led_x,0);
+   uint16_t tmp_x = 15-((x.u16[LSB])/73);
+   uint16_t tmp_y = ((y.u16[LSB])/55)+2;
+   ht1632c_drawPixel(tmp_y,tmp_x,1);
+   //ht1632c_fillCircle(tmp_y,tmp_x,1,1);
    ht1632c_writeScreen();
-   previous_led = tmp;
+   previous_led_x = tmp_x;
+   previous_led_y = tmp_y;
    
    /*
 

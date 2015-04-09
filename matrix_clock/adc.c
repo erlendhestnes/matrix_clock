@@ -71,13 +71,12 @@ int16_t adc_get_temp(void) {
 	ADCA.CH0.MUXCTRL = ADC_CH_MUXINT_TEMP_gc;
 	ADCA.CTRLA |= ADC_ENABLE_bm;
 	// adc_wait_8mhz();
-	_delay_us(400); // Wait at least 25 clocks
+	_delay_ms(1); // Wait at least 25 clocks
 	// get 358 K factory calibrated value
-	//ref = read_signature_byte(PROD_SIGNATURES_START + TEMPSENSE0);
-	//ref += read_signature_byte(PROD_SIGNATURES_START + TEMPSENSE1) << 8;
+	ref = (0x09 << 8) | 0x5C;
 	
 	kelvin_per_adc_x10 = ((273 + 85)*10) / (float)ref; // reference is ADC reading at 85C, scaled by 10 to get units of 0.1C
-	degrees_x10 = ADCA.CH0RES;//ADC_sample(&ADCA.CH0);
+	degrees_x10 = ADCA.CH0RES; //ADC_sample(&ADCA.CH0);
 	ADCA.CTRLA = 0; // turn ADC off
 	ADCA.REFCTRL = 0; // turn temperature sensor off
 	degrees_x10 *= kelvin_per_adc_x10;

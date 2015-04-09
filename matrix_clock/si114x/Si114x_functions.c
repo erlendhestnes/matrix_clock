@@ -62,11 +62,11 @@ s16 si114x_init(HANDLE si114x_handle)
 {
 	s16 retval   = 0;
 
-	u8  code current_LED1  = 0x0f;   // 359 mA
-	u8  code current_LED2  = 0x0f;   // 359 mA
-	u8  code current_LED3  = 0x00;   // 359 mA
+	u8  code current_LED1  = 0x05;   // 359 mA
+	u8  code current_LED2  = 0x05;   // 359 mA
+	u8  code current_LED3  = 0x05;   // 359 mA
 
-	u8  tasklist      = 0x33;   // ALS, IR, PS1, PS2, PS3
+	u8  tasklist      = 0x77;   // ALS, IR, PS1, PS2, PS3
 
 	u8  measrate      = 0x60; //0x84;   // 0xa0 every 30.0 ms
 	// 0x94 every 20.0 ms
