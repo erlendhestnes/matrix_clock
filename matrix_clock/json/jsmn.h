@@ -27,7 +27,9 @@ typedef enum {
 	/* Invalid character inside JSON string */
 	JSMN_ERROR_INVAL = -2,
 	/* The string is not a full JSON packet, more bytes expected */
-	JSMN_ERROR_PART = -3
+	JSMN_ERROR_PART = -3,
+	
+	JSMN_SUCCESS = -4
 } jsmnerr_t;
 
 /**

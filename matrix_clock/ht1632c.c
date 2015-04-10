@@ -25,7 +25,7 @@
 #define _wr PIN2_bm
 #define _data PIN3_bm
 
-#define WIDTH 24
+#define WIDTH 16
 #define HEIGHT 16
 
 uint8_t ledmatrix[48]; // 16 * 24 / 8
@@ -87,37 +87,35 @@ void ht1632c_blink(uint8_t blinky) {
 	}
 }
 
-void ht1632c_drawPixel(uint8_t x, uint8_t y, uint8_t color) {
-	if (y >= WIDTH) {
+void ht1632c_drawPixel(int x, int y, uint8_t color) {
+	if (x >= WIDTH) {
 		return;
 	}
-	if (x >= HEIGHT) {
+	if (y >= HEIGHT) {
 		return;
 	}
+	y = 15 - y;
 
-	uint8_t m;
-	// figure out which matrix controller it is
-	m = x / 24;
-	x %= 24;
+	y %= 24;
 
-	uint16_t i;
-
-	if (x < 8) {
-		i = 7;
-		} else if (x < 16) {
-		i = 128 + 7;
-		} else {
-		i = 256 + 7;
-	}
-	i -= (x % 8);
+	int i;
 
 	if (y < 8) {
-		y *= 2;
-		} else {
-		y = (y-8) * 2 + 1;
+		i = 7;
+	} else if (y < 16) {
+		i = 128 + 7;
+	} else {
+		i = 256 + 7;
+	}
+	i -= (y % 8);
+
+	if (x < 8) {
+		x *= 2;
+	} else {
+		x = (x-8) * 2 + 1;
 	}
 
-	i += y * 8;
+	i += x * 8;
 
 	if (color)
 	ht1632c_setPixel(i);
@@ -139,14 +137,16 @@ void ht1632c_drawBitmap(uint8_t x, uint8_t y,const uint8_t *bitmap, uint8_t w, u
 
 // draw a character
 void ht1632c_drawChar(uint8_t x, uint8_t y, char c,uint16_t color, uint8_t size) {
-  for (uint8_t i =0; i<5; i++ ) {
+  uint8_t i;
+  uint8_t j;
+  for (i = 0; i < 5; i++) {
 	  uint8_t line = pgm_read_byte(font+(c*5)+i);
-	  for (uint8_t j = 0; j<8; j++) {
+	  for (j = 7; j > 0; j--) {
 		  if (line & 0x1) {
 			  if (size == 1) // default size
-			  ht1632c_drawPixel(y+j, x+i, color);
+			  ht1632c_drawPixel(x+i, y+j-1, color);
 			  else {  // big size
-				  ht1632c_fillRect(y+j*size, x+i*size, size, size, color);
+				  ht1632c_fillRect(x+i*size, y+j*size, size, size, color);
 			  }
 		  }
 		  line >>= 1;
@@ -317,6 +317,12 @@ void ht1632c_clearScreen() {
 	ht1632c_writeScreen();
 }
 
+void ht1632c_clear_buffer() {
+	for (uint8_t i=0; i<(WIDTH*HEIGHT/8); i++) {
+		ledmatrix[i] = 0;
+	}
+}
+
 void ht1632c_writedata(uint16_t d, uint8_t bits) {
 	HT1632_PORT.DIRSET = _data;
 	for (uint8_t i=bits; i > 0; i--) {
@@ -443,16 +449,18 @@ void ht1632c_write(uint8_t c) {
 	if (c == '\n') {
 		cursor_y += textsize;
 		cursor_x = 0;
-		} else if (c == '\r') {
+	} else if (c == '\r') {
 		// skip em
-		} else {
+	} else {
 		ht1632c_drawChar(cursor_x, cursor_y, c, 1, textsize);
 		cursor_x += textsize*6;
 	}
 	return 1;
 }
 
-void ht1632c_print(uint8_t *str) {
+void ht1632c_print(uint8_t *str, uint8_t cursor) {
+	cursor_x = cursor;
+	ht1632c_clear_buffer();
 	while(*str) {
 		ht1632c_write(*str++);
 	}

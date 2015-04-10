@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <avr/sleep.h>
 
 #include "ht1632c.h"
@@ -29,6 +30,7 @@
 #include "port.h"
 #include "usb.h"
 #include "adc.h"
+#include "json/jsmn.h"
 
 #include "si114x/User_defs.h"
 #include "si114x/Si114x_functions.h"
@@ -71,10 +73,29 @@ void sd_card(void) {
 	}
 }
 
+void remove_substring(char *src, char *sub)
+{
+	char *p;
+	if ((p=strstr(src,sub)) != NULL)
+	{
+		memmove(p,p+strlen(sub), strlen(p+strlen(sub))+1);
+
+		// alternative
+		// strcpy(p,p+strlen(sub));
+	}
+}
+
 int main(void) {
 
 	time_t user_time;
 	SI114X_IRQ_SAMPLE sensor_data;
+	jsmn_parser parser;
+	
+	jsmntok_t tokens[100];
+	char *js;
+	char *js2;
+	char *js3;
+	jsmnerr_t r;
 	
 	clock_setup_32_mhz();
 	ht1632c_begin(HT1632_COMMON_16NMOS);
@@ -87,6 +108,7 @@ int main(void) {
 	i2c_setup();
 	btn_setup();
 	rtc_setup();
+	jsmn_init(&parser);
 	
 	stdout = stdin = &mystdout;
 	
@@ -95,20 +117,42 @@ int main(void) {
 	//_delay_ms(5000);
 	
 	si114x_reset(SI114X_ADDR);
-	si114x_init(SI114X_ADDR);
+	//si114x_init(SI114X_ADDR);
 	
-	TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
-	TCC1.PERL = 0x80;
-	TCC1.PERH = 0x0C;
-	TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
+	//TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
+	//TCC1.PERL = 0x80;
+	//TCC1.PERH = 0x0C;
+	//TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
 	
 	//init_time();
+	
+	sei();
+	
+	
+	//js = "sfdsf";
+	//r = jsmn_parse(&parser, js, strlen(js), tokens, 256);
+
+	esp8266_on();
+	esp8266_setup();
+	_delay_ms(5000);
+	esp8266_off();
+	js = strchr(rx_buffer,'{');
+    js2 = strchr(js,'}');
+	*js2++;
+
+	remove_substring(js,js2);
+	
+	puts("DONE");
+	puts(js);
+	
+	r = jsmn_parse(&parser, js, strlen(js), tokens, 100);
+	
+	puts("done");
 	
 	user_time.seconds = 0;
 	user_time.minutes = 0;
 	user_time.hours = 0;
 	
-	sei();
 	
 	while (1) {
 		
@@ -138,10 +182,11 @@ int main(void) {
 				break;
 		}
 		*/
-		
+		/*
 		sensor_data.timestamp = counter;
 		si114x_get_data(&sensor_data);
 		si114x_process_samples(SI114X_ADDR,&sensor_data);
+		*/
 	}
 	
 }

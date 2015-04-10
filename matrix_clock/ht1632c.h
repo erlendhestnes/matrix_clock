@@ -36,7 +36,7 @@ void ht1632c_powerdown(void);
 void ht1632c_setBrightness(uint8_t pwm);
 void ht1632c_blink(uint8_t blinky);
 void ht1632c_drawBitmap(uint8_t x, uint8_t y,const uint8_t *bitmap, uint8_t w, uint8_t h,uint8_t color);
-void ht1632c_drawPixel(uint8_t x, uint8_t y, uint8_t color);
+void ht1632c_drawPixel(int x, int y, uint8_t color);
 void ht1632c_setPixel(uint16_t i);
 void ht1632c_clrPixel(uint16_t i);
 void ht1632c_writeScreen();
@@ -61,7 +61,7 @@ void fade_down(void);
 
 void ht1632c_setCursor(uint8_t x, uint8_t y);
 void ht1632c_write(uint8_t c);
-void ht1632c_print(uint8_t *str);
+void ht1632c_print(uint8_t *str, uint8_t cursor);
 void ht1632_random(void);
 
 #endif /* HT1632_H_ */

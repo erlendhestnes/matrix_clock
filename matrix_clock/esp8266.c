@@ -5,14 +5,15 @@
  *  Author: Administrator
  */ 
 #include "esp8266.h"
+#include "ht1632c.h"
 
 #include <avr/interrupt.h>
 
 char cmd[BUFFER];
 char buffer[BUFFER];
-volatile char rx_buffer[RX_BUFFER];
 volatile uint16_t rx_ptr = 0;
 char *str;
+volatile uint8_t download = 0;
 
 static inline void flush_rx_buffer(void) {
 	rx_ptr = 0;
@@ -26,6 +27,7 @@ static inline void flush_cmd_buffer(void) {
 static inline void esp8266_send_cmd(char *str, uint16_t timeout_ms) {
 	flush_rx_buffer();
 	puts(str);
+	//printf("%s \r\n",str);
 	_delay_ms(timeout_ms);
 }
 
@@ -37,32 +39,26 @@ esp8266_status_t esp8266_init_webserver(void) {
 	esp8266_send_cmd("AT+CIPSERVER=1,80", 2000);
 }
 
-esp8266_status_t esp8266_init(void) {
+esp8266_status_t esp8266_setup(void) {
     
 	//Reset module
 	esp8266_send_cmd("AT+RST",2000);
-	if(strstr(rx_buffer,"OK") == "OK") {
-		return ERROR;
-	}
 	
 	//Set Data Mode
 	esp8266_send_cmd("AT+CIPMODE=0",1000);
-	if(strstr(rx_buffer,"OK") == "OK") {
+	if (strstr(rx_buffer,"OK") == NULL) {
 		return ERROR;
 	}
 	
 	//Single connection mode
-	esp8266_send_cmd("AT+CIPMUX=1",1000);
-	if(strstr(rx_buffer,"OK") == "OK") {
+	esp8266_send_cmd("AT+CIPMUX=0",1000);
+	if (strstr(rx_buffer,"OK") == NULL) {
 		return ERROR;
 	}
 	
 	//Select mode
 	esp8266_send_cmd("AT+CWMODE=1",1000);
-	if(strstr(rx_buffer,"OK") == "OK") {
-		return ERROR;
-	}
-    
+	
 	//Join Access-Point
 	flush_cmd_buffer();
 	strcat(cmd,"AT+CWJAP=\"");
@@ -75,34 +71,35 @@ esp8266_status_t esp8266_init(void) {
 	
 	//Set up TCP connection
 	flush_cmd_buffer();
-	strcat(cmd,"AT+CIPSTART=0,\"TCP\",\"");
+	strcat(cmd,"AT+CIPSTART=\"TCP\",\"");
 	strcat(cmd,DST_IP);
 	strcat(cmd,"\",80");
-	esp8266_send_cmd(cmd,1000);
+	esp8266_send_cmd(cmd,2000);
+	
+	//Send number of bytes
+	//flush_cmd_buffer();
+	//char *str;
+	//sprintf(str, "%d", strlen(ADDRESS)+12);
+	//strcat("AT+CIPSEND=",str);
+	//strcat(cmd,str);
+	printf("AT+CIPSEND=110\r\n");
 	
 	//Send data
 	flush_cmd_buffer();
 	strcat(cmd,"GET ");
 	strcat(cmd,ADDRESS);
-	strcat(cmd," HTTP/1.0\r\n");
-	char str[15];
-	char cmd2[30];
-	sprintf(str, "%d", strlen(cmd));
-	strcat(cmd2,"AT+CIPSEND=0,");
-	strcat(cmd2,str);
-	esp8266_send_cmd(cmd2,1000);
+	strcat(cmd," HTTP/1.0");
+	esp8266_send_cmd(cmd,2000);
 	
-	esp8266_send_cmd(cmd,1000);
-	
-	flush_cmd_buffer();
-	strcat(cmd,"Host: ");
-	strcat(cmd,DST_IP);
-	strcat(cmd,"\r\n\r\n\r\n");
-	esp8266_send_cmd(cmd,1000);
-	
-	while (strstr(rx_buffer,"OK") != "OK")
+	uint16_t timeout = 40;
+	uint16_t counter = 0;
+	while (strstr(rx_buffer,"SEND OK") == NULL)
 	{
-		esp8266_send_cmd("\r\n",10);
+		esp8266_send_cmd("",250);
+		
+		if (counter++ > timeout) {
+			return SUCCESS;
+		}
 	}
 	
 }
@@ -166,4 +163,5 @@ esp8266_status_t connectWiFi(void) {
 
 ISR(USARTD0_RXC_vect) {
 	rx_buffer[rx_ptr++] = USARTD0.DATA;
+	download = 1;
 }
