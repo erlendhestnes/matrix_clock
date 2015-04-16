@@ -5,13 +5,11 @@
  *  Author: Administrator
  */ 
 
-#define F_CPU 32000000UL
 
 #include "uart.h"
+#include "global.h"
 #include <avr/io.h>
 #include <util/delay.h>
-
-char rxbuf[50];
 
 void uart_setup(void) {
 	
@@ -32,13 +30,7 @@ void uart_put_char(char c) {
 }
 
 char uart_get_char(void) {
-	uint16_t timer = 0;
-	while (!(USARTD0.STATUS & USART_RXCIF_bm)){
-		 _delay_ms(1);
-		 if (timer++ == TIMEOUT) {
-			return 0x03;
-		 }
-	}
+	while (!(USARTD0.STATUS & USART_RXCIF_bm));
 	return USARTD0.DATA;
 }
 

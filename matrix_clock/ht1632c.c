@@ -4,8 +4,8 @@
  * Created: 10/9/2014 5:50:34 PM
  *  Author: Administrator
  */ 
-#define F_CPU 32000000UL
 
+#include "global.h"
 #include "ht1632c.h"
 #include "4x6_font.c"
 #include <util/delay.h>
@@ -455,7 +455,6 @@ void ht1632c_write(uint8_t c) {
 		ht1632c_drawChar(cursor_x, cursor_y, c, 1, textsize);
 		cursor_x += textsize*6;
 	}
-	return 1;
 }
 
 void ht1632c_print(uint8_t *str, uint8_t cursor) {

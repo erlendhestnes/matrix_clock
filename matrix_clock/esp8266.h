@@ -8,36 +8,38 @@
 #ifndef _ESP8266_H_
 #define _ESP8266_H_
 
-#define F_CPU 32000000UL
-
+#include "global.h"
 #include <avr/io.h>
-#include <util/delay.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-typedef enum {
-	ERROR,
-	SUCCESS	
-} esp8266_status_t;
 
 #define SSID        "Inteno_68"
 #define PASS        "A26A411568"
-//#define DST_IP		"184.106.153.149"
+//#define DST_IP	"184.106.153.149"
 #define DST_IP      "api.thingspeak.com"
-#define ADDRESS "http://api.thingspeak.com/channels/23643/feed.json?key=B48BEBINSXKRJRIN"
+#define ADDRESS		"http://api.thingspeak.com/channels/23643/feed.json?key=B48BEBINSXKRJRIN"
 //#define ADDRESS "/channels/23643/feed.json?key=B48BEBINSXKRJRIN"
-#define BUFFER 100
-#define RX_BUFFER 200
+#define BUFFER		100
+#define RX_BUFFER	1000
 
-volatile char rx_buffer[RX_BUFFER];
+#define ESP_RST		PIN4_bm
+#define CH_EN		PIN5_bm
 
-#define RST   PIN4_bm
-#define CH_EN PIN5_bm
+typedef enum {
+	ERROR,
+	SUCCESS,
+	TIMEOUT
+} esp8266_status_t;
 
-esp8266_status_t esp8266_setup(void);
 void esp8266_on(void);
 void esp8266_off(void);
-void esp8266_connect(void);
+void esp8266_reset(void);
+
+esp8266_status_t esp8266_setup(void);
+esp8266_status_t esp8266_setup_webserver(void);
+esp8266_status_t esp8266_join_ap(char *ssid, char *pass);
+esp8266_status_t esp8266_connect(char *host, char *addr);
 esp8266_status_t connectWiFi(void);
+
+void esp8266_get_rx_buffer(char *str);
+void esp8266_extract_json(char *str);
 
 #endif

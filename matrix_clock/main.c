@@ -10,13 +10,10 @@
 #define RAND_MAX 255
 
 #include <avr/io.h>
-#include <util/delay.h>
 #include <avr/interrupt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
 #include <avr/sleep.h>
+#include <util/delay.h>
+#include <stdio.h>
 
 #include "ht1632c.h"
 #include "rtc.h"
@@ -24,7 +21,6 @@
 #include "uart.h"
 #include "fatfs/ff.h"
 #include "fatfs/sound.h"
-#include "fft/fft.h"
 #include "power.h"
 #include "esp8266.h"
 #include "port.h"
@@ -40,7 +36,7 @@ static volatile uint16_t counter = 0;
 
 FATFS FatFs;		// FatFs work area needed for each volume
 FIL Fil;			// File object needed for each open file
-BYTE Buff[2048];	// Working buffer
+BYTE Buff[2];	// Working buffer 2048
 
 void uart_put_char(char c);
 static FILE mystdout = FDEV_SETUP_STREAM(uart_put_char,uart_get_char,_FDEV_SETUP_WRITE);
@@ -73,29 +69,38 @@ void sd_card(void) {
 	}
 }
 
-void remove_substring(char *src, char *sub)
-{
-	char *p;
-	if ((p=strstr(src,sub)) != NULL)
-	{
-		memmove(p,p+strlen(sub), strlen(p+strlen(sub))+1);
+void print_token(jsmntok_t *tokens, char *js, uint8_t i) {
+	int len;
+	jsmntok_t key;
 
-		// alternative
-		// strcpy(p,p+strlen(sub));
-	}
+	key = tokens[i];
+	len = key.end - key.start;
+	char keyString[ len+1 ];
+	memcpy( keyString, &js[ key.start ], len );
+	keyString[ len ] = '\0';
+	//printf( "Key[%d]: %s\n", i, keyString );
+	puts(keyString);
+}
+
+void tcc_setup(void) {
+	TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
+	TCC1.PERL = 0x80;
+	TCC1.PERH = 0x0C;
+	TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
 }
 
 int main(void) {
 
 	time_t user_time;
-	SI114X_IRQ_SAMPLE sensor_data;
-	jsmn_parser parser;
 	
+	SI114X_IRQ_SAMPLE sensor_data;
+	
+	jsmn_parser p;
 	jsmntok_t tokens[100];
-	char *js;
-	char *js2;
-	char *js3;
 	jsmnerr_t r;
+	char rx_buf[200];
+	
+	esp8266_status_t status;
 	
 	clock_setup_32_mhz();
 	ht1632c_begin(HT1632_COMMON_16NMOS);
@@ -105,55 +110,47 @@ int main(void) {
 	//adc_setup();
 	uart_setup();
 	pmic_setup();
-	i2c_setup();
-	btn_setup();
-	rtc_setup();
-	jsmn_init(&parser);
+	//i2c_setup();
+	//btn_setup();
+	//rtc_setup();
+	jsmn_init(&p);
 	
 	stdout = stdin = &mystdout;
 	
-	sd_card();
+	puts("LED MATRIX Clock - By: Erlend Hestnes");
+	
+	//sd_card();
 	
 	//_delay_ms(5000);
 	
-	si114x_reset(SI114X_ADDR);
+	//si114x_reset(SI114X_ADDR);
 	//si114x_init(SI114X_ADDR);
 	
-	//TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
-	//TCC1.PERL = 0x80;
-	//TCC1.PERH = 0x0C;
-	//TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
 	
 	//init_time();
 	
 	sei();
 	
-	
-	//js = "sfdsf";
-	//r = jsmn_parse(&parser, js, strlen(js), tokens, 256);
-
 	esp8266_on();
-	esp8266_setup();
-	_delay_ms(5000);
+	esp8266_setup_webserver();
+	
+	/*
+	do {status = esp8266_setup(); } while (status != SUCCESS);
+	do {status = esp8266_join_ap(SSID,PASS); } while (status != SUCCESS);
+	status = esp8266_connect("hvilkenuke.no","hvilkenuke.no");
 	esp8266_off();
-	js = strchr(rx_buffer,'{');
-    js2 = strchr(js,'}');
-	*js2++;
-
-	remove_substring(js,js2);
+	puts("GOT DATA:");
+	esp8266_get_rx_buffer(&rx_buf);
+	puts(rx_buf);
+	*/
+	//r = jsmn_parse(&p, &rx_buf, 100, tokens, 100);
 	
-	puts("DONE");
-	puts(js);
-	
-	r = jsmn_parse(&parser, js, strlen(js), tokens, 100);
-	
-	puts("done");
+	//print_token(tokens,&rx_buf,10);
 	
 	user_time.seconds = 0;
 	user_time.minutes = 0;
 	user_time.hours = 0;
-	
-	
+
 	while (1) {
 		
 		/*

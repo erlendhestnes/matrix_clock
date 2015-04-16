@@ -19,12 +19,12 @@
 #define DIVIDER 320000UL
 
 /* Port controls  (Platform dependent) */
-#define CS_LOW()	SDPORT.OUTCLR = CS			/* CS=low */
-#define	CS_HIGH()	SDPORT.OUTSET = CS			/* CS=high */
-#define MMC_CD		(!(SDPORT.IN & PIN3_bm))	/* Card detected.   yes:true, no:false, default:true */
+#define CS_LOW()	SD_PORT.OUTCLR = SD_CS			/* CS=low */
+#define	CS_HIGH()	SD_PORT.OUTSET = SD_CS			/* CS=high */
+#define MMC_CD		(!(SD_PORT.IN & SD_CD))	/* Card detected.   yes:true, no:false, default:true */
 #define MMC_WP		0							/* Write protected. yes:true, no:false, default:false */
-#define	FCLK_SLOW()	SPIC.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV64_gc		/* Set slow clock (F_CPU / 64) */
-#define	FCLK_FAST()	SPIC.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV4_gc		/* Set fast clock (F_CPU / 2) */
+#define	FCLK_SLOW()	SD_SPI.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV64_gc		/* Set slow clock (F_CPU / 64) */
+#define	FCLK_FAST()	SD_SPI.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV4_gc		/* Set fast clock (F_CPU / 2) */
 
 
 /*--------------------------------------------------------------------------

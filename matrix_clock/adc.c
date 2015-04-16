@@ -4,11 +4,11 @@
  * Created: 1/18/2015 4:16:21 PM
  *  Author: Administrator
  */ 
-#define F_CPU 32000000UL
 
+#include "adc.h"
+#include "global.h"
 #include <avr/io.h>
 #include <util/delay.h>
-#include "adc.h"
 
 void adc_setup(void) {
 	ADCA.CTRLA = ADC_FLUSH_bm; // cancel any pending conversions, disable ADC

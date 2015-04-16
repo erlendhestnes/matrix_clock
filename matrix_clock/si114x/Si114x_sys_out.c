@@ -22,6 +22,7 @@ void PortSet(u8 port, u8 portdata)
 s16 PortRead(u8 port)
 {
     //return PT_i2c_smbus_read_byte_data(mcu_handle, port) < 0 ;
+	return 1;
 }
 
 s16 Si114xWriteToRegister(HANDLE si114x_handle, u8 address, u8 value)

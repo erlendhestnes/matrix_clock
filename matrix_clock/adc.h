@@ -8,6 +8,8 @@
 #ifndef _ADC_H_
 #define _ADC_H_
 
+#include <avr/io.h>
+
 void adc_setup(void);
 int16_t adc_get_temp(void);
 uint16_t adc_read(uint8_t ch, uint8_t mode);

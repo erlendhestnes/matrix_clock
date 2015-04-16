@@ -11,12 +11,14 @@
 #include <avr/io.h>
 #include <stdint.h>
 
-#define SDPORT PORTC
+#define SD_PORT		PORTC
+#define SD_SPI		SPIC
 
-#define CS PIN4_bm
-#define MOSI PIN5_bm
-#define MISO PIN6_bm
-#define SCK PIN7_bm
+#define SD_CD		PIN3_bm
+#define SD_CS		PIN4_bm
+#define SD_MOSI		PIN5_bm
+#define SD_MISO		PIN6_bm
+#define SD_SCK		PIN7_bm
 
 #define MAX44007_ADDR_0  0x94
 #define MAX44007_READ    0b10110101
@@ -30,11 +32,11 @@ void spi_off(void);
 uint8_t spi_wr_rd(uint8_t spi_data);
 
 static inline void ss_select(void) {
-	PORTC.OUTCLR = CS;
+	SD_PORT.OUTCLR = SD_CS;
 }
 
 static inline void ss_deselect(void) {
-	PORTC.OUTSET = CS;
+	SD_PORT.OUTSET = SD_CS;
 }
 
 void i2c_setup(void);

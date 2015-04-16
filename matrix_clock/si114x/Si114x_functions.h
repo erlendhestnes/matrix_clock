@@ -36,7 +36,7 @@ s16 Si114xBlockWrite(HANDLE si114x_handle, u8 address, u8 length, u8 *values);
 s16 Si114xBlockRead(HANDLE si114x_handle, u8 address, u8 length, u8 *values);
 
 // Commands to the Si114x
-s16 si114x_reset      (HANDLE si114x_handle);
+s16 si114x_reset     (HANDLE si114x_handle);
 s16 Si114xPauseAll   (HANDLE si114x_handle);
 s16 Si114xNop        (HANDLE si114x_handle);
 s16 Si114xPsForce    (HANDLE si114x_handle);
