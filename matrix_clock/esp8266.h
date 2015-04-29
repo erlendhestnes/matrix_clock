@@ -35,11 +35,13 @@ void esp8266_reset(void);
 
 esp8266_status_t esp8266_setup(void);
 esp8266_status_t esp8266_setup_webserver(void);
+esp8266_status_t esp8266_run_webserver(char *str);
+esp8266_status_t esp8266_run_simple_webserver(char *str);
+
 esp8266_status_t esp8266_join_ap(char *ssid, char *pass);
 esp8266_status_t esp8266_connect(char *host, char *addr);
 esp8266_status_t connectWiFi(void);
 
 void esp8266_get_rx_buffer(char *str);
 void esp8266_extract_json(char *str);
-
 #endif

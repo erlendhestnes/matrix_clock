@@ -99,8 +99,6 @@ ISR(TCC0_OVF_vect)
 	
 	DACB.CH0DATA = 255+data;//<< 2;
 	DACB.CH1DATA = 255-data;//<< 2;
-	//DACB.CH0DATAL = (data << 7);
-	//DACB.CH0DATAH = (data >> 1);
 }
 
 static inline void speaker_on(void) {
@@ -125,11 +123,12 @@ int sound_start (
 	fcb->ri = 0; fcb->wi = 0; fcb->ct = 0;	/* Flush FIFO */
 	WavFifo = fcb;			/* Register FIFO control structure */
 
-	PORTB.DIRSET = PIN2_bm | PIN3_bm; //DAC0
-	DACB.CTRLC = DAC_REFSEL_AVCC_gc;// | DAC_LEFTADJ_bm;
+	PORTB.DIRSET = PIN2_bm | PIN3_bm;
+	DACB.CTRLC = DAC_REFSEL_AVCC_gc;
 	DACB.CTRLB = DAC_CHSEL_DUAL_gc;
 	DACB.CTRLA = DAC_CH0EN_bm | DAC_CH1EN_bm;
 	
+	//From calibration rows
 	DACB.CH0OFFSETCAL = 0x07;
 	DACB.CH0GAINCAL = 0x1B;
 	DACB.CH1GAINCAL = 0x0C;

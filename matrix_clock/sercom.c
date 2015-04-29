@@ -32,6 +32,8 @@ uint8_t spi_wr_rd(uint8_t spi_data) {
 	return SD_SPI.DATA;
 }
 
+//--------------LUFA-------------------------
+
 void twi_setup(TWI_t* const TWI) {
 	//TWIC.CTRL = TWI_SDAHOLD_50NS_gc;
 	TWIC.MASTER.CTRLB = TWI_MASTER_SMEN_bm; //| TWI_MASTER_TIMEOUT1_bm;
@@ -39,9 +41,6 @@ void twi_setup(TWI_t* const TWI) {
 	TWIC.MASTER.CTRLA = TWI_MASTER_ENABLE_bm;
 	TWIC.MASTER.STATUS = TWI_MASTER_BUSSTATE_IDLE_gc;
 }
-
-
-//--------------LUFA-------------------------
 
 void twi_stop_transmission(TWI_t* const TWI) {
 	TWI->MASTER.CTRLC = TWI_MASTER_ACKACT_bm | TWI_MASTER_CMD_STOP_gc;

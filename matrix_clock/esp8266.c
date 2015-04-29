@@ -11,11 +11,24 @@
 #include <util/delay.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 char cmd[BUFFER];
+char html[BUFFER];
 
 volatile static uint16_t rx_ptr = 0;
 static char rx_buffer[RX_BUFFER];
+
+const bool printReply = true;
+const char line[] = "-----\n\r";
+int loopCount=0;
+
+char command[20];
+
+char ipAddress [20];
+char name[30];
+int lenHtml = 0;
+char temp[5];
 
 static inline void flush_rx_buffer(void) {
 	rx_ptr = 0;
@@ -84,7 +97,7 @@ esp8266_status_t esp8266_join_ap(char *ssid, char *pass) {
 	strcat(cmd,pass);
 	strcat(cmd,"\"");
 	esp8266_send_cmd(cmd,5000);
-	esp8266_send_cmd("AT+CWJAP=?",5000);
+	esp8266_send_cmd("AT+CWJAP\r",5000);
 	
 	if (strstr(rx_buffer,"OK") == NULL) {
 		return ERROR;
@@ -108,7 +121,7 @@ esp8266_status_t esp8266_connect(char *host, char *addr) {
 	//Count number of bytes to send
 	flush_cmd_buffer();
 	char *number_of_bytes;
-	sprintf(number_of_bytes, "%d", strlen(addr)+15);
+	sprintf(number_of_bytes, "%d", strlen(addr)+20);
 	strcat(cmd, "AT+CIPSEND=");
 	strcat(cmd,number_of_bytes);
 	strcat(cmd,"\r"); //needs to be here
@@ -124,7 +137,7 @@ esp8266_status_t esp8266_connect(char *host, char *addr) {
 	uint16_t timeout = 40;
 	uint16_t cnt = 0;
 	
-	while (strstr(rx_buffer,"SEND") == NULL)
+	while (strstr(rx_buffer,"Unlink") == NULL)
 	{
 		esp8266_send_cmd("",250);
 		
@@ -175,13 +188,219 @@ void esp8266_extract_json(char *str) {
 }
 
 esp8266_status_t esp8266_setup_webserver(void) {
-	esp8266_send_cmd("AT+RST\r", 5000);
-	esp8266_send_cmd("AT+CIPMUX=1", 2000);
-	esp8266_send_cmd("AT+CWMODE=2", 2000);
-	esp8266_send_cmd("AT+CIPSERVER=1,80", 2000);
-	esp8266_send_cmd("AT+CIFSR=?", 2000);
+	
+	//Reset module
+	esp8266_send_cmd("AT+RST\r",3000);
+	if (strstr(rx_buffer,"OK") == NULL) {
+		return ERROR;
+	}
+	
+	//Select mode
+	esp8266_send_cmd("AT+CWMODE=1",500);
+	
+	//Join access point
+	esp8266_join_ap(SSID,PASS);
+	
+	esp8266_send_cmd("AT+CIFSR\r", 500);
+	
+	// parse ip address.
+	int len = strlen(rx_buffer);
+	bool done=false;
+	bool error = false;
+	int pos = 0;
+	while (!done)
+	{
+		if ( rx_buffer[pos] == 10) { done = true;}
+		pos++;
+		if (pos > len) { done = true;  error = true;}
+	}
+	
+	if (!error)
+	{
+		int buffpos = 0;
+		done = false;
+		while (!done)
+		{
+			if ( rx_buffer[pos] == 13 ) { done = true; }
+			else { ipAddress[buffpos] = rx_buffer[pos];    buffpos++; pos++;   }
+		}
+		ipAddress[buffpos] = 0;
+	}
+	else { strcpy(ipAddress,"ERROR"); }
+	
+	//Configure multiple connections
+	esp8266_send_cmd("AT+CIPMUX=1",500);
+	
+	//Start server
+	esp8266_send_cmd("AT+CIPSERVER=1,80",500);	
 	
 	return SUCCESS;
+}
+
+void at_cipsend(char *str) {
+	char *number_of_bytes;
+	
+	strcpy(html,str);
+	
+	//flush_cmd_buffer();
+	sprintf(number_of_bytes, "%d", strlen(str));
+	strcpy(cmd, "AT+CIPSEND=0,");
+	strcat(cmd,number_of_bytes);
+	strcat(cmd,"\r"); //needs to be here
+
+	esp8266_send_cmd(cmd,2000);
+	esp8266_send_cmd(html,2000);
+}
+
+esp8266_status_t esp8266_run_simple_webserver(char *str) 
+{
+	if(rx_ptr > 190) // check if the ESP8266 is sending data
+	{
+		_delay_ms(1000);
+		at_cipsend(str);
+		_delay_ms(5000);
+		esp8266_send_cmd("AT+CIPCLOSE=0\r", 100);
+	}
+}
+
+esp8266_status_t esp8266_run_webserver(char *str) 
+{
+ if(rx_ptr > 190) // check if the ESP8266 is sending data
+ {
+	 // this is the +IPD rx_buffer - it is quite long.
+	 // normally you would not need to copy the whole message in to a variable you can copy up to "HOST" only
+	 // or you can just search the data character by character as you read the serial port.
+	 
+	 bool foundIPD = false;
+	 for (int i=0; i<strlen(rx_buffer); i++)
+	 {
+		 if (  (rx_buffer[i]=='I') && (rx_buffer[i+1]=='P') && (rx_buffer[i+2]=='D')   ) { foundIPD = true;    }
+	 }
+	 
+	 if ( foundIPD  )
+	 {
+		 loopCount++;
+		 // Serial.print( "Have a request.  Loop = ");  Serial.println(loopCount); Serial.println("");
+		 
+		 // check to see if we have a name - look for name=
+		 bool haveName = false;
+		 int nameStartPos = 0;
+		 for (int i=0; i<strlen(rx_buffer); i++)
+		 {
+			 if (!haveName) // just get the first occurrence of name
+			 {
+				 if (  (rx_buffer[i]=='n') && (rx_buffer[i+1]=='a') && (rx_buffer[i+2]=='m') && (rx_buffer[i+3]=='e')  && (rx_buffer[i+4]=='=') )
+				 {
+					 haveName = true;
+					 nameStartPos = i+5;
+				 }
+			 }
+		 }
+		 
+		 // get the name - copy everything from nameStartPos to the first space character
+		 if (haveName)
+		 {
+			 int tempPos = 0;
+			 bool finishedCopying = false;
+			 for (int i=nameStartPos; i<strlen(rx_buffer); i++)
+			 {
+				 if ( (rx_buffer[i]==' ') && !finishedCopying )  { finishedCopying = true;   }
+				 if ( !finishedCopying )                     { name[tempPos] = rx_buffer[i];   tempPos++; }
+			 }
+			 name[tempPos] = 0;
+		 }
+		
+		 // start sending the HTML
+		 
+		 _delay_ms(1000);
+		 
+		 at_cipsend(str);
+		 /*
+		 strcpy(html,"<html><head></head><body>");
+		 strcpy(command,"AT+CIPSEND=0,26\r");
+		 esp8266_send_cmd(command,100);
+		 esp8266_send_cmd(html,100);
+		 
+		 //at_cipsend("<html><head></head><body>");
+		 //at_cipsend("<h1>ESP8266 Webserver</h1>");
+		 //at_cipsend("<p>Served by Arduino and ESP8266</p>");
+		 
+		 strcpy(html,"<h1>ESP8266 Webserver</h1>");
+		 strcpy(command,"AT+CIPSEND=0,27\r");
+		 esp8266_send_cmd(command,100);
+		 esp8266_send_cmd(html,100);
+		 
+		 strcpy(html,"<p>Served by Arduino and ESP8266</p>");
+		 strcpy(command,"AT+CIPSEND=0,36\r");
+		 esp8266_send_cmd(command,100);
+		 esp8266_send_cmd(html,100);
+		 
+		 strcpy(html,"<p>Request number ");
+		 itoa( loopCount, temp, 10);
+		 strcat(html,temp);
+		 strcat(html,"</p>");
+		 
+		 // need the length of html
+		 int lenHtml = strlen( html );
+		 
+		 strcpy(command,"AT+CIPSEND=0,");
+		 itoa( lenHtml, temp, 10);
+		 strcat(command, temp);
+		 strcat(command, "\r");
+		 esp8266_send_cmd(command,100);
+		 esp8266_send_cmd(html,100);
+ 
+		 if (haveName)
+		 {
+			 // write name
+			 strcpy(html,"<p>Your name is "); strcat(html, name ); strcat(html,"</p>");
+			 
+			 // need the length of html for the cipsend command
+			 lenHtml = strlen( html );
+			 strcpy(command,"AT+CIPSEND=0,"); itoa( lenHtml, temp, 10); strcat(command, temp); strcat(command, "\r");
+			 esp8266_send_cmd(command,100);
+			 esp8266_send_cmd(html,100);
+		 }
+		 
+		 
+		 strcpy(html,"<form action=\""); strcat(html, ipAddress); strcat(html, "\" method=\"GET\">"); strcat(command, "\r");
+		 
+		 lenHtml = strlen( html );
+		 itoa( lenHtml, temp, 10);
+		 strcpy(command,"AT+CIPSEND=0,");
+		 itoa( lenHtml, temp, 10);
+		 strcat(command, temp);
+		 strcat(command, "\r");
+		 
+		 esp8266_send_cmd(command,100);
+		 esp8266_send_cmd(html,100);
+		 
+		 strcpy(html,"Name:<br><input type=\"text\" name=\"name\">");
+		 strcpy(command,"AT+CIPSEND=0,40\r");
+		 esp8266_send_cmd(command,100);
+		 esp8266_send_cmd(html,100);
+		 
+		 strcpy(html,"<input type=\"submit\" value=\"Submit\"></form>");
+		 strcpy(command,"AT+CIPSEND=0,43\r");
+		 esp8266_send_cmd(command,100);
+		 esp8266_send_cmd(html,100);
+		 
+		 strcpy(html,"</body></html>");
+		 strcpy(command,"AT+CIPSEND=0,14\r");
+		 esp8266_send_cmd(command,100);
+		 esp8266_send_cmd(html,100);
+		 */
+		 
+		 // close the connection
+		 esp8266_send_cmd( "AT+CIPCLOSE=0\r", 100);
+		 
+	 } // if(espSerial.find("+IPD"))
+ } //if(espSerial.available())
+ 
+ 
+ _delay_ms (100);
+ 
+ // drop to here and wait for next request.
 }
 
 ISR(USARTD0_RXC_vect) {

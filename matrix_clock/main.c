@@ -82,14 +82,15 @@ void play_sound(char *name) {
 }
 
 static inline void sd_card(void) {
-	f_mount(&FatFs, "", 0);		/* Give a work area to the default drive */
+	f_mount(&FatFs, "", 0);
 	
-	if (f_open(&Fil, "newfileb.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {	/* Create a file */
-		
-		f_write(&Fil, "It works!\r\n", 11, &bw);	/* Write data to the file */
-		
-		f_close(&Fil);								/* Close the file */
+	if (f_open(&Fil, "web.txt", FA_READ | FA_OPEN_EXISTING) == FR_OK) {
+		puts("Reading...");
+		f_read(&Fil,Buff,101,&bw);
+		f_close(&Fil);
 	}
+	puts("Read done:");
+	puts(Buff);
 }
 
 void print_token(jsmntok_t *tokens, char *js, uint8_t i) {
@@ -110,6 +111,30 @@ void tcc_setup(void) {
 	TCC1.PERL = 0x80;
 	TCC1.PERH = 0x0C;
 	TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
+}
+
+void proximity_fade_demo(void) {
+	
+	uint8_t flip = 1;
+	
+	uint8_t reg0 = i2c_read_data(SI114X_ADDR,REG_PS1_DATA0);
+	uint8_t reg1 = i2c_read_data(SI114X_ADDR,REG_PS1_DATA1);
+
+	uint16_t reg01 = ((u16)reg1 << 8) | reg0;
+	
+	if (reg01 < 2200)
+	{
+		if (flip) {
+			ht1632c_send_command(HT1632_LED_OFF);
+			flip = 0;
+		}
+		} else {
+		if (!flip) {
+			ht1632c_send_command(HT1632_LED_ON);
+			flip = 1;
+		}
+		ht1632_fade(reg01/400);
+	}
 }
 
 int main(void) {
@@ -142,18 +167,20 @@ int main(void) {
 	uart_setup();
 	pmic_setup();
 	twi_setup(&TWIC);
+	si114x_setup();
 	//btn_setup();
 	//rtc_setup();
-	//jsmn_init(&p);
+	jsmn_init(&p);
 	
 	stdout = stdin = &mystdout;
-	//puts("LED MATRIX Clock - By: Erlend Hestnes\r\n");
+	puts("LED MATRIX Clock - By: Erlend Hestnes\r\n");
 	
-	
-	_delay_ms(1000);
-	si114x_setup();
-	tcc_setup();
 	sei();
+	
+	sd_card();
+	
+	esp8266_on();
+	esp8266_setup_webserver();
 	
 	/*
 	do {status = esp8266_setup(); } while (status != SUCCESS);
@@ -168,10 +195,9 @@ int main(void) {
 	
 	print_token(tokens,&rx_buf,10);
 	*/
-	
-	uint8_t flip = 1;
-	
 	while (1) {
+		
+		esp8266_run_simple_webserver(Buff);
 		/*
 		update_time();
 		
@@ -197,44 +223,6 @@ int main(void) {
 				_delay_ms(250);
 				break;
 		}
-		*/
-		
-		//sensor_data.timestamp = counter;
-		//si114x_get_data(&sensor_data);
-		uint8_t reg0;
-		//twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS1_DATA0,reg0,1);
-		reg0 = i2c_read_data(SI114X_ADDR,REG_PS1_DATA0);
-		
-		printf("IR: %d \r\n",sensor_data.ps1);
-		//si114x_process_samples(SI114X_ADDR,&sensor_data);
-		
-		
-		/*
-		
-		reg0 = i2c_read_data(SI114X_ADDR,REG_PS1_DATA0);
-		reg1 = i2c_read_data(SI114X_ADDR,REG_PS1_DATA1);
-
-		reg01 = ((u16)reg1 << 8) | reg0;
-		
-		if (reg01 < 2200)
-		{
-			if (flip) {
-				ht1632c_send_command(HT1632_LED_OFF);
-				flip = 0;	
-			}
-		} else {
-			if (!flip) {
-				ht1632c_send_command(HT1632_LED_ON);
-				flip = 1;
-			}
-			ht1632_fade(reg01/400);
-		}
-		*/
+		*/	
 	}
-	
-}
-
-//Used for SI114x Timestamp
-ISR(TCC1_OVF_vect) {
-	counter++;	
 }
