@@ -1,9 +1,11 @@
 #include "Si114x_handler.h"
 #include "User_defs.h"
 
+#include <stdio.h>
+
 u8 xdata initial_baseline_counter=128;
-u16 xdata maxLeakage[2] = { 0, 0};
-u16 xdata baseline[2];    // Array to store calcBaseline return values
+u16 xdata maxLeakage[3] = { 0, 0, 0};
+u16 xdata baseline[3];    // Array to store calcBaseline return values
 
 #ifdef GENERAL
 u16 code noise_margin    = 10;
@@ -19,7 +21,7 @@ u8  code ircorrection[3] =  { 17, 35, 29 };
 
 void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
 {
-    if ((maxLeakage[0]==0)&&(maxLeakage[1]==0)&&(initial_baseline_counter==128))
+    if ((maxLeakage[0]==0)&&(maxLeakage[1]==0)&&(maxLeakage[2]==0)&&(initial_baseline_counter==128))
     {
         printf("Computing Baseline. Make sure nothing is in the vicinity of the EVB\n");
         PortSet(1,0); // Turn on all lights to indicate baseline is being computed
@@ -34,17 +36,20 @@ void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
             // Look for maximum
             if( maxLeakage[0] < samples->ps1) maxLeakage[0] = samples->ps1;
             if( maxLeakage[1] < samples->ps2) maxLeakage[1] = samples->ps2;
+			if( maxLeakage[2] < samples->ps3) maxLeakage[2] = samples->ps3;
         }
         else
         {
-            printf("Initial Baseline Calculated, PS1 = %d, PS2 = %d \n", maxLeakage[0], maxLeakage[1]);
+            printf("Initial Baseline Calculated, PS1 = %d, PS2 = %d, PS3 = %d \n", maxLeakage[0], maxLeakage[1],maxLeakage[2]);
             PortSet(1,0xff); // Turn off all leds to indicate baseline computation is completed
             // Set Max Leakage 
             maxLeakage[0] = maxLeakage[0] + noise_margin*2;
             maxLeakage[1] = maxLeakage[1] + noise_margin*2;
+			maxLeakage[2] = maxLeakage[2] + noise_margin*2;
 
             baseline[0] = maxLeakage[0];
             baseline[1] = maxLeakage[1];
+			baseline[2] = maxLeakage[2];
         }
         
         // Decrement counter
@@ -55,7 +60,7 @@ void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
         //
         // Once the baseline has been set, do the actual loop
         // The first thing that happens is to check for saturation events
-        if(samples->ps1 > 48000 || samples->ps2 > 48000)
+        if(samples->ps1 > 48000 || samples->ps2 > 48000 || samples->ps3 > 48000)
         {
             //
             // Handle Saturation Events by discarding them. These 
@@ -73,9 +78,11 @@ void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
             {
                 IRCompensation( 0, samples, ircorrection );  // IR Ambient Compensation for PS1 Channel
                 IRCompensation( 1, samples, ircorrection );  // IR Ambient Compensation for PS2 Channel
+				IRCompensation( 2, samples, ircorrection );  // IR Ambient Compensation for PS3 Channel
 
                 calcBaseline( 0 , samples, noise_margin); // Calculate PS1 Baseline
                 calcBaseline( 1 , samples, noise_margin); // Calculate PS2 Baseline
+				calcBaseline( 2 , samples, noise_margin); // Calculate PS3 Baseline
 
                 SliderAlgorithm(si114x_handle, samples, scale);
 
@@ -155,6 +162,11 @@ void IRCompensation(u8 proxChannel, SI114X_IRQ_SAMPLE *samples, u8 ircorrection[
             Correction = Correction/10000;
             samples->ps2 = samples->ps2 + Correction;            
             break;
+		case 2:
+			Correction = ((u32)samples->ir + (u32)(samples->ps3) - 512) * (u32) ircorrection[proxChannel];
+			Correction = Correction/10000;
+			samples->ps3 = samples->ps3 + Correction;
+			break;
         default:
             break;
     }
@@ -179,18 +191,18 @@ void IRCompensation(u8 proxChannel, SI114X_IRQ_SAMPLE *samples, u8 ircorrection[
 ////////////////////////////////////////////////////////////////////////////////
 void calcBaseline(u8 proxChannel, SI114X_IRQ_SAMPLE *samples, u16 noise_margin)
 {
-    static u16 xdata rollingMax[2] = {0,0}; // Stores a rolling maximum value for 
+    static u16 xdata rollingMax[3] = {0,0,0}; // Stores a rolling maximum value for 
                                     // each PS channel. This will determine the 
                                     // baseline level.
 
-    static u8 xdata Maxcount[2]= {0,0};     // Stores the number of measurement cycles 
+    static u8 xdata Maxcount[3]= {0,0,0};     // Stores the number of measurement cycles 
                                     // that have occurred since the last time 
                                     // the rollingMax was hit by PS readings.
 
     u32 xdata average=0;                    // Temporary variable used to calculate 
                                     // the exponential average of PS channel
 
-    static u16 xdata dynamic_baseline[2] = {0,0};//,0};
+    static u16 xdata dynamic_baseline[3] = {0,0,0};
 
     u16 xdata *pPS;
 
@@ -211,10 +223,13 @@ void calcBaseline(u8 proxChannel, SI114X_IRQ_SAMPLE *samples, u16 noise_margin)
             average    = 0;
             dynamic_baseline[0] = 0;
             dynamic_baseline[1] = 0;
+			dynamic_baseline[2] = 0;
             rollingMax[0] = 0;
             rollingMax[1] = 0;
+			rollingMax[2] = 0;
             Maxcount[0]   = 0;
             Maxcount[1]   = 0;
+			Maxcount[2]   = 0;
             return;
             break;
     }

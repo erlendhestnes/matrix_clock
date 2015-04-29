@@ -15,46 +15,36 @@
 //
 //-----------------------------------------------------------------------------
 #include "si114x_functions.h"
+#include <avr/io.h>
+
+void si114x_setup(void) {
+	si114x_reset(SI114X_ADDR);
+	si114x_init(SI114X_ADDR);
+}
 
 void si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data) {
 	
 	uint16_t reg01;
-	uint8_t reg0;
-	uint8_t reg1;
+	uint8_t reg[2];
 	
-	reg0 = i2c_read_data(SI114X_ADDR,REG_PS1_DATA0);
-	reg1 = i2c_read_data(SI114X_ADDR,REG_PS1_DATA1);
-	
-	reg01 = ((u16)reg1 << 8) | reg0;
-	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS1_DATA0,reg,2);
+	reg01 = ((u16)reg[1] << 8) | reg[0];
 	sensor_data->ps1 = reg01;
 
-	reg0 = i2c_read_data(SI114X_ADDR,REG_PS2_DATA0);
-	reg1 = i2c_read_data(SI114X_ADDR,REG_PS2_DATA1);
-	
-	reg01 = ((u16)reg1 << 8) | reg0;
-	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS2_DATA0,reg,2);
+	reg01 = ((u16)reg[1] << 8) | reg[0];
 	sensor_data->ps2 = reg01;
 	
-	reg0 = i2c_read_data(SI114X_ADDR,REG_PS3_DATA0);
-	reg1 = i2c_read_data(SI114X_ADDR,REG_PS3_DATA1);
-	
-	reg01 = ((u16)reg1 << 8) | reg0;
-	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS3_DATA0,reg,2);
+	reg01 = ((u16)reg[1] << 8) | reg[0];
 	sensor_data->ps3 = reg01;
 	
-	reg0 = i2c_read_data(SI114X_ADDR,REG_ALS_IR_DATA0);
-	reg1 = i2c_read_data(SI114X_ADDR,REG_ALS_IR_DATA1);
-	
-	reg01 = ((uint16_t)reg1 << 8) | reg0;
-	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_ALS_IR_DATA0,reg,2);
+	reg01 = ((u16)reg[1] << 8) | reg[0];
 	sensor_data->ir = reg01;
 	
-	reg0 = i2c_read_data(SI114X_ADDR,REG_ALS_VIS_DATA0);
-	reg1 = i2c_read_data(SI114X_ADDR,REG_ALS_VIS_DATA1);
-	
-	reg01 = ((uint16_t)reg1 << 8) | reg0;
-	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_ALS_VIS_DATA0,reg,2);
+	reg01 = ((u16)reg[1] << 8) | reg[0];
 	sensor_data->vis = reg01;
 }
 
@@ -62,9 +52,9 @@ s16 si114x_init(HANDLE si114x_handle)
 {
 	s16 retval   = 0;
 
-	u8  code current_LED1  = 0x05;   // 359 mA
-	u8  code current_LED2  = 0x05;   // 359 mA
-	u8  code current_LED3  = 0x05;   // 359 mA
+	u8  code current_LED1  = 0x0f;   // 359 mA
+	u8  code current_LED2  = 0x0f;   // 359 mA
+	u8  code current_LED3  = 0x00;   // 359 mA
 
 	u8  tasklist      = 0x77;   // ALS, IR, PS1, PS2, PS3
 

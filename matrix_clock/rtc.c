@@ -28,7 +28,7 @@ void rtc_setup(void) {
 }
 
 void init_time(void) {
-	ht1632c_clearScreen();
+	ht1632c_clear_screen();
 	
 	time.hours = 0;
 	time.minutes = 0;
@@ -80,13 +80,13 @@ void int_to_string(uint8_t pos, uint8_t t) {
 	}
 	*/
 
-	ht1632c_fillRect(pos,0,8,16,0);
+	ht1632c_fill_rect(pos,0,8,16,0);
 	
 	//Write new numbers
-	ht1632c_drawChar(2,pos,buffer[0],1,1);
-	ht1632c_drawChar(9,pos,buffer[1],1,1);
+	ht1632c_draw_char(2,pos,buffer[0],1,1);
+	ht1632c_draw_char(9,pos,buffer[1],1,1);
 	
-	ht1632c_writeScreen();
+	ht1632c_refresh_screen();
 }
 
 ISR(RTC_OVF_vect) {

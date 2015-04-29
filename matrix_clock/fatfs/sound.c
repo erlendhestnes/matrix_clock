@@ -16,16 +16,22 @@
 /  to lower sampling frequency, 8-bit.
 */
 
-#define F_CPU 32000000UL
-
 #include <string.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "sound.h"
-#include "../fft/fft.h"
+#include "../global.h"
 
 #define NBSIZE 32
 #define FCC(c1,c2,c3,c4)	(((DWORD)c4<<24)+((DWORD)c3<<16)+(c2<<8)+c1)	/* FourCC */
+
+static inline uint8_t read_signature_byte(uint16_t Address) {
+	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
+	uint8_t Result;
+	__asm__ ("lpm %0, Z\n" : "=r" (Result) : "z" (Address));
+	NVM_CMD = NVM_CMD_NO_OPERATION_gc;
+	return Result;
+}
 
 uint16_t ConvertInt16toUint12(uint16_t integer)
 {
@@ -88,11 +94,11 @@ ISR(TCC0_OVF_vect)
 	fcb->ct = ct;
 	fcb->ri = ri & (fcb->sz_buff - 1);
 	
-	uint8_t data = l1;//smooth(l1,0.35,data);
+	uint8_t data = smooth(l1,0.4,data);
 	//uint8_t data = l1*0.2;
 	
-	DACB.CH0DATA = data;
-	DACB.CH1DATA = data;
+	DACB.CH0DATA = 255+data;//<< 2;
+	DACB.CH1DATA = 255-data;//<< 2;
 	//DACB.CH0DATAL = (data << 7);
 	//DACB.CH0DATAH = (data >> 1);
 }
@@ -120,9 +126,15 @@ int sound_start (
 	WavFifo = fcb;			/* Register FIFO control structure */
 
 	PORTB.DIRSET = PIN2_bm | PIN3_bm; //DAC0
-	DACB.CTRLC = DAC_REFSEL_INT1V_gc;// | DAC_LEFTADJ_bm;
+	DACB.CTRLC = DAC_REFSEL_AVCC_gc;// | DAC_LEFTADJ_bm;
 	DACB.CTRLB = DAC_CHSEL_DUAL_gc;
 	DACB.CTRLA = DAC_CH0EN_bm | DAC_CH1EN_bm;
+	
+	DACB.CH0OFFSETCAL = 0x07;
+	DACB.CH0GAINCAL = 0x1B;
+	DACB.CH1GAINCAL = 0x0C;
+	DACB.CH1OFFSETCAL = 0x13;
+	
 	DACB.CTRLA |= DAC_ENABLE_bm;
 	
 	speaker_on();

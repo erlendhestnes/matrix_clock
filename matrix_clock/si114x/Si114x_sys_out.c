@@ -4,6 +4,7 @@
 //#include "Si114x_PGM_Toolkit.h"
 #include "Si114x_functions.h"
 #include "../sercom.h"
+#include "../global.h"
 #include <util/delay.h>
 
 extern HANDLE mcu_handle;
@@ -27,30 +28,26 @@ s16 PortRead(u8 port)
 
 s16 Si114xWriteToRegister(HANDLE si114x_handle, u8 address, u8 value)
 {
-    //return PT_i2c_smbus_write_byte_data(si114x_handle, address, value);
+	//return PT_i2c_smbus_write_byte_data(si114x_handle, address, value);
 	return i2c_write_data(SI114X_ADDR,address,value);
 }
 
 s16 Si114xReadFromRegister(HANDLE si114x_handle, u8 address)
 {
-    //return PT_i2c_smbus_read_byte_data(si114x_handle, address);
+	//return PT_i2c_smbus_read_byte_data(si114x_handle, address);
 	return i2c_read_data(SI114X_ADDR,address);
 }
 
 s16 Si114xBlockWrite(HANDLE si114x_handle, 
                         u8 address, u8 length, u8 *values)
 {
-    //return PT_i2c_smbus_write_i2c_block_data(si114x_handle,
-    //                       address,    length,           values);
-	return i2c_write_data_block(SI114X_ADDR,address,values,length);
+	return twi_write_packet(&TWIC,SI114X_ADDR,2000,address,values,length);
 }
 
 s16 Si114xBlockRead(HANDLE si114x_handle, 
                         u8 address, u8 length, u8 *values)
 {
-    //return PT_i2c_smbus_read_i2c_block_data(si114x_handle,
-    //                       address,    length,     values);
-	return i2c_read_data_block(SI114X_ADDR,address,values,length);
+	return twi_read_packet(&TWIC,SI114X_ADDR,2000,address,values,length);
 }
 
 void delay_10ms()

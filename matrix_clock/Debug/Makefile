@@ -33,8 +33,6 @@ LIB_DEP:=
 # Every subdirectory with source files must be described here
 SUBDIRS :=  \
 ../fatfs \
-../fft \
-../fft/wff_fht \
 ../json \
 ../si114x
 
@@ -48,14 +46,6 @@ C_SRCS +=  \
 ../fatfs/ff.c \
 ../fatfs/mmc_avr.c \
 ../fatfs/sound.c \
-../fft/fft.c \
-../fft/sampling.c \
-../fft/wff_fht/complexToDecibel.c \
-../fft/wff_fht/complexToReal.c \
-../fft/wff_fht/fht.c \
-../fft/wff_fht/fhtDebug.c \
-../fft/wff_fht/generateTables.c \
-../fft/wff_fht/windowing.c \
 ../ht1632c.c \
 ../json/jsmn.c \
 ../main.c \
@@ -86,14 +76,6 @@ esp8266.o \
 fatfs/ff.o \
 fatfs/mmc_avr.o \
 fatfs/sound.o \
-fft/fft.o \
-fft/sampling.o \
-fft/wff_fht/complexToDecibel.o \
-fft/wff_fht/complexToReal.o \
-fft/wff_fht/fht.o \
-fft/wff_fht/fhtDebug.o \
-fft/wff_fht/generateTables.o \
-fft/wff_fht/windowing.o \
 ht1632c.o \
 json/jsmn.o \
 main.o \
@@ -117,14 +99,6 @@ esp8266.o \
 fatfs/ff.o \
 fatfs/mmc_avr.o \
 fatfs/sound.o \
-fft/fft.o \
-fft/sampling.o \
-fft/wff_fht/complexToDecibel.o \
-fft/wff_fht/complexToReal.o \
-fft/wff_fht/fht.o \
-fft/wff_fht/fhtDebug.o \
-fft/wff_fht/generateTables.o \
-fft/wff_fht/windowing.o \
 ht1632c.o \
 json/jsmn.o \
 main.o \
@@ -148,14 +122,6 @@ esp8266.d \
 fatfs/ff.d \
 fatfs/mmc_avr.d \
 fatfs/sound.d \
-fft/fft.d \
-fft/sampling.d \
-fft/wff_fht/complexToDecibel.d \
-fft/wff_fht/complexToReal.d \
-fft/wff_fht/fht.d \
-fft/wff_fht/fhtDebug.d \
-fft/wff_fht/generateTables.d \
-fft/wff_fht/windowing.d \
 ht1632c.d \
 json/jsmn.d \
 main.d \
@@ -179,14 +145,6 @@ esp8266.d \
 fatfs/ff.d \
 fatfs/mmc_avr.d \
 fatfs/sound.d \
-fft/fft.d \
-fft/sampling.d \
-fft/wff_fht/complexToDecibel.d \
-fft/wff_fht/complexToReal.d \
-fft/wff_fht/fht.d \
-fft/wff_fht/fhtDebug.d \
-fft/wff_fht/generateTables.d \
-fft/wff_fht/windowing.d \
 ht1632c.d \
 json/jsmn.d \
 main.d \
@@ -256,22 +214,6 @@ LIB_DEP+=
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ./%.o: .././%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
@@ -280,20 +222,6 @@ LIB_DEP+=
 	
 
 fatfs/%.o: ../fatfs/%.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 4.8.1
-	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-fft/%.o: ../fft/%.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 4.8.1
-	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-fft/wff_fht/%.o: ../fft/wff_fht/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
 	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

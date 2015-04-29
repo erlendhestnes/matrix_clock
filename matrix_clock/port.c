@@ -54,5 +54,5 @@ button_t btn_check_press(void) {
 }
 
 ISR(PORTA_INT0_vect) {
-	ht1632c_clearScreen();
+	ht1632c_clear_screen();
 }

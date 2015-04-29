@@ -16,22 +16,6 @@ fatfs\mmc_avr.c
 
 fatfs\sound.c
 
-fft\fft.c
-
-fft\sampling.c
-
-fft\wff_fht\complexToDecibel.c
-
-fft\wff_fht\complexToReal.c
-
-fft\wff_fht\fht.c
-
-fft\wff_fht\fhtDebug.c
-
-fft\wff_fht\generateTables.c
-
-fft\wff_fht\windowing.c
-
 ht1632c.c
 
 json\jsmn.c

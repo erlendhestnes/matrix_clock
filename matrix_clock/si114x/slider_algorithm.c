@@ -21,6 +21,10 @@ s16 QS_Counts_to_Distance (u16 counts, u8 led)
     u16 code   offset_2[9]    = {27, 39, 51, 75, 96, 132, 177, 236, 299};
     u16 code   slope_2[9]     = {27, 39, 95, 298, 538, 1481, 3637, 11457, 31208};	
     u16 code   piecewise_brackets_2[9]= {17760, 14650, 7745, 5545, 2500, 1394, 493, 207, 102};	
+		
+	u16 code   offset_3[9]    = {27, 39, 51, 75, 96, 132, 177, 236, 299};
+	u16 code   slope_3[9]     = {27, 39, 95, 298, 538, 1481, 3637, 11457, 31208};
+	u16 code   piecewise_brackets_3[9]= {17760, 14650, 7745, 5545, 2500, 1394, 493, 207, 102};
 
     u8 code   maxIndex = 9;
     u8 xdata   indexLinear;
@@ -54,6 +58,20 @@ s16 QS_Counts_to_Distance (u16 counts, u8 led)
            }
        }
     }
+	else if(led==3) 
+	{
+		// Perform piecewise linear approximation
+		indexLinear = 0;
+		for (indexLinear = 0; indexLinear < maxIndex; indexLinear++)
+		{
+			if (counts > piecewise_brackets_3[indexLinear])
+			{
+				distance.u32 = (u32)counts * (u32)slope_3[indexLinear];
+				distance.u16[LSB] = offset_3[indexLinear] - distance.u16[MSB];
+				break;
+			}
+		}
+	}
     else return -1;  /* Invalid channel number */
 
     // Set to a max value if above a certain level.
@@ -130,6 +148,8 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
     // ALS is stored in channel 6
     // Calculate r1 and r2 distances; store in channels 0 and 1
     r1 = QS_Counts_to_Distance ((u16)ps, 1);
+	
+	//printf("r1 = %d , counts = %d \r\n",r1,(u16)ps);
 
     ps = (u32) samples->ps2 - (u32)baseline[1];
     if (ps < 0) ps = 0;
@@ -137,16 +157,16 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
     // Scale it
     ps *= (u32)scale;
 
-    r2 = QS_Counts_to_Distance ((u16)ps, 2);
+    r2 = QS_Counts_to_Distance ((u16)ps, 1);
 	
 	//PS3 Sensor
-	ps = (u32) samples->ps3 - (u32)baseline[1];
+	ps = (u32) samples->ps3 - (u32)baseline[2];
 	if (ps < 0) ps = 0;
 
 	// Scale it
 	ps *= (u32)scale;
 
-	r3 = QS_Counts_to_Distance ((u16)ps, 2);
+	r3 = QS_Counts_to_Distance ((u16)ps, 1);
 
     //REPLACE_0_PS1(samples->ps1); 
     //REPLACE_0_PS2(samples->ps2);
@@ -240,21 +260,20 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
          z = r1;
       }
    }
-   //ht1632c_fillCircle(previous_led_y,previous_led_x,1,1);
-   ht1632c_drawPixel(previous_led_y,previous_led_x,0);
+   /*
+   uint16_t tmp_y = 8;
+   ht1632c_draw_char(previous_led_x,previous_led_y,'A',0,1);
    uint16_t tmp_x = 15-((x.u16[LSB])/73);
-   uint16_t tmp_y = ((y.u16[LSB])/55)+2;
-   ht1632c_drawPixel(tmp_y,tmp_x,1);
-   //ht1632c_fillCircle(tmp_y,tmp_x,1,1);
-   ht1632c_writeScreen();
+   ht1632c_draw_char(tmp_x,tmp_y,'A',1,1);
+   ht1632c_refresh_screen();
    previous_led_x = tmp_x;
    previous_led_y = tmp_y;
-   
-   /*
+   */
+   printf("z:%d\r\n",z);
 
    // Set raw channel data for x (channel 2) and z (channel 3)
-   //REPLACE_0_PS3( x.u16[LSB] );
-   //REPLACE_0_AUX( z );
+   // REPLACE_0_PS3( x.u16[LSB] );
+   // REPLACE_0_AUX( z );
 
    // If a swipe was detected, determine the direction (L/R), set up LED state machine
    // to indicate swipe gesture, and post the swipe event.
@@ -362,7 +381,6 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
        //REPLACE_0_AUX( 0 ); 
 	    //printf("no touch \r\n");
    }
-	*/
 }
 
 
