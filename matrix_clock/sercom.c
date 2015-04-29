@@ -219,3 +219,47 @@ uint8_t i2c_read_data(uint8_t slave_addr, uint8_t register_addr) {
 	
 	return tmp;
 }
+
+uint8_t i2c_read_data_block(uint8_t slave_addr, uint8_t register_addr, uint8_t *data, uint8_t length) {
+	
+	uint8_t tmp;
+	uint8_t i;
+	
+	TWIC.MASTER.ADDR = (slave_addr << 1);
+	while(!(TWIC.MASTER.STATUS & TWI_MASTER_WIF_bm));
+	TWIC.MASTER.DATA = register_addr;
+	while(!(TWIC.MASTER.STATUS & TWI_MASTER_WIF_bm));
+	TWIC.MASTER.ADDR = (slave_addr << 1) | 0x01; //Send START
+	
+	for (i = 0; i < length; i++) {
+		while(!(TWIC.MASTER.STATUS & TWI_MASTER_RIF_bm));
+		data[i] = TWIC.MASTER.DATA;
+	}
+	TWIC.MASTER.CTRLC |= TWI_MASTER_ACKACT_bm; //Send NACK
+	//tmp = TWIC.MASTER.DATA;
+	
+	_delay_ms(1);
+	
+	TWIC.MASTER.CTRLC = 0x03; //Send STOP
+	
+	return length;
+}
+
+uint8_t i2c_write_data_block(uint8_t slave_addr, uint8_t register_addr, uint8_t *data, uint8_t length) {
+	
+	uint8_t i;
+	
+	TWIC.MASTER.ADDR = (slave_addr << 1);
+	while(!(TWIC.MASTER.STATUS & TWI_MASTER_WIF_bm));
+	TWIC.MASTER.DATA = register_addr;
+	while(!(TWIC.MASTER.STATUS & TWI_MASTER_WIF_bm));
+	
+	for (i = 0; i < length; i++) {
+		TWIC.MASTER.DATA = data[i];
+		while(!(TWIC.MASTER.STATUS & TWI_MASTER_WIF_bm));
+	}
+	
+	TWIC.MASTER.CTRLC = 0x03; //Stop
+	
+	return length;
+}

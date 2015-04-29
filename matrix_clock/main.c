@@ -167,7 +167,7 @@ int main(void) {
 	uart_setup();
 	pmic_setup();
 	twi_setup(&TWIC);
-	si114x_setup();
+
 	//btn_setup();
 	//rtc_setup();
 	jsmn_init(&p);
@@ -175,12 +175,16 @@ int main(void) {
 	stdout = stdin = &mystdout;
 	puts("LED MATRIX Clock - By: Erlend Hestnes\r\n");
 	
+	si114x_reset(SI114X_ADDR);
+	//_delay_ms(1000);
+	//si114x_init(SI114X_ADDR);
+	
 	sei();
 	
-	sd_card();
+	//sd_card();
 	
-	esp8266_on();
-	esp8266_setup_webserver();
+	//esp8266_on();
+	//esp8266_setup_webserver();
 	
 	/*
 	do {status = esp8266_setup(); } while (status != SUCCESS);
@@ -197,7 +201,7 @@ int main(void) {
 	*/
 	while (1) {
 		
-		esp8266_run_simple_webserver(Buff);
+		//esp8266_run_simple_webserver(Buff);
 		/*
 		update_time();
 		

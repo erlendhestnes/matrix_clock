@@ -24,7 +24,6 @@
 // Function Prototypes
 //
 
-void si114x_setup(void);
 s16 si114x_init(HANDLE si114x_handle);
 
 void si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data);

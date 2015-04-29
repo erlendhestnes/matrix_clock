@@ -63,4 +63,6 @@ uint8_t twi_read_packet(TWI_t* const TWI, const uint8_t slave_address, const uin
 uint8_t twi_write_packet(TWI_t* const TWI, const uint8_t slave_address, const uint8_t timeout_ms, const uint8_t reg, const uint8_t* data, uint8_t length);
 uint8_t i2c_read_data(uint8_t slave_addr, uint8_t register_addr);
 uint8_t i2c_write_data(uint8_t slave_addr, uint8_t register_addr, uint8_t data);
+uint8_t i2c_read_data_block(uint8_t slave_addr, uint8_t register_addr, uint8_t *data, uint8_t length);
+uint8_t i2c_write_data_block(uint8_t slave_addr, uint8_t register_addr, uint8_t *data, uint8_t length);
 #endif
