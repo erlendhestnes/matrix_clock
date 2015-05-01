@@ -140,9 +140,6 @@ void proximity_fade_demo(void) {
 int main(void) {
 
 	//Note to self: There is a memory issue, try to reduce size of buffers
-
-	time_t user_time;
-	
 	SI114X_IRQ_SAMPLE sensor_data;
 	
 	jsmn_parser p;
@@ -157,27 +154,21 @@ int main(void) {
 	ht1632c_set_brightness(0);
 	ht1632c_clear_screen();
 	
-	ht1632c_draw_char(2,9,'1',1,1);
-	ht1632c_draw_char(9,9,'8',1,1);
-	ht1632c_draw_char(2,0,'0',1,1);
-	ht1632c_draw_char(9,0,'4',1,1);
-	ht1632c_refresh_screen();
-	
 	//adc_setup();
 	uart_setup();
 	pmic_setup();
 	twi_setup(&TWIC);
-
-	//btn_setup();
-	//rtc_setup();
+	si114x_setup();
+	tcc_setup();
+	btn_setup();
+	rtc_setup();
+	rtc_init_time();
 	jsmn_init(&p);
 	
 	stdout = stdin = &mystdout;
 	puts("LED MATRIX Clock - By: Erlend Hestnes\r\n");
 	
-	si114x_reset(SI114X_ADDR);
-	//_delay_ms(1000);
-	//si114x_init(SI114X_ADDR);
+	rtc_set_time(18,50,0);
 	
 	sei();
 	
@@ -199,34 +190,60 @@ int main(void) {
 	
 	print_token(tokens,&rx_buf,10);
 	*/
+	uint8_t *data;
+	uint8_t flip = 1;
+	
 	while (1) {
 		
+		//ht1632c_scroll_print("16:04",4,4);
 		//esp8266_run_simple_webserver(Buff);
-		/*
-		update_time();
 		
+		/*
 		switch(btn_check_press()) {
 			case BTN1:
-				user_time.minutes++;
-				set_time(&user_time);
+				rtc_increment_minute();
 				_delay_ms(250);
 				break;
 			case BTN2:
-				user_time.minutes--;
-				set_time(&user_time);
+				rtc_decrement_minute();
 				_delay_ms(250);
 				break;
 			case BTN3:
-				user_time.hours++;
-				set_time(&user_time);
+				rtc_set_time_mode();
+				//rtc_increment_hour();
 				_delay_ms(250);
 				break;
 			case BTN4:
-				user_time.hours--;
-				set_time(&user_time);
+				rtc_time_mode();
+				//rtc_decrement_hour();
 				_delay_ms(250);
 				break;
 		}
-		*/	
+		*/
+		sensor_data.timestamp = counter;
+		si114x_get_data(&sensor_data);
+		si114x_process_samples(SI114X_ADDR,&sensor_data); 
+		
+		/*
+		if (sensor_data.ps1 < 1600)
+		{
+			if (flip) {
+				ht1632c_send_command(HT1632_LED_OFF);
+				flip = 0;
+			}
+			} else {
+			if (!flip) {
+				ht1632c_send_command(HT1632_LED_ON);
+				flip = 1;
+			}
+			ht1632_fade(sensor_data.ps1/300);
+		}
+		*/
+		//rtc_update_display_alt();
 	}
+}
+
+//Used for SI114x Timestamp
+ISR(TCC1_OVF_vect) {
+	counter++;
 }

@@ -25,32 +25,29 @@ s16 PortRead(u8 port)
 	return 1;
 }
 
-s16 Si114xWriteToRegister(HANDLE si114x_handle, u8 address, u8 value)
+s16 Si114xWriteToRegister(HANDLE si114x_handle, u8 address, u8 val)
 {
-	//return PT_i2c_smbus_write_byte_data(si114x_handle, address, value);
-	return i2c_write_data(SI114X_ADDR,address,value);
+	twi_write_packet(&TWIC,SI114X_ADDR,1000,address,&val,1);
+	return 0;
 }
 
 s16 Si114xReadFromRegister(HANDLE si114x_handle, u8 address)
 {
-	//return PT_i2c_smbus_read_byte_data(si114x_handle, address);
-	return i2c_read_data(SI114X_ADDR,address);
+	u8 val;
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,address,&val,1);
+	return val;
 }
 
 s16 Si114xBlockWrite(HANDLE si114x_handle,
 u8 address, u8 length, u8 *values)
 {
-	//return PT_i2c_smbus_write_i2c_block_data(si114x_handle,
-	//                       address,    length,           values);
-	return i2c_write_data_block(SI114X_ADDR,address,values,length);
+	return twi_write_packet(&TWIC,SI114X_ADDR,1000,address,values,length);
 }
 
 s16 Si114xBlockRead(HANDLE si114x_handle,
 u8 address, u8 length, u8 *values)
 {
-	//return PT_i2c_smbus_read_i2c_block_data(si114x_handle,
-	//                       address,    length,     values);
-	return i2c_read_data_block(SI114X_ADDR,address,values,length);
+	return twi_read_packet(&TWIC,SI114X_ADDR,1000,address,values,length);
 }
 
 void delay_10ms()

@@ -15,6 +15,40 @@
 //
 //-----------------------------------------------------------------------------
 #include "si114x_functions.h"
+#include "../sercom.h"
+#include <avr/io.h>
+
+void si114x_setup(void)
+{
+	si114x_reset(SI114X_ADDR);
+	si114x_init(SI114X_ADDR);
+}
+
+void si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data) 
+{
+	u16 data_16;
+	u8 data_8[2];
+	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS1_DATA0,data_8,2);
+	data_16 = ((u16)data_8[1] << 8) | data_8[0];
+	sensor_data->ps1 = data_16;
+	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS2_DATA0,data_8,2);
+	data_16 = ((u16)data_8[1] << 8) | data_8[0];
+	sensor_data->ps2 = data_16;
+	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS3_DATA0,data_8,2);
+	data_16 = ((u16)data_8[1] << 8) | data_8[0];
+	sensor_data->ps3 = data_16;
+	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_ALS_IR_DATA0,data_8,2);
+	data_16 = ((u16)data_8[1] << 8) | data_8[0];
+	sensor_data->ir = data_16;
+	
+	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_ALS_VIS_DATA0,data_8,2);
+	data_16 = ((u16)data_8[1] << 8) | data_8[0];
+	sensor_data->vis = data_16;
+}
 
 s16 si114x_init(HANDLE si114x_handle)
 {
@@ -24,9 +58,9 @@ s16 si114x_init(HANDLE si114x_handle)
 	u8  code current_LED2  = 0x0f;   // 359 mA
 	u8  code current_LED3  = 0x00;   //   0 mA
 
-	u8  tasklist      = 0x23;   // IR, PS1, PS2
+	u8  tasklist      = 0x77;   // IR, PS1, PS2
 
-	u8  measrate      = 0x84;   // 0xa0 every 30.0 ms
+	u8  measrate      = 0x94;   // 0xa0 every 30.0 ms
 	// 0x94 every 20.0 ms
 	// 0x84 every 10.4 ms
 	// 0x74 every  5.2 ms

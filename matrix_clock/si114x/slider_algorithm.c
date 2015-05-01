@@ -269,14 +269,19 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
    previous_led_x = tmp_x;
    previous_led_y = tmp_y;
    */
-   printf("z:%d\r\n",z);
-
+   //printf("z:%d\r\n",z);
+   int16_t tmp_x = 15-((x.u16[LSB])/30);
+   
+	ht1632c_motion_print("Erlend",tmp_x);
+	
    // Set raw channel data for x (channel 2) and z (channel 3)
    // REPLACE_0_PS3( x.u16[LSB] );
    // REPLACE_0_AUX( z );
 
    // If a swipe was detected, determine the direction (L/R), set up LED state machine
    // to indicate swipe gesture, and post the swipe event.
+   
+   /*
    if (swipe_detect == 1)
    {
        if (xdiff > 150)             // Left Swipe
@@ -381,6 +386,7 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
        //REPLACE_0_AUX( 0 ); 
 	    //printf("no touch \r\n");
    }
+   */
 }
 
 

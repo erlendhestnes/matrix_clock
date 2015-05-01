@@ -24,12 +24,13 @@
 // Function Prototypes
 //
 
+void si114x_setup(void);
 s16 si114x_init(HANDLE si114x_handle);
 
 void si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data);
 
 // Byte Read/Write Access to Si114x I2C Registers
-s16 Si114xWriteToRegister (HANDLE si114x_handle, u8 address, u8 value);
+s16 Si114xWriteToRegister (HANDLE si114x_handle, u8 address, u8 val);
 s16 Si114xReadFromRegister(HANDLE si114x_handle, u8 address);
 
 // Block Read/Write Access to Si114x I2C Registers

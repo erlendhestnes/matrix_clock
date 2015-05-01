@@ -60,6 +60,7 @@ void ht1632c_set_cursor(int16_t x, int16_t y);
 void ht1632c_write(uint8_t c);
 void ht1632c_print(uint8_t *str);
 void ht1632c_scroll_print(uint8_t *str, uint16_t len, uint16_t delay);
+void ht1632c_motion_print(uint8_t *str, int16_t x);
 void ht1632_random(void);
 
 #endif /* HT1632_H_ */

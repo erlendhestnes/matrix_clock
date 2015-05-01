@@ -389,8 +389,15 @@ void ht1632c_scroll_print(uint8_t *str, uint16_t len, uint16_t delay) {
 	for (i = (WIDTH*2); i > -((int16_t)length); i--) {
 		ht1632c_set_cursor(i,5);
 		ht1632c_print(str);
-		_delay_ms(150);
+		_delay_ms(100);
 	}
+}
+
+void ht1632c_motion_print(uint8_t *str, int16_t x) {
+	
+	ht1632c_set_cursor(x,5);
+	ht1632c_print(str);
+	_delay_ms(10);
 }
 
 /*---------------------------------DEBUG-------------------------------------*/

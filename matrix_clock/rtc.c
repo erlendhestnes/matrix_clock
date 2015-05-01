@@ -11,8 +11,8 @@
 
 time_t time;
 
-#define TOP		0
-#define BOTTOM  9
+#define TOP		9
+#define BOTTOM  0
 
 void rtc_setup(void) {
 	CCP = CCP_IOREG_gc;
@@ -20,14 +20,14 @@ void rtc_setup(void) {
 	while (RTC.STATUS & RTC_SYNCBUSY_bm);
 	
 	//RTC.PER = 32768;
-	RTC.PER = 100;
+	RTC.PER = 1000;
 	RTC.INTCTRL = RTC_OVFINTLVL_MED_gc;
 	RTC.CNT = 0;
 	RTC.COMP = 0;
 	RTC.CTRL = RTC_PRESCALER_DIV1_gc;
 }
 
-void init_time(void) {
+void rtc_init_time(void) {
 	ht1632c_clear_screen();
 	
 	time.hours = 0;
@@ -36,51 +36,87 @@ void init_time(void) {
 	time.days = 0;
 	time.years = 0;
 	
-	int_to_string(BOTTOM,time.minutes);
-	int_to_string(TOP,time.hours);
+	rtc_update_display(BOTTOM,time.minutes);
+	rtc_update_display(TOP,time.hours);
 }
 
-void set_time(time_t *t) {
+void rtc_set_time(uint8_t h, uint8_t m, uint8_t s) {
 	
 	cli();
 	
-	time.hours = t->hours;
-	time.minutes = t->minutes;
-	time.seconds = t->seconds;
-	time.days = t->days;
-	time.years = t->years;
+	time.hours = h;
+	time.minutes = m;
+	time.seconds = s;
 	
-	int_to_string(BOTTOM,time.minutes);
-	int_to_string(TOP,time.hours);
+	rtc_update_display(BOTTOM,time.minutes);
+	rtc_update_display(TOP,time.hours);
 	
 	sei();
 }
 
-void update_time(void) {
-	if (time.seconds == 59) {
-		int_to_string(BOTTOM,time.minutes);
+void rtc_increment_hour(void) {
+	if (time.hours < 59) {
+		rtc_update_display(TOP,++time.hours);
+	} else {
+		time.hours = 0;
+		rtc_update_display(TOP,time.hours);	
 	}
-	if (time.minutes == 59) {
-		int_to_string(TOP,time.hours);
+	sei();
+}
+
+void rtc_decrement_hour(void) {
+	if (time.hours > 0) {
+		rtc_update_display(TOP,--time.hours);	
+	} else {
+		time.hours = 59;
+		rtc_update_display(TOP,time.hours);	
 	}
 }
 
-void int_to_string(uint8_t pos, uint8_t t) {
+void rtc_increment_minute(void) {
+	if (time.minutes < 59) {
+		rtc_update_display(BOTTOM,++time.minutes);
+	} else {
+		time.minutes = 0;
+		rtc_update_display(BOTTOM,time.minutes);
+	}
+}
+
+void rtc_decrement_minute(void) {
+	if (time.minutes > 0) {
+		rtc_update_display(BOTTOM,--time.minutes);	
+	} else {
+		time.minutes = 59;
+		rtc_update_display(BOTTOM,time.minutes);
+	}
+}
+
+void rtc_set_time_mode(void) {
+	RTC.CTRL = RTC_PRESCALER_OFF_gc;
+	ht1632c_blink(1);
+}
+
+void rtc_time_mode(void) {
+	RTC.CTRL = RTC_PRESCALER_DIV1_gc;
+	ht1632c_blink(0);
+}
+
+void rtc_update_display(uint8_t pos, uint8_t t) {
 	
 	char buffer[2];
 	char temp;
 	
 	sprintf(buffer, "%d", t);
 	
-	/*
+	//add zero
 	if (t < 10) {
 		temp = buffer[0];
 		buffer[0] = '0';
 		buffer[1] = temp;
 	}
-	*/
-
-	ht1632c_fill_rect(pos,0,8,16,0);
+	
+	//Clear old numbers
+	ht1632c_fill_rect(0,pos,16,8,0);
 	
 	//Write new numbers
 	ht1632c_draw_char(2,pos,buffer[0],1,1);
@@ -89,10 +125,61 @@ void int_to_string(uint8_t pos, uint8_t t) {
 	ht1632c_refresh_screen();
 }
 
+void rtc_update_display_alt(void) {
+	char buffer_hours[3];
+	char buffer_minutes[3];
+	char buffer[20];
+	char temp;
+	
+	sprintf(buffer_hours, "%d", time.hours);
+	
+	//add zero
+
+	if (time.hours < 10) {
+		temp = buffer_hours[0];
+		buffer_hours[0] = '0';
+		buffer_hours[1] = temp;
+	}
+	
+	sprintf(buffer_minutes, "%d", time.minutes);
+	
+	//add zero
+	if (time.minutes < 10) {
+		temp = buffer_minutes[0];
+		buffer_minutes[0] = '0';
+		buffer_minutes[1] = temp;
+	}
+	
+	memset(buffer,0,5);
+	strcat(buffer,"Time:");
+	strcat(buffer, buffer_hours);
+	strcat(buffer, ":");
+	strcat(buffer,buffer_minutes);
+	
+	ht1632c_scroll_print(buffer,2,2);
+}
+
 ISR(RTC_OVF_vect) {
-	time.seconds++;
-	time.minutes += time.seconds / 60;
-	time.seconds %= 60;
-	time.hours += time.minutes / 60;
-	time.minutes %= 60;
+	if (++time.seconds == 60) {
+		
+		time.seconds = 0;
+			
+		if (++time.minutes == 60) {
+			
+			time.minutes = 0;
+			//rtc_update_display(BOTTOM,time.minutes);
+			
+			if (++time.hours == 24) {
+				time.weeks += (++time.days)/7;
+				time.years += time.weeks/52;
+				time.hours = 0;
+				//rtc_update_display(TOP,time.hours);
+			} else {
+				//rtc_update_display(TOP,time.hours);
+			}
+			time.minutes = 0;
+		} else {
+			//rtc_update_display(BOTTOM,time.minutes);
+		}
+	}
 }

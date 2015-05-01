@@ -15,13 +15,22 @@ typedef struct {
 	uint8_t minutes;
 	uint8_t hours;
 	uint16_t days;
+	uint8_t weeks;
 	uint16_t years;
 }time_t;
 
 void rtc_setup(void);
-void init_time(void);
-void set_time(time_t *t);
-void update_time(void);
-void int_to_string(uint8_t pos, uint8_t t);
+void rtc_init_time(void);
+void rtc_set_time(uint8_t h, uint8_t m, uint8_t s);
+void rtc_update_display(uint8_t pos, uint8_t t);
+void rtc_update_display_alt(void);
+
+void rtc_increment_hour(void);
+void rtc_decrement_hour(void);
+void rtc_increment_minute(void);
+void rtc_decrement_minute(void);
+
+void rtc_set_time_mode(void);
+void rtc_time_mode(void);
 
 #endif
