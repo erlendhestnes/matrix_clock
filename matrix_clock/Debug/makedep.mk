@@ -22,6 +22,8 @@ json\jsmn.c
 
 main.c
 
+menu.c
+
 port.c
 
 power.c
@@ -33,8 +35,6 @@ sercom.c
 si114x\Si114x_functions.c
 
 si114x\Si114x_handler.c
-
-si114x\Si114x_init.c
 
 si114x\Si114x_sys_out.c
 

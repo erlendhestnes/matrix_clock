@@ -9,7 +9,6 @@
 #define _ESP8266_H_
 
 #include "global.h"
-#include <avr/io.h>
 
 #define SSID        "Inteno_68"
 #define PASS        "A26A411568"

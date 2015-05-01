@@ -8,7 +8,7 @@
 #ifndef _HT1632_H_
 #define _HT1632_H_
 
-#include <avr/io.h>
+#include "global.h"
 
 #define HT1632_READ  0x6
 #define HT1632_WRITE 0x5

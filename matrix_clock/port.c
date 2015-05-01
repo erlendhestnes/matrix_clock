@@ -8,26 +8,28 @@
 #include "port.h"
 #include "ht1632c.h"
 
-#include <avr/io.h>
-#include <stdint.h>
-#include <avr/interrupt.h>
+#define BUTTON0 PIN5_bm
+#define BUTTON1 PIN6_bm
+#define BUTTON2 PIN7_bm
+#define BUTTON3 PIN0_bm
 
 void btn_setup(void) {
 	
-	PORTA.DIRCLR = PIN5_bm | PIN6_bm | PIN7_bm;
-	PORTB.DIRCLR = PIN0_bm;
+	PORTA.DIRCLR = BUTTON0 | BUTTON1 | BUTTON2;
+	PORTB.DIRCLR = BUTTON3;
 	
-	//PORTA.PIN2CTRL = PORT_OPC_PULLDOWN_gc | PORT_ISC_RISING_gc;
+	PORTA.PIN5CTRL = PORT_ISC_FALLING_gc;
+	PORTA.PIN6CTRL = PORT_ISC_FALLING_gc;
+	PORTA.PIN7CTRL = PORT_ISC_FALLING_gc;
 	
-	/*
+	PORTB.PIN0CTRL = PORT_ISC_FALLING_gc;
 	
-	PORTA.INT0MASK = PIN5_bm | PIN6_bm | PIN7_bm;
-	PORTB.INT0MASK = PIN0_bm;
+	PORTA.INT0MASK = BUTTON0 | BUTTON1 | BUTTON2;
+	PORTB.INT0MASK = BUTTON3;
 	
 	PORTA.INTCTRL = PORT_INT0LVL_LO_gc;
 	PORTB.INTCTRL = PORT_INT0LVL_LO_gc;
-	
-	*/
+
 }
 
 void btn_top_setup(void) {
@@ -40,13 +42,13 @@ void btn_top_setup(void) {
 
 button_t btn_check_press(void) {
 	
-	if (!(PORTA.IN & PIN5_bm)) {
+	if (!(PORTA.IN & BUTTON0)) {
 		return BTN1;
-	} else if (!(PORTA.IN & PIN6_bm)) {
+	} else if (!(PORTA.IN & BUTTON1)) {
 		return BTN2;
-	} else if (!(PORTA.IN & PIN7_bm)) {
+	} else if (!(PORTA.IN & BUTTON2)) {
 		return BTN3;
-	} else if (!(PORTB.IN & PIN0_bm)) {
+	} else if (!(PORTB.IN & BUTTON3)) {
 		return BTN4;
 	} else {
 		return NONE;
@@ -54,5 +56,11 @@ button_t btn_check_press(void) {
 }
 
 ISR(PORTA_INT0_vect) {
-	ht1632c_clear_screen();
+	btn_status = btn_check_press();
+	printf("%d",btn_status);
+}
+
+ISR(PORTB_INT0_vect) {
+	btn_status = btn_check_press();
+	printf("%d",btn_status);
 }

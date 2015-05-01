@@ -7,14 +7,8 @@
 #include "esp8266.h"
 #include "ht1632c.h"
 
-#include <avr/interrupt.h>
-#include <util/delay.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
-
 char cmd[BUFFER];
-char html[BUFFER];
+char html[10];
 
 volatile static uint16_t rx_ptr = 0;
 static char rx_buffer[RX_BUFFER];
@@ -237,10 +231,10 @@ esp8266_status_t esp8266_setup_webserver(void) {
 	return SUCCESS;
 }
 
-void at_cipsend(char *str) {
+static inline void at_cipsend(char *str) {
 	char *number_of_bytes;
 	
-	strcpy(html,str);
+	//strcpy(html,str);
 	
 	//flush_cmd_buffer();
 	sprintf(number_of_bytes, "%d", strlen(str));
@@ -249,7 +243,7 @@ void at_cipsend(char *str) {
 	strcat(cmd,"\r"); //needs to be here
 
 	esp8266_send_cmd(cmd,2000);
-	esp8266_send_cmd(html,2000);
+	esp8266_send_cmd(str,2000);
 }
 
 esp8266_status_t esp8266_run_simple_webserver(char *str) 
@@ -258,7 +252,7 @@ esp8266_status_t esp8266_run_simple_webserver(char *str)
 	{
 		_delay_ms(1000);
 		at_cipsend(str);
-		_delay_ms(5000);
+		_delay_ms(10000);
 		esp8266_send_cmd("AT+CIPCLOSE=0\r", 100);
 	}
 }

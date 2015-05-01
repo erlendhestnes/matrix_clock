@@ -8,9 +8,7 @@
 #ifndef _SERCOM_H_
 #define _SERCOM_H_
 
-#include <avr/io.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include "global.h"
 
 #define SD_PORT		PORTC
 #define SD_SPI		SPIC

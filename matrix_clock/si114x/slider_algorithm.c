@@ -270,9 +270,9 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
    previous_led_y = tmp_y;
    */
    //printf("z:%d\r\n",z);
-   int16_t tmp_x = 15-((x.u16[LSB])/30);
+   int16_t tmp_x = 16-((x.u16[LSB])/35);
    
-	ht1632c_motion_print("Erlend",tmp_x);
+	ht1632c_motion_print("o",tmp_x);
 	
    // Set raw channel data for x (channel 2) and z (channel 3)
    // REPLACE_0_PS3( x.u16[LSB] );

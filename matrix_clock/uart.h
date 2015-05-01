@@ -8,6 +8,8 @@
 #ifndef _UART_H_
 #define _UART_H_
 
+#include "global.h"
+
 void uart_setup(void);
 void uart_put_char(char c);
 char uart_get_char(void);

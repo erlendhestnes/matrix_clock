@@ -5,12 +5,8 @@
  *  Author: Administrator
  */ 
 
-#include "global.h"
 #include "ht1632c.h"
 #include "4x6_font.c"
-#include <util/delay.h>
-#include <string.h>
-#include <avr/sfr_defs.h>
 
 #define swap(a, b) { uint16_t t = a; a = b; b = t; }
 
@@ -64,10 +60,10 @@ void ht1632c_powerdown(void) {
 	HT1632_PORT.DIRCLR = _rd;
 	HT1632_PORT.DIRCLR = _data;
 	
-	HT1632_PORT.PIN4CTRL = PORT_OPC_PULLUP_gc;
-	HT1632_PORT.PIN5CTRL = PORT_OPC_PULLUP_gc;
-	HT1632_PORT.PIN6CTRL = PORT_OPC_PULLUP_gc;
-	HT1632_PORT.PIN7CTRL = PORT_OPC_PULLUP_gc;
+	HT1632_PORT.PIN0CTRL = PORT_OPC_PULLUP_gc;
+	HT1632_PORT.PIN1CTRL = PORT_OPC_PULLUP_gc;
+	HT1632_PORT.PIN2CTRL = PORT_OPC_PULLUP_gc;
+	HT1632_PORT.PIN3CTRL = PORT_OPC_PULLUP_gc;
 	
 	ht1632c_send_command(HT1632_LED_OFF);
 	ht1632c_send_command(HT1632_SYS_DIS);
@@ -309,7 +305,7 @@ void ht1632c_write_data(uint16_t d, uint8_t bits) {
 		HT1632_PORT.OUTCLR = _wr;
 		if (d & _BV(i-1)) {
 			HT1632_PORT.OUTSET = _data;
-			} else {
+		} else {
 			HT1632_PORT.OUTCLR = _data;
 		}
 		HT1632_PORT.OUTSET = _wr;
@@ -397,7 +393,7 @@ void ht1632c_motion_print(uint8_t *str, int16_t x) {
 	
 	ht1632c_set_cursor(x,5);
 	ht1632c_print(str);
-	_delay_ms(10);
+	_delay_ms(15);
 }
 
 /*---------------------------------DEBUG-------------------------------------*/

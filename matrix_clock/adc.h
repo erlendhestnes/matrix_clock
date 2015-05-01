@@ -8,7 +8,7 @@
 #ifndef _ADC_H_
 #define _ADC_H_
 
-#include <avr/io.h>
+#include "global.h"
 
 void adc_setup(void);
 int16_t adc_get_temp(void);

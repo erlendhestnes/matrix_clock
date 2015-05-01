@@ -1,4 +1,4 @@
-main.d main.o: .././main.c \
+main.d main.o: .././main.c .././ht1632c.h .././global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\inttypes.h \
@@ -21,14 +21,18 @@ main.d main.o: .././main.c \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdio.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
- .././ht1632c.h .././rtc.h .././sercom.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
- .././uart.h .././fatfs/ff.h .././fatfs/integer.h .././fatfs/ffconf.h \
- .././fatfs/sound.h .././fatfs/ff.h .././power.h .././esp8266.h \
- .././global.h .././port.h .././usb.h .././adc.h .././json/jsmn.h \
- .././clock.h .././si114x/User_defs.h .././si114x/Si114x_functions.h \
- .././si114x/Si114x_types.h .././si114x/User_defs.h \
- .././si114x/Si114x_handler.h .././si114x/Si114x_functions.h
+ .././rtc.h .././sercom.h .././uart.h .././fatfs/ff.h \
+ .././fatfs/integer.h .././fatfs/ffconf.h .././fatfs/sound.h \
+ .././fatfs/ff.h .././power.h .././esp8266.h .././port.h .././usb.h \
+ .././adc.h .././json/jsmn.h .././clock.h .././si114x/User_defs.h \
+ .././si114x/Si114x_functions.h .././si114x/Si114x_types.h \
+ .././si114x/User_defs.h .././si114x/Si114x_handler.h \
+ .././si114x/Si114x_functions.h
+
+.././ht1632c.h:
+
+.././global.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h:
 
@@ -74,13 +78,11 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h:
 
-.././ht1632c.h:
+c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
 
 .././rtc.h:
 
 .././sercom.h:
-
-c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
 
 .././uart.h:
 
@@ -97,8 +99,6 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 .././power.h:
 
 .././esp8266.h:
-
-.././global.h:
 
 .././port.h:
 

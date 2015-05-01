@@ -6,8 +6,6 @@
  */ 
 
 #include "rtc.h"
-#include <avr/io.h>
-#include <avr/interrupt.h>
 
 time_t time;
 

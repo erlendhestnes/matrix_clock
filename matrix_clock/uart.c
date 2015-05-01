@@ -5,11 +5,7 @@
  *  Author: Administrator
  */ 
 
-
 #include "uart.h"
-#include "global.h"
-#include <avr/io.h>
-#include <util/delay.h>
 
 void uart_setup(void) {
 	

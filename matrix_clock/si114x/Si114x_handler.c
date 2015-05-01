@@ -15,7 +15,7 @@ u8  code ircorrection[3] =  { 11, 33, 33 };
 
 #ifdef INDOORS
 u16 code noise_margin    = 50;
-u16 code scale           =  1;
+u16 code scale           =  3;
 u8  code ircorrection[3] =  { 17, 35, 29 };
 #endif
 

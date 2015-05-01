@@ -8,7 +8,7 @@
 #ifndef _RTC_H_
 #define _RTC_H_
 
-#include <stdint.h>
+#include "global.h"
 
 typedef struct {
 	uint8_t seconds;

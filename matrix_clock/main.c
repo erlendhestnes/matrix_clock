@@ -9,14 +9,6 @@
 
 #define RAND_MAX 255
 
-#include <avr/io.h>
-#include <avr/pgmspace.h>
-#include <avr/interrupt.h>
-#include <avr/sleep.h>
-#include <util/delay.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "ht1632c.h"
 #include "rtc.h"
 #include "sercom.h"
@@ -60,7 +52,7 @@ static volatile uint16_t counter = 0;
 
 FATFS FatFs;		// FatFs work area needed for each volume
 FIL Fil;			// File object needed for each open file
-BYTE Buff[1024];	// Working buffer 2048
+BYTE Buff[1564];	// Working buffer 2048
 UINT bw;
 
 void uart_put_char(char c);
@@ -84,9 +76,9 @@ void play_sound(char *name) {
 static inline void sd_card(void) {
 	f_mount(&FatFs, "", 0);
 	
-	if (f_open(&Fil, "web.txt", FA_READ | FA_OPEN_EXISTING) == FR_OK) {
+	if (f_open(&Fil, "website2.txt", FA_READ | FA_OPEN_EXISTING) == FR_OK) {
 		puts("Reading...");
-		f_read(&Fil,Buff,101,&bw);
+		f_read(&Fil,Buff,1024,&bw);
 		f_close(&Fil);
 	}
 	puts("Read done:");
@@ -143,13 +135,12 @@ int main(void) {
 	SI114X_IRQ_SAMPLE sensor_data;
 	
 	jsmn_parser p;
-	jsmntok_t tokens[100];
+	jsmntok_t tokens[10];
 	jsmnerr_t r;
-	char rx_buf[200];
 	
 	esp8266_status_t status;
 	
-	clock_setup_32_mhz();
+	clock_setup_32_mhz_pll();
 	ht1632c_setup(HT1632_COMMON_16NMOS);
 	ht1632c_set_brightness(0);
 	ht1632c_clear_screen();
@@ -158,24 +149,27 @@ int main(void) {
 	uart_setup();
 	pmic_setup();
 	twi_setup(&TWIC);
-	si114x_setup();
-	tcc_setup();
-	btn_setup();
-	rtc_setup();
-	rtc_init_time();
+	si114x_reset(SI114X_ADDR);
+	//si114x_setup();
+	//tcc_setup();
+	//btn_setup();
+	//rtc_setup();
+	//rtc_init_time();
 	jsmn_init(&p);
 	
 	stdout = stdin = &mystdout;
 	puts("LED MATRIX Clock - By: Erlend Hestnes\r\n");
+
+	//rtc_set_time(18,50,0);
 	
-	rtc_set_time(18,50,0);
+	sd_card();
 	
 	sei();
 	
 	//sd_card();
 	
-	//esp8266_on();
-	//esp8266_setup_webserver();
+	esp8266_on();
+	esp8266_setup_webserver();
 	
 	/*
 	do {status = esp8266_setup(); } while (status != SUCCESS);
@@ -192,38 +186,17 @@ int main(void) {
 	*/
 	uint8_t *data;
 	uint8_t flip = 1;
-	
+
 	while (1) {
 		
 		//ht1632c_scroll_print("16:04",4,4);
-		//esp8266_run_simple_webserver(Buff);
+		esp8266_run_simple_webserver(Buff);
 		
 		/*
-		switch(btn_check_press()) {
-			case BTN1:
-				rtc_increment_minute();
-				_delay_ms(250);
-				break;
-			case BTN2:
-				rtc_decrement_minute();
-				_delay_ms(250);
-				break;
-			case BTN3:
-				rtc_set_time_mode();
-				//rtc_increment_hour();
-				_delay_ms(250);
-				break;
-			case BTN4:
-				rtc_time_mode();
-				//rtc_decrement_hour();
-				_delay_ms(250);
-				break;
-		}
-		*/
 		sensor_data.timestamp = counter;
 		si114x_get_data(&sensor_data);
 		si114x_process_samples(SI114X_ADDR,&sensor_data); 
-		
+		*/
 		/*
 		if (sensor_data.ps1 < 1600)
 		{

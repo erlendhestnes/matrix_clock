@@ -6,7 +6,6 @@
  */ 
 
 #include "sercom.h"
-#include <util/delay.h>
 
 void spi_on(void) {
 	

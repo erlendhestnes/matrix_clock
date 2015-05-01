@@ -8,6 +8,8 @@
 #ifndef PORT_H_
 #define PORT_H_
 
+#include "global.h"
+
 typedef enum {
 	NONE,
 	BTN1,
@@ -16,6 +18,8 @@ typedef enum {
 	BTN4,
 	BTN5
 } button_t;
+
+volatile button_t btn_status;
 
 void btn_setup(void);
 void btn_top_setup(void);

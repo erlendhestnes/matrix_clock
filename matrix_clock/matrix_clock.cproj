@@ -184,6 +184,12 @@
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="menu.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="menu.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="port.c">
       <SubType>compile</SubType>
     </Compile>
@@ -218,9 +224,6 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="si114x\Si114x_handler.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\Si114x_init.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="si114x\Si114x_sys_out.c">
