@@ -7,36 +7,19 @@
 #include "esp8266.h"
 #include "ht1632c.h"
 
-char cmd[BUFFER];
-char html[10];
+volatile bool json_found = false;
 
 volatile static uint16_t rx_ptr = 0;
+
 static char rx_buffer[RX_BUFFER];
 
-const bool printReply = true;
-const char line[] = "-----\n\r";
-int loopCount=0;
-
-char command[20];
-
 char ipAddress [20];
-char name[30];
-int lenHtml = 0;
-char temp[5];
 
-static inline void flush_rx_buffer(void) {
-	rx_ptr = 0;
-	memset(rx_buffer, 0, RX_BUFFER);
-}
-
-static inline void flush_cmd_buffer(void) {
-	memset(cmd, 0, BUFFER);
-}
+esp8266_status_t status;
 
 static inline void esp8266_send_cmd(char *str, uint16_t timeout_ms) {
-	flush_rx_buffer();
-	//puts(str);
-	printf("%s\r\n",str);
+	status = ESP8266_NONE;
+	uart_write_str(str);
 	_delay_ms(timeout_ms);
 }
 
@@ -51,7 +34,7 @@ void esp8266_off(void) {
 }
 
 void esp8266_reset(void) {
-	PORTD.OUTSET = ESP_RST; //| PIN5_bm;_
+	PORTD.OUTSET = ESP_RST;
 	_delay_ms(100);
 	PORTD.OUTCLR = ESP_RST;
 	_delay_ms(100);
@@ -60,103 +43,136 @@ void esp8266_reset(void) {
 esp8266_status_t esp8266_setup(void) {
     
 	//Reset module
-	esp8266_send_cmd("AT+RST\r",5000);
-	if (strstr(rx_buffer,"OK") == NULL) {
-		return ERROR;
+	esp8266_send_cmd("AT+RST",4000);
+	if (status != ESP8266_SUCCESS) {
+		return status;
 	}
 	
 	//Set Data Mode
-	esp8266_send_cmd("AT+CIPMODE=0",1000);
-	if (strstr(rx_buffer,"OK") == NULL) {
-		return ERROR;
+	esp8266_send_cmd("AT+CIPMODE=0",500);
+	if (status != ESP8266_SUCCESS) {
+		return status;
 	}
 	
 	//Single connection mode
-	esp8266_send_cmd("AT+CIPMUX=0",1000);
-	if (strstr(rx_buffer,"OK") == NULL) {
-		return ERROR;
+	esp8266_send_cmd("AT+CIPMUX=0",500);
+	if (status != ESP8266_SUCCESS) {
+		return status;
 	}
 	
 	//Select mode
-	esp8266_send_cmd("AT+CWMODE=1",1000);
+	esp8266_send_cmd("AT+CWMODE=1",500);
 	
-	return SUCCESS;
+	return ESP8266_SUCCESS;
 }
 
 esp8266_status_t esp8266_join_ap(char *ssid, char *pass) {
-	flush_cmd_buffer();
-	strcat(cmd,"AT+CWJAP=\"");
+	
+	uint8_t timeout = 60;
+	uint16_t cnt = 0;
+	char cmd[100];
+	
+	strcpy(cmd,"AT+CWJAP=\"");
 	strcat(cmd,ssid);
 	strcat(cmd,"\",\"");
 	strcat(cmd,pass);
 	strcat(cmd,"\"");
-	esp8266_send_cmd(cmd,5000);
-	esp8266_send_cmd("AT+CWJAP\r",5000);
+	esp8266_send_cmd(cmd,500);
 	
-	if (strstr(rx_buffer,"OK") == NULL) {
-		return ERROR;
+	while (status != ESP8266_SUCCESS)
+	{
+		_delay_ms(1000);
+		
+		if (cnt++ > timeout) {
+			return ESP8266_TIMEOUT;
+		} else if (status == ESP8266_ERROR) {
+			return status;
+		}
+	}
+	
+	//Try to reduce delay here...
+	esp8266_send_cmd("AT+CWJAP?",500);
+	
+	if (status != ESP8266_SUCCESS) {
+		return status;
 	}
 
-	return SUCCESS;
+	return ESP8266_SUCCESS;
 }
 
-esp8266_status_t esp8266_connect(char *host, char *addr) {
+esp8266_status_t esp8266_connect(char *host, char *addr, char *json) {
+	
+	uint8_t timeout = 60;
+	uint16_t cnt = 0;
+	char cmd[100];
+	
 	//Set up TCP connection to host
-	flush_cmd_buffer();
-	strcat(cmd,"AT+CIPSTART=\"TCP\",\"");
+	strcpy(cmd,"AT+CIPSTART=\"TCP\",\"");
 	strcat(cmd,host);
 	strcat(cmd,"\",80");
-	esp8266_send_cmd(cmd,2000);
+	esp8266_send_cmd(cmd,1000);
 	
-	if (strstr(rx_buffer,"OK") == NULL) {
-		return ERROR;
+	if (status != ESP8266_SUCCESS) {
+		return status;
 	}
 	
 	//Count number of bytes to send
-	flush_cmd_buffer();
 	char *number_of_bytes;
-	sprintf(number_of_bytes, "%d", strlen(addr)+20);
-	strcat(cmd, "AT+CIPSEND=");
+	itoa(strlen(addr)+25, number_of_bytes, 10);
+	strcpy(cmd, "AT+CIPSEND=");
 	strcat(cmd,number_of_bytes);
-	strcat(cmd,"\r"); //needs to be here
-	esp8266_send_cmd(cmd,1000);
+	strcat(cmd,"\r"); //needs to be here...
+	esp8266_send_cmd(cmd,500);
 	
-	//Send data
-	flush_cmd_buffer();
-	strcat(cmd,"GET ");
+	//Request data by sending a GET
+	strcpy(cmd,"GET ");
 	strcat(cmd,addr);
-	strcat(cmd," HTTP/1.0");
-	esp8266_send_cmd(cmd,1000);
+	strcat(cmd," HTTP/1.0\r\n");
+	esp8266_send_cmd(cmd,500);
 	
-	uint16_t timeout = 40;
-	uint16_t cnt = 0;
-	
-	while (strstr(rx_buffer,"Unlink") == NULL)
+	while (status != ESP8266_SUCCESS)
 	{
-		esp8266_send_cmd("",250);
+		esp8266_send_cmd("",1000);
 		
 		if (cnt++ > timeout) {
-			return TIMEOUT;
+			return ESP8266_TIMEOUT;
+		} else if (status == ESP8266_ERROR) {
+			break;
 		}
 	}
-	_delay_ms(5000);
-	/*
-	cnt = 0;
-	while (strstr(rx_buffer,"Unlink") == NULL)
-	{
-		_delay_ms(250);
-		if (cnt++ > timeout) {
-			return TIMEOUT;
-		}
-	}*/
 	
-	return SUCCESS;
+	//Waiting for all the data
+	while (status != ESP8266_CLOSED)
+	{
+		_delay_ms(1000);
+		
+		if (cnt++ > timeout) {
+			return ESP8266_TIMEOUT;
+		} else if (status == ESP8266_ERROR) {
+			break;
+		}
+	}
+	
+	if (json_found) {
+		strncpy(json,rx_buffer,strlen(rx_buffer)-15);
+		json_found = false;
+		rx_ptr = 0;
+		memset(rx_buffer, 0, RX_BUFFER);
+	}
+	
+	esp8266_send_cmd("AT+CIPCLOSE",1000);
+	
+	if (status != ESP8266_SUCCESS) {
+		return status;
+	}
+	
+	return ESP8266_SUCCESS;
 }
 
 static inline void remove_substring(char *src, char *sub) {
 	char *p;
-	if ((p=strstr(src,sub)) != NULL) {
-		memmove(p,p+strlen(sub), strlen(p+strlen(sub))+1);
+	if ((p = strstr(src,sub)) != NULL) {
+		memmove(p,p+strlen(sub), strlen(p + strlen(sub)) + 1);
 		// alternative
 		// strcpy(p,p+strlen(sub));
 	}
@@ -186,7 +202,7 @@ esp8266_status_t esp8266_setup_webserver(void) {
 	//Reset module
 	esp8266_send_cmd("AT+RST\r",3000);
 	if (strstr(rx_buffer,"OK") == NULL) {
-		return ERROR;
+		return ESP8266_ERROR;
 	}
 	
 	//Select mode
@@ -228,12 +244,12 @@ esp8266_status_t esp8266_setup_webserver(void) {
 	//Start server
 	esp8266_send_cmd("AT+CIPSERVER=1,80",500);	
 	
-	return SUCCESS;
+	return ESP8266_SUCCESS;
 }
 
 static inline void at_cipsend(char *str) {
 	char *number_of_bytes;
-	
+	char *cmd;
 	//strcpy(html,str);
 	
 	//flush_cmd_buffer();
@@ -256,7 +272,7 @@ esp8266_status_t esp8266_run_simple_webserver(char *str)
 		esp8266_send_cmd("AT+CIPCLOSE=0\r", 100);
 	}
 }
-
+/*
 esp8266_status_t esp8266_run_webserver(char *str) 
 {
  if(rx_ptr > 190) // check if the ESP8266 is sending data
@@ -309,7 +325,7 @@ esp8266_status_t esp8266_run_webserver(char *str)
 		 _delay_ms(1000);
 		 
 		 at_cipsend(str);
-		 /*
+		 
 		 strcpy(html,"<html><head></head><body>");
 		 strcpy(command,"AT+CIPSEND=0,26\r");
 		 esp8266_send_cmd(command,100);
@@ -383,7 +399,6 @@ esp8266_status_t esp8266_run_webserver(char *str)
 		 strcpy(command,"AT+CIPSEND=0,14\r");
 		 esp8266_send_cmd(command,100);
 		 esp8266_send_cmd(html,100);
-		 */
 		 
 		 // close the connection
 		 esp8266_send_cmd( "AT+CIPCLOSE=0\r", 100);
@@ -391,12 +406,34 @@ esp8266_status_t esp8266_run_webserver(char *str)
 	 } // if(espSerial.find("+IPD"))
  } //if(espSerial.available())
  
- 
  _delay_ms (100);
- 
  // drop to here and wait for next request.
 }
+*/
 
 ISR(USARTD0_RXC_vect) {
-	rx_buffer[rx_ptr++] = USARTD0.DATA;
+	
+	char rx_temp = USARTD0.DATA;
+	
+	if (rx_temp == '\n') {
+		if (strstr(rx_buffer,"OK")) {
+			status = ESP8266_SUCCESS;
+		} else if (strstr(rx_buffer,"ERROR")) {
+			status = ESP8266_ERROR;
+		} else if (strstr(rx_buffer,"CONNECT")) {
+			status = ESP8266_CONNECT;
+		} else if (strstr(rx_buffer,"CLOSED")) {
+			status = ESP8266_CLOSED;
+		}
+		
+		if (strstr(rx_buffer,"{")) {
+			json_found = true;
+		} else {
+			//Flush buffer
+			rx_ptr = 0;
+			memset(rx_buffer, 0, RX_BUFFER);	
+		}
+	} else {
+		rx_buffer[rx_ptr++] = rx_temp;
+	}
 }

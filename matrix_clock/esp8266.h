@@ -17,15 +17,19 @@
 #define ADDRESS		"http://api.thingspeak.com/channels/23643/feed.json?key=B48BEBINSXKRJRIN"
 //#define ADDRESS "/channels/23643/feed.json?key=B48BEBINSXKRJRIN"
 #define BUFFER		100
-#define RX_BUFFER	1000
+#define RX_BUFFER	200
 
 #define ESP_RST		PIN4_bm
 #define CH_EN		PIN5_bm
 
 typedef enum {
-	ERROR,
-	SUCCESS,
-	TIMEOUT
+	ESP8266_ERROR,
+	ESP8266_SUCCESS,
+	ESP8266_TIMEOUT,
+	ESP8266_CONNECT,
+	ESP8266_LINKED,
+	ESP8266_CLOSED,
+	ESP8266_NONE
 } esp8266_status_t;
 
 void esp8266_on(void);
@@ -38,7 +42,7 @@ esp8266_status_t esp8266_run_webserver(char *str);
 esp8266_status_t esp8266_run_simple_webserver(char *str);
 
 esp8266_status_t esp8266_join_ap(char *ssid, char *pass);
-esp8266_status_t esp8266_connect(char *host, char *addr);
+esp8266_status_t esp8266_connect(char *host, char *addr, char *json);
 esp8266_status_t connectWiFi(void);
 
 void esp8266_get_rx_buffer(char *str);

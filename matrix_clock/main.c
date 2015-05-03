@@ -52,8 +52,14 @@ static volatile uint16_t counter = 0;
 
 FATFS FatFs;		// FatFs work area needed for each volume
 FIL Fil;			// File object needed for each open file
-BYTE Buff[1564];	// Working buffer 2048
+BYTE Buff[1024];	// Working buffer 2048
 UINT bw;
+
+typedef struct {
+	uint16_t id;
+	char *name;
+	char *time;
+} env_variables_t;
 
 void uart_put_char(char c);
 static FILE mystdout = FDEV_SETUP_STREAM(uart_put_char,uart_get_char,_FDEV_SETUP_WRITE);
@@ -135,8 +141,10 @@ int main(void) {
 	SI114X_IRQ_SAMPLE sensor_data;
 	
 	jsmn_parser p;
-	jsmntok_t tokens[10];
+	jsmntok_t tokens[100];
 	jsmnerr_t r;
+	
+	char json_buffer[RX_BUFFER];
 	
 	esp8266_status_t status;
 	
@@ -162,35 +170,35 @@ int main(void) {
 
 	//rtc_set_time(18,50,0);
 	
-	sd_card();
+	//sd_card();
 	
 	sei();
 	
 	//sd_card();
 	
 	esp8266_on();
-	esp8266_setup_webserver();
+	//esp8266_setup_webserver();
 	
-	/*
-	do {status = esp8266_setup(); } while (status != SUCCESS);
-	do {status = esp8266_join_ap(SSID,PASS); } while (status != SUCCESS);
-	status = esp8266_connect("hvilkenuke.no","hvilkenuke.no");
+	do {status = esp8266_setup(); } while (status != ESP8266_SUCCESS);
+	do {status = esp8266_join_ap(SSID,PASS); } while (status != ESP8266_SUCCESS);
+	status = esp8266_connect(DST_IP,ADDRESS,json_buffer);
 	esp8266_off();
 	puts("GOT DATA:");
-	esp8266_get_rx_buffer(&rx_buf);
-	puts(rx_buf);
+	puts(json_buffer);
 	
-	r = jsmn_parse(&p, &rx_buf, 100, tokens, 100);
+	r = jsmn_parse(&p,json_buffer,strlen(json_buffer),tokens,100);
 	
-	print_token(tokens,&rx_buf,10);
-	*/
-	uint8_t *data;
-	uint8_t flip = 1;
+	print_token(tokens,json_buffer,3);
+	print_token(tokens,json_buffer,4);
+	print_token(tokens,json_buffer,5);
+	
+	//uint8_t *data;
+	//uint8_t flip = 1;
 
 	while (1) {
 		
 		//ht1632c_scroll_print("16:04",4,4);
-		esp8266_run_simple_webserver(Buff);
+		//esp8266_run_simple_webserver(Buff);
 		
 		/*
 		sensor_data.timestamp = counter;
