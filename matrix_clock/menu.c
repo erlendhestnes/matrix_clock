@@ -6,9 +6,9 @@
  */ 
 
 #include "menu.h"
-#include "rtc.h"
-#include "port.h"
-#include "ht1632c.h"
+#include "drivers/rtc/rtc.h"
+#include "drivers/port/port.h"
+#include "drivers/ht1632c/ht1632c.h"
 
 void menu_state_machine(void) {
 	if (btn_status != NONE)

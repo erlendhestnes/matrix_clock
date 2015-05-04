@@ -124,22 +124,91 @@
     <Compile Include="4x6_font.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="adc.c">
+    <Compile Include="drivers\adc\adc.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="adc.h">
+    <Compile Include="drivers\adc\adc.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="clock.c">
+    <Compile Include="drivers\clock\clock.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="clock.h">
+    <Compile Include="drivers\clock\clock.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="esp8266.c">
+    <Compile Include="drivers\dma\dma.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="esp8266.h">
+    <Compile Include="drivers\dma\dma.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\eeprom\eeprom.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\eeprom\eeprom.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\esp8266\esp8266.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\esp8266\esp8266.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\ht1632c\ht1632c.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\ht1632c\ht1632c.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\port\port.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\port\port.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\power\power.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\power\power.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\rtc\rtc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\rtc\rtc.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sensors\si114x\Si114x_functions.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sensors\si114x\Si114x_functions.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sensors\si114x\Si114x_handler.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sensors\si114x\Si114x_handler.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sensors\si114x\Si114x_sys_out.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sensors\si114x\Si114x_types.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sensors\si114x\slider_algorithm.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sensors\si114x\slider_algorithm.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sensors\si114x\User_defs.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sercom\sercom.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sercom\sercom.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="fatfs\diskio.h">
@@ -169,12 +238,6 @@
     <Compile Include="global.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="ht1632c.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="ht1632c.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="json\jsmn.c">
       <SubType>compile</SubType>
     </Compile>
@@ -190,74 +253,29 @@
     <Compile Include="menu.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="port.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="port.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="power.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="power.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="rtc.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="rtc.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="sercom.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="sercom.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\Si114x_functions.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\Si114x_functions.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\Si114x_handler.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\Si114x_handler.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\Si114x_sys_out.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\Si114x_types.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\slider_algorithm.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\slider_algorithm.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="si114x\User_defs.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="uart.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="uart.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="usb.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="usb.h">
-      <SubType>compile</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="drivers\adc" />
+    <Folder Include="drivers\clock" />
+    <Folder Include="drivers\dma" />
+    <Folder Include="drivers\esp8266" />
+    <Folder Include="drivers\ht1632c" />
+    <Folder Include="drivers\eeprom" />
+    <Folder Include="drivers\rtc" />
+    <Folder Include="drivers\sercom" />
+    <Folder Include="drivers\port" />
+    <Folder Include="drivers\power" />
+    <Folder Include="drivers\sensors" />
+    <Folder Include="drivers\sensors\si114x\" />
     <Folder Include="fatfs" />
     <Folder Include="json" />
-    <Folder Include="si114x" />
+    <Folder Include="drivers" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

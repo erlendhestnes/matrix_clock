@@ -32,34 +32,47 @@ LIB_DEP:=
 
 # Every subdirectory with source files must be described here
 SUBDIRS :=  \
+../drivers/adc \
+../drivers/clock \
+../drivers/dma \
+../drivers/esp8266 \
+../drivers/ht1632c \
+../drivers/eeprom \
+../drivers/rtc \
+../drivers/sercom \
+../drivers/port \
+../drivers/power \
+../drivers/sensors \
+../drivers/sensors/si114x/ \
 ../fatfs \
 ../json \
-../si114x
+../drivers
 
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS +=  \
 ../4x6_font.c \
-../adc.c \
-../clock.c \
-../esp8266.c \
+../drivers/adc/adc.c \
+../drivers/clock/clock.c \
+../drivers/dma/dma.c \
+../drivers/eeprom/eeprom.c \
+../drivers/esp8266/esp8266.c \
+../drivers/ht1632c/ht1632c.c \
+../drivers/port/port.c \
+../drivers/power/power.c \
+../drivers/rtc/rtc.c \
+../drivers/sensors/si114x/Si114x_functions.c \
+../drivers/sensors/si114x/Si114x_handler.c \
+../drivers/sensors/si114x/Si114x_sys_out.c \
+../drivers/sensors/si114x/slider_algorithm.c \
+../drivers/sercom/sercom.c \
 ../fatfs/ff.c \
 ../fatfs/mmc_avr.c \
 ../fatfs/sound.c \
-../ht1632c.c \
 ../json/jsmn.c \
 ../main.c \
 ../menu.c \
-../port.c \
-../power.c \
-../rtc.c \
-../sercom.c \
-../si114x/Si114x_functions.c \
-../si114x/Si114x_handler.c \
-../si114x/Si114x_sys_out.c \
-../si114x/slider_algorithm.c \
-../uart.c \
-../usb.c
+../uart.c
 
 
 PREPROCESSING_SRCS += 
@@ -70,95 +83,99 @@ ASM_SRCS +=
 
 OBJS +=  \
 4x6_font.o \
-adc.o \
-clock.o \
-esp8266.o \
+drivers/adc/adc.o \
+drivers/clock/clock.o \
+drivers/dma/dma.o \
+drivers/eeprom/eeprom.o \
+drivers/esp8266/esp8266.o \
+drivers/ht1632c/ht1632c.o \
+drivers/port/port.o \
+drivers/power/power.o \
+drivers/rtc/rtc.o \
+drivers/sensors/si114x/Si114x_functions.o \
+drivers/sensors/si114x/Si114x_handler.o \
+drivers/sensors/si114x/Si114x_sys_out.o \
+drivers/sensors/si114x/slider_algorithm.o \
+drivers/sercom/sercom.o \
 fatfs/ff.o \
 fatfs/mmc_avr.o \
 fatfs/sound.o \
-ht1632c.o \
 json/jsmn.o \
 main.o \
 menu.o \
-port.o \
-power.o \
-rtc.o \
-sercom.o \
-si114x/Si114x_functions.o \
-si114x/Si114x_handler.o \
-si114x/Si114x_sys_out.o \
-si114x/slider_algorithm.o \
-uart.o \
-usb.o
+uart.o
 
 OBJS_AS_ARGS +=  \
 4x6_font.o \
-adc.o \
-clock.o \
-esp8266.o \
+drivers/adc/adc.o \
+drivers/clock/clock.o \
+drivers/dma/dma.o \
+drivers/eeprom/eeprom.o \
+drivers/esp8266/esp8266.o \
+drivers/ht1632c/ht1632c.o \
+drivers/port/port.o \
+drivers/power/power.o \
+drivers/rtc/rtc.o \
+drivers/sensors/si114x/Si114x_functions.o \
+drivers/sensors/si114x/Si114x_handler.o \
+drivers/sensors/si114x/Si114x_sys_out.o \
+drivers/sensors/si114x/slider_algorithm.o \
+drivers/sercom/sercom.o \
 fatfs/ff.o \
 fatfs/mmc_avr.o \
 fatfs/sound.o \
-ht1632c.o \
 json/jsmn.o \
 main.o \
 menu.o \
-port.o \
-power.o \
-rtc.o \
-sercom.o \
-si114x/Si114x_functions.o \
-si114x/Si114x_handler.o \
-si114x/Si114x_sys_out.o \
-si114x/slider_algorithm.o \
-uart.o \
-usb.o
+uart.o
 
 C_DEPS +=  \
 4x6_font.d \
-adc.d \
-clock.d \
-esp8266.d \
+drivers/adc/adc.d \
+drivers/clock/clock.d \
+drivers/dma/dma.d \
+drivers/eeprom/eeprom.d \
+drivers/esp8266/esp8266.d \
+drivers/ht1632c/ht1632c.d \
+drivers/port/port.d \
+drivers/power/power.d \
+drivers/rtc/rtc.d \
+drivers/sensors/si114x/Si114x_functions.d \
+drivers/sensors/si114x/Si114x_handler.d \
+drivers/sensors/si114x/Si114x_sys_out.d \
+drivers/sensors/si114x/slider_algorithm.d \
+drivers/sercom/sercom.d \
 fatfs/ff.d \
 fatfs/mmc_avr.d \
 fatfs/sound.d \
-ht1632c.d \
 json/jsmn.d \
 main.d \
 menu.d \
-port.d \
-power.d \
-rtc.d \
-sercom.d \
-si114x/Si114x_functions.d \
-si114x/Si114x_handler.d \
-si114x/Si114x_sys_out.d \
-si114x/slider_algorithm.d \
-uart.d \
-usb.d
+uart.d
 
 C_DEPS_AS_ARGS +=  \
 4x6_font.d \
-adc.d \
-clock.d \
-esp8266.d \
+drivers/adc/adc.d \
+drivers/clock/clock.d \
+drivers/dma/dma.d \
+drivers/eeprom/eeprom.d \
+drivers/esp8266/esp8266.d \
+drivers/ht1632c/ht1632c.d \
+drivers/port/port.d \
+drivers/power/power.d \
+drivers/rtc/rtc.d \
+drivers/sensors/si114x/Si114x_functions.d \
+drivers/sensors/si114x/Si114x_handler.d \
+drivers/sensors/si114x/Si114x_sys_out.d \
+drivers/sensors/si114x/slider_algorithm.d \
+drivers/sercom/sercom.d \
 fatfs/ff.d \
 fatfs/mmc_avr.d \
 fatfs/sound.d \
-ht1632c.d \
 json/jsmn.d \
 main.d \
 menu.d \
-port.d \
-power.d \
-rtc.d \
-sercom.d \
-si114x/Si114x_functions.d \
-si114x/Si114x_handler.d \
-si114x/Si114x_sys_out.d \
-si114x/slider_algorithm.d \
-uart.d \
-usb.d
+uart.d
 
 OUTPUT_FILE_PATH +=matrix_clock.elf
 
@@ -214,7 +231,86 @@ LIB_DEP+=
 
 
 
+
+
 ./%.o: .././%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/adc/%.o: ../drivers/adc/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/clock/%.o: ../drivers/clock/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/dma/%.o: ../drivers/dma/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/eeprom/%.o: ../drivers/eeprom/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/esp8266/%.o: ../drivers/esp8266/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/ht1632c/%.o: ../drivers/ht1632c/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/port/%.o: ../drivers/port/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/power/%.o: ../drivers/power/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/rtc/%.o: ../drivers/rtc/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/sensors/si114x/%.o: ../drivers/sensors/si114x/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+drivers/sercom/%.o: ../drivers/sercom/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
 	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
@@ -229,13 +325,6 @@ fatfs/%.o: ../fatfs/%.c
 	
 
 json/%.o: ../json/%.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 4.8.1
-	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-si114x/%.o: ../si114x/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
 	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O3 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

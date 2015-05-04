@@ -9,56 +9,34 @@
 
 #define RAND_MAX 255
 
-#include "ht1632c.h"
-#include "rtc.h"
-#include "sercom.h"
+#include "drivers/ht1632c/ht1632c.h"
+#include "drivers/rtc/rtc.h"
+#include "drivers/sercom/sercom.h"
 #include "uart.h"
 #include "fatfs/ff.h"
 #include "fatfs/sound.h"
-#include "power.h"
-#include "esp8266.h"
-#include "port.h"
-#include "usb.h"
-#include "adc.h"
+#include "drivers/power/power.h"
+#include "drivers/esp8266/esp8266.h"
+#include "drivers/port/port.h"
+#include "drivers/adc/adc.h"
 #include "json/jsmn.h"
-#include "clock.h"
+#include "drivers/clock/clock.h"
 
-#include "si114x/User_defs.h"
-#include "si114x/Si114x_functions.h"
-#include "si114x/Si114x_handler.h"
-
-static const unsigned char IMG_SPEAKER_A [] PROGMEM = {0b00011000, 0b00011000, 0b00111100, 0b01000010, 0b10100101, 0b00011000};
-static const unsigned char IMG_SPEAKER_B [] PROGMEM = {0b00011000, 0b00011000, 0b00111100, 0b01000010, 0b10111101, 0b00000000};
-#define IMG_SPEAKER_WIDTH 	 6
-#define IMG_SPEAKER_HEIGHT 	 8
-
-static const unsigned char IMG_HEART [] PROGMEM = {0b01110000, 0b11111000, 0b11111100, 0b11111110, 0b01111111, 0b11111110, 0b11111100, 0b11111000, 0b01110000};
-#define IMG_HEART_WIDTH 	 9
-#define IMG_HEART_HEIGHT 	 8
-
-static const unsigned char IMG_MAIL [] PROGMEM = {0b11111111, 0b11000001, 0b10100001, 0b10010001, 0b10001001, 0b10000101, 0b10000101, 0b10001001, 0b10010001, 0b10100001, 0b11000001, 0b11111111};
-#define IMG_MAIL_WIDTH 	12
-#define IMG_MAIL_HEIGHT 8
-
-static const unsigned char IMG_FB [] PROGMEM = {0b00111111, 0b01000000, 0b10000100, 0b10011111, 0b10100100, 0b10100000, 0b10000000, 0b10000000};
-#define IMG_FB_WIDTH 	 7
-#define IMG_FB_HEIGHT 	 8
-
-static const unsigned char IMG_TWITTER [] PROGMEM = {0b01111110, 0b10000001, 0b10111001, 0b10010101, 0b10010101, 0b10000001, 0b01111110};
-#define IMG_TWITTER_WIDTH 	 7
-#define IMG_TWITTER_HEIGHT 	 8
+#include "drivers/sensors/si114x/User_defs.h"
+#include "drivers/sensors/si114x/Si114x_functions.h"
+#include "drivers/sensors/si114x/Si114x_handler.h"
 
 static volatile uint16_t counter = 0;
 
 FATFS FatFs;		// FatFs work area needed for each volume
 FIL Fil;			// File object needed for each open file
-BYTE Buff[1024];	// Working buffer 2048
+BYTE Buff[2048];	// Working buffer 2048
 UINT bw;
 
 typedef struct {
 	uint16_t id;
 	char *name;
-	char *time;
+	char *time; //maybe a time_t struct?
 } env_variables_t;
 
 void uart_put_char(char c);
@@ -72,7 +50,7 @@ void pmic_setup(void) {
 void play_sound(char *name) {
 	
 	BYTE res;
-	res = f_open(&Fil, "john3.wav", FA_READ);
+	res = f_open(&Fil, "cold3.wav", FA_READ);
 	if (!res) {
 		load_wav(&Fil, "**** WAV PLAYER ****", Buff, sizeof Buff);
 		f_close(&Fil);
@@ -141,26 +119,26 @@ int main(void) {
 	SI114X_IRQ_SAMPLE sensor_data;
 	
 	jsmn_parser p;
-	jsmntok_t tokens[100];
+	//jsmntok_t tokens[100];
 	jsmnerr_t r;
 	
-	char json_buffer[RX_BUFFER];
+	char *cmd;
+	//char json_buffer[RX_BUFFER];
 	
 	esp8266_status_t status;
 	
-	clock_setup_32_mhz_pll();
+	clock_setup_32_mhz();
 	ht1632c_setup(HT1632_COMMON_16NMOS);
 	ht1632c_set_brightness(0);
 	ht1632c_clear_screen();
 	
-	//adc_setup();
 	uart_setup();
 	pmic_setup();
 	twi_setup(&TWIC);
 	si114x_reset(SI114X_ADDR);
 	//si114x_setup();
 	//tcc_setup();
-	//btn_setup();
+	btn_setup();
 	//rtc_setup();
 	//rtc_init_time();
 	jsmn_init(&p);
@@ -170,18 +148,21 @@ int main(void) {
 
 	//rtc_set_time(18,50,0);
 	
-	//sd_card();
+	sd_card();
 	
 	sei();
 	
-	//sd_card();
-	
-	esp8266_on();
+	esp8266_off();
+	//esp8266_on();
 	//esp8266_setup_webserver();
 	
+	/*
 	do {status = esp8266_setup(); } while (status != ESP8266_SUCCESS);
+	ht1632c_scroll_print("Wifi on",0,0);
 	do {status = esp8266_join_ap(SSID,PASS); } while (status != ESP8266_SUCCESS);
+	ht1632c_scroll_print(SSID,0,0);
 	status = esp8266_connect(DST_IP,ADDRESS,json_buffer);
+	ht1632c_scroll_print("Got Data",0,0);
 	esp8266_off();
 	puts("GOT DATA:");
 	puts(json_buffer);
@@ -194,7 +175,10 @@ int main(void) {
 	
 	//uint8_t *data;
 	//uint8_t flip = 1;
-
+	
+	*/
+	play_sound("whatever!");
+	
 	while (1) {
 		
 		//ht1632c_scroll_print("16:04",4,4);
@@ -205,6 +189,7 @@ int main(void) {
 		si114x_get_data(&sensor_data);
 		si114x_process_samples(SI114X_ADDR,&sensor_data); 
 		*/
+		
 		/*
 		if (sensor_data.ps1 < 1600)
 		{

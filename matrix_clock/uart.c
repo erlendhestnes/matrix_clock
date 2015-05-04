@@ -48,4 +48,7 @@ void uwrite_hex(unsigned char n) {
 	uart_put_char('0' + ((n>>4)&15));
 	else
 	uart_put_char('A' + ((n>>4)&15) - 10);
+	
+	uart_put_char('\r');
+	uart_put_char('\n');
 }
