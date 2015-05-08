@@ -38,13 +38,20 @@ void rtc_init_time(void) {
 	rtc_update_display(TOP,time.hours);
 }
 
-void rtc_set_time(uint8_t h, uint8_t m, uint8_t s) {
+void rtc_set_time(uint8_t s, 
+uint8_t m, 
+uint8_t h,
+uint16_t d,
+uint16_t y) {
 	
 	cli();
 	
-	time.hours = h;
+	//time.seconds = s;
 	time.minutes = m;
-	time.seconds = s;
+	time.hours = h;
+	//time.days = d;
+	//time.weeks = w;
+	//time.year = y;
 	
 	rtc_update_display(BOTTOM,time.minutes);
 	rtc_update_display(TOP,time.hours);

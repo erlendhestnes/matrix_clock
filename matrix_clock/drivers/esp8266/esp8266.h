@@ -37,9 +37,10 @@ void esp8266_off(void);
 void esp8266_reset(void);
 
 esp8266_status_t esp8266_setup(void);
-esp8266_status_t esp8266_setup_webserver(void);
+esp8266_status_t esp8266_setup_webserver(bool telnet);
 esp8266_status_t esp8266_run_webserver(char *str);
 esp8266_status_t esp8266_run_simple_webserver(char *str);
+esp8266_status_t esp8266_telnet_server(void);
 
 esp8266_status_t esp8266_join_ap(char *ssid, char *pass);
 esp8266_status_t esp8266_connect(char *host, char *addr, char *json);

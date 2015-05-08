@@ -148,13 +148,13 @@ int main(void) {
 
 	//rtc_set_time(18,50,0);
 	
-	sd_card();
+	//sd_card();
 	
 	sei();
 	
-	esp8266_off();
-	//esp8266_on();
-	//esp8266_setup_webserver();
+	//esp8266_off();
+	esp8266_on();
+	esp8266_setup_webserver(true);
 	
 	/*
 	do {status = esp8266_setup(); } while (status != ESP8266_SUCCESS);
@@ -177,9 +177,11 @@ int main(void) {
 	//uint8_t flip = 1;
 	
 	*/
-	play_sound("whatever!");
+	//play_sound("whatever!");
 	
 	while (1) {
+		
+		esp8266_telnet_server();
 		
 		//ht1632c_scroll_print("16:04",4,4);
 		//esp8266_run_simple_webserver(Buff);

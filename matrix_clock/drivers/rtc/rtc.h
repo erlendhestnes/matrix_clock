@@ -21,7 +21,13 @@ typedef struct {
 
 void rtc_setup(void);
 void rtc_init_time(void);
-void rtc_set_time(uint8_t h, uint8_t m, uint8_t s);
+
+void rtc_set_time(uint8_t s,
+uint8_t m,
+uint8_t h,
+uint16_t d,
+uint16_t y);
+
 void rtc_update_display(uint8_t pos, uint8_t t);
 void rtc_update_display_alt(void);
 
