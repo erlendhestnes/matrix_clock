@@ -45,19 +45,19 @@ button_t btn_check_press(void) {
 	
 	if (!(PORTA.IN & BUTTON0)) {
 		uwrite_hex(DACB.CH0OFFSETCAL);
-		DACB.CH0OFFSETCAL += 1;
+		//DACB.CH0OFFSETCAL += 1;
 		return BTN1;
 	} else if (!(PORTA.IN & BUTTON1)) {
 		uwrite_hex(DACB.CH0OFFSETCAL);
-		DACB.CH0OFFSETCAL -= 1;
+		//DACB.CH0OFFSETCAL -= 1;
 		return BTN2;
 	} else if (!(PORTA.IN & BUTTON2)) {
 		uwrite_hex(DACB.CH0GAINCAL);
-		DACB.CH0GAINCAL += 1;
+		//DACB.CH0GAINCAL += 1;
 		return BTN3;
 	} else if (!(PORTB.IN & BUTTON3)) {
 		uwrite_hex(DACB.CH0GAINCAL);
-		DACB.CH0GAINCAL -= 1;
+		//DACB.CH0GAINCAL -= 1;
 		return BTN4;
 	} else {
 		return NONE;

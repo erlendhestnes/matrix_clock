@@ -88,11 +88,11 @@ void ht1632c_blink(uint8_t blinky) {
 
 /*-------------------------Geometric functions----------------------------*/
 
-void ht1632c_set_pixel(uint16_t i) {
+static inline void ht1632c_set_pixel(uint16_t i) {
 	ledmatrix[i/8] |= _BV(i%8);
 }
 
-void ht1632c_clr_pixel(uint16_t i) {
+static inline void ht1632c_clr_pixel(uint16_t i) {
 	ledmatrix[i/8] &= ~_BV(i%8);
 }
 
@@ -128,9 +128,9 @@ void ht1632c_draw_pixel(int x, int y, uint8_t color) {
 	i += x * 8;
 
 	if (color)
-	ht1632c_set_pixel(i);
+		ht1632c_set_pixel(i);
 	else
-	ht1632c_clr_pixel(i);
+		ht1632c_clr_pixel(i);
 }
 
 void ht1632c_draw_line(int8_t x0, int8_t y0, int8_t x1, int8_t y1,uint8_t color) {
@@ -339,7 +339,7 @@ void ht1632c_send_command(uint8_t cmd) {
 
 /*------------------------------STRING FUNCTIONS------------------------------*/
 
-void ht1632c_set_cursor(int16_t x, int16_t y) {
+static inline void ht1632c_set_cursor(int16_t x, int16_t y) {
 	cursor_x = x;
 	cursor_y = y;
 }
@@ -377,7 +377,7 @@ void ht1632c_draw_char_2(int16_t x, int16_t y, char c,uint16_t color, uint8_t si
 		for (j = 7; j > -1; j--) {
 			if (line & 0x1) {
 				if (size == 1) {
-					if (x+j >= 0) {
+					if (x+j-2 >= 0) {
 						ht1632c_draw_pixel(x+j-2, y-i+3, color);
 					}
 				}
@@ -390,32 +390,46 @@ void ht1632c_draw_char_2(int16_t x, int16_t y, char c,uint16_t color, uint8_t si
 	}
 }
 
-void ht1632c_print(uint8_t *str) {
+void ht1632c_print(uint8_t *str, bool big_font) {
 	
 	ht1632c_clear_buffer();
 	while(*str) {
-		ht1632c_draw_char(cursor_x, cursor_y, *str++, 1, textsize);
-		cursor_x += textsize*6;
+		if (big_font) {
+			ht1632c_draw_char(cursor_x, cursor_y, *str++, 1, textsize);
+			cursor_x += textsize*6;
+		} else {
+			ht1632c_draw_char_2(cursor_x, cursor_y, *str++, 1, textsize);
+			cursor_x += textsize*4;
+		}
 	}
 	ht1632c_refresh_screen();
 }
 
-void ht1632c_scroll_print(uint8_t *str, uint16_t len, uint16_t delay_ms) {
+void ht1632c_scroll_print(uint8_t *str, bool big_font) {
 	
+	uint8_t y;
 	int16_t i;
-	uint16_t length = strlen(str)*6;
+	int16_t length;
+	
+	if (big_font) {
+		y = 5;
+		length = strlen(str)*6;
+	} else {
+		y = 7;
+		length = strlen(str)*4;
+	}
 	
 	for (i = (WIDTH*2); i > -((int16_t)length); i--) {
-		ht1632c_set_cursor(i,5);
-		ht1632c_print(str);
-		_delay_ms(60);
+		ht1632c_set_cursor(i,y);
+		ht1632c_print(str,big_font);
+		_delay_ms(80);
 	}
 }
 
 void ht1632c_motion_print(uint8_t *str, int16_t x) {
 	
 	ht1632c_set_cursor(x,5);
-	ht1632c_print(str);
+	ht1632c_print(str,true);
 	_delay_ms(15);
 }
 
@@ -539,11 +553,11 @@ void ht1632c_shift_left(void) {
 	}
 }
 
-void ht1632_dummy() {
-	ht1632c_draw_char_2(1,8,'1',1,1);
-	ht1632c_draw_char_2(5,8,'7',1,1);
+void ht1632_dummy(void) {
+	ht1632c_draw_char_2(1,7,'1',1,1);
+	ht1632c_draw_char_2(5,7,'7',1,1);
 	//ht1632c_draw_char_2(7,8,':',1,1);
-	ht1632c_draw_char_2(10,8,'5',1,1);
-	ht1632c_draw_char_2(14,8,'3',1,1);
+	ht1632c_draw_char_2(10,7,'3',1,1);
+	ht1632c_draw_char_2(14,7,'4',1,1);
 	ht1632c_refresh_screen();
 }

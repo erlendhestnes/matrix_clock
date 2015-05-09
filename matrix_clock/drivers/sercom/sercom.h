@@ -53,6 +53,9 @@ static inline void ss_deselect(void) {
 }
 
 void twi_setup(TWI_t* const TWI);
+void twi_off(void);
+void twi_on(void);
+
 void twi_stop_transmission(TWI_t* const TWI);
 uint8_t twi_start_transmission(TWI_t* const TWI, const uint8_t slave_address, const uint8_t timeout_ms);
 uint8_t twi_send_byte(TWI_t* const TWI, const uint8_t data);

@@ -37,8 +37,6 @@ void ht1632c_set_brightness(uint8_t pwm);
 void ht1632c_blink(uint8_t blinky);
 void ht1632c_draw_bitmap(uint8_t x, uint8_t y,const uint8_t *bitmap, uint8_t w, uint8_t h,uint8_t color);
 void ht1632c_draw_pixel(int x, int y, uint8_t color);
-void ht1632c_set_pixel(uint16_t i);
-void ht1632c_clr_pixel(uint16_t i);
 void ht1632c_refresh_screen();
 void ht1632c_clear_screen();
 void ht1632c_write_data(uint16_t d, uint8_t bits);
@@ -56,13 +54,13 @@ void traverse_screen(void);
 void traverse_screen_clear(void);
 void ht1632_fade(uint8_t pwm);
 
-void ht1632c_set_cursor(int16_t x, int16_t y);
 void ht1632c_write(uint8_t c);
-void ht1632c_print(uint8_t *str);
-void ht1632c_scroll_print(uint8_t *str, uint16_t len, uint16_t delay);
+void ht1632c_print(uint8_t *str, bool big_font);
+void ht1632c_scroll_print(uint8_t *str, bool big_font);
 void ht1632c_motion_print(uint8_t *str, int16_t x);
 void ht1632_random(void);
 void ht1632c_loading(void);
 void ht1632c_draw_char_2(int16_t x, int16_t y, char c,uint16_t color, uint8_t size);
 void ht1632c_shift_left(void);
+void ht1632_dummy(void);
 #endif /* HT1632_H_ */

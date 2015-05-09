@@ -16,7 +16,7 @@ volatile static uint16_t rx_ptr = 0;
 
 static char rx_buffer[RX_BUFFER];
 
-char ip_address[20];
+char ip_address[19];
 char telnet_cmd[50];
 
 esp8266_status_t status;
@@ -201,7 +201,7 @@ esp8266_status_t esp8266_setup_webserver(bool telnet) {
 	esp8266_send_cmd("AT+CIFSR", 500);
 	
 	//Show ip address to user
-	// ht1632c_scroll_print(ip_address,1,1);
+	ht1632c_scroll_print(ip_address,false);
 	
 	//Configure multiple connections
 	esp8266_send_cmd("AT+CIPMUX=1",500);
@@ -209,7 +209,7 @@ esp8266_status_t esp8266_setup_webserver(bool telnet) {
 	//Start server
 	if (telnet) {
 		esp8266_send_cmd("AT+CIPSERVER=1,8888",500);
-		// ht1632c_scroll_print("Telnet on",1,1);	
+		ht1632c_scroll_print("TELNET ON",false);	
 	} else {
 		esp8266_send_cmd("AT+CIPSERVER=1,80",500);	
 	}
@@ -234,158 +234,161 @@ static inline void at_cipsend(char *str) {
 
 esp8266_status_t esp8266_telnet_server(void) {
 	
-	if (status == ESP8266_CONNECT) {
-		status = ESP8266_NONE;
-		memset(telnet_cmd, 0, 50);
-		at_cipsend("Welcome to the LED Matrix Clock telnet interface\r\n");
-		at_cipsend("Type \"man\" to view all available commands\r\n>");
-	} else if (strstr(telnet_cmd,"led")) {
-		if (strstr(telnet_cmd,"on")) {
+	while(1) {
+		if (status == ESP8266_CONNECT) {
+			status = ESP8266_NONE;
 			memset(telnet_cmd, 0, 50);
-			ht1632c_fill_screen();
-			at_cipsend("Turning on LEDs\r\n>");
-		} else if (strstr(telnet_cmd,"off")) {
-			ht1632c_clear_screen();
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Turning of LEDs\r\n>");
-		} else if (strstr(telnet_cmd,"down")) {
-			ht1632c_set_brightness(0);
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Dimming down LEDs\r\n>");
-		} else if (strstr(telnet_cmd,"up")) {
-			ht1632c_set_brightness(15);
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Dimming up LEDs\r\n>");
-		} else {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Command not found \r\n>");
-		}
-	} else if (strstr(telnet_cmd,"get")) {
-		if (strstr(telnet_cmd,"password")) {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend(PASS);
-			at_cipsend("\r\n>");
-		} else if (strstr(telnet_cmd,"ssid")) {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend(SSID);
-			at_cipsend("\r\n>");
-		} else {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Command not found \r\n>");
-		}
-	} else if (strstr(telnet_cmd,"get")) {
-		if (strstr(telnet_cmd,"password")) {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend(PASS);
-			at_cipsend("\r\n>");
-		} else if (strstr(telnet_cmd,"ssid")) {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend(SSID);
-			at_cipsend("\r\n>");
-		} else {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Command not found \r\n>");
-		}
-	} else if (strstr(telnet_cmd,"set")) {
-		if (strstr(telnet_cmd,"time")) {
-			time_t time;
-			uint16_t timeout = 1000;
-			uint16_t cnt = 0;
-			char *token;
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Date format - [hh:mm:ss:yyyy]\r\n>");
-			
-			while(!got_reply && (++cnt < timeout)) {
-				_delay_ms(60);
+			at_cipsend("Welcome to the LED Matrix Clock telnet interface\r\n");
+			at_cipsend("Type \"man\" to view all available commands\r\n>");
+		} else if (strstr(telnet_cmd,"led")) {
+			if (strstr(telnet_cmd,"on")) {
+				memset(telnet_cmd, 0, 50);
+				ht1632c_fill_screen();
+				at_cipsend("Turning on LEDs\r\n>");
+				} else if (strstr(telnet_cmd,"off")) {
+				ht1632c_clear_screen();
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Turning of LEDs\r\n>");
+				} else if (strstr(telnet_cmd,"down")) {
+				ht1632c_set_brightness(0);
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Dimming down LEDs\r\n>");
+				} else if (strstr(telnet_cmd,"up")) {
+				ht1632c_set_brightness(15);
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Dimming up LEDs\r\n>");
+				} else {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Command not found \r\n>");
 			}
-			
-			if (strlen(telnet_cmd) == 24) {
+		} else if (strstr(telnet_cmd,"get")) {
+			if (strstr(telnet_cmd,"password")) {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend(PASS);
+				at_cipsend("\r\n>");
+				} else if (strstr(telnet_cmd,"ssid")) {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend(SSID);
+				at_cipsend("\r\n>");
+				} else {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Command not found \r\n>");
+			}
+		} else if (strstr(telnet_cmd,"get")) {
+			if (strstr(telnet_cmd,"password")) {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend(PASS);
+				at_cipsend("\r\n>");
+				} else if (strstr(telnet_cmd,"ssid")) {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend(SSID);
+				at_cipsend("\r\n>");
+				} else {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Command not found \r\n>");
+			}
+		} else if (strstr(telnet_cmd,"set")) {
+			if (strstr(telnet_cmd,"time")) {
+				time_t time;
+				uint16_t timeout = 1000;
+				uint16_t cnt = 0;
+				char *token;
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Date format - [hh:mm:ss:yyyy]\r\n>");
 				
-				token = strtok(telnet_cmd,":");
-				if (token == NULL) {
-					at_cipsend("Wrong time format!\r\n");
-					return ESP8266_ERROR;
-				}
-			
-				token = strtok(NULL,":");
-				if (token == NULL) {
-					at_cipsend("Wrong time format...failed at hours!\r\n");
-					return ESP8266_ERROR;
-				}
-				
-				time.hours = atoi(token);
-				if (time.hours > 23) {
-					at_cipsend("Wrong time format...failed at hours!\r\n");
-					return ESP8266_ERROR;
-				}
-		
-				token = strtok(NULL,":");
-				if (token == NULL) {
-					at_cipsend("Wrong time format...failed at minutes!\r\n");
-					return ESP8266_ERROR;
-				}
-				
-				time.minutes = atoi(token);
-				if (time.minutes > 59) {
-					at_cipsend("Wrong time format...failed at minutes!\r\n");
-					return ESP8266_ERROR;
-				}
-				
-				token = strtok(NULL,":");
-				if (token == NULL) {
-					at_cipsend("Wrong time format...failed at seconds!\r\n");
-					return ESP8266_ERROR;
-				}
-				
-				time.seconds = atoi(token);
-				if (time.seconds > 59) {
-					at_cipsend("Wrong time format...failed at seconds!\r\n");
-					return ESP8266_ERROR;
+				while(!got_reply && (++cnt < timeout)) {
+					_delay_ms(60);
 				}
 				
-				token = strtok(NULL,":");
-				if (token == NULL) {
-					at_cipsend("Wrong time format...failed at years!\r\n");
-					return ESP8266_ERROR;
+				if (strlen(telnet_cmd) == 24) {
+					
+					token = strtok(telnet_cmd,":");
+					if (token == NULL) {
+						at_cipsend("Wrong time format!\r\n");
+						return ESP8266_ERROR;
+					}
+					
+					token = strtok(NULL,":");
+					if (token == NULL) {
+						at_cipsend("Wrong time format...failed at hours!\r\n");
+						return ESP8266_ERROR;
+					}
+					
+					time.hours = atoi(token);
+					if (time.hours > 23) {
+						at_cipsend("Wrong time format...failed at hours!\r\n");
+						return ESP8266_ERROR;
+					}
+					
+					token = strtok(NULL,":");
+					if (token == NULL) {
+						at_cipsend("Wrong time format...failed at minutes!\r\n");
+						return ESP8266_ERROR;
+					}
+					
+					time.minutes = atoi(token);
+					if (time.minutes > 59) {
+						at_cipsend("Wrong time format...failed at minutes!\r\n");
+						return ESP8266_ERROR;
+					}
+					
+					token = strtok(NULL,":");
+					if (token == NULL) {
+						at_cipsend("Wrong time format...failed at seconds!\r\n");
+						return ESP8266_ERROR;
+					}
+					
+					time.seconds = atoi(token);
+					if (time.seconds > 59) {
+						at_cipsend("Wrong time format...failed at seconds!\r\n");
+						return ESP8266_ERROR;
+					}
+					
+					token = strtok(NULL,":");
+					if (token == NULL) {
+						at_cipsend("Wrong time format...failed at years!\r\n");
+						return ESP8266_ERROR;
+					}
+					time.year = atoi(token);
+					rtc_set_time(time.seconds,time.minutes,time.hours,time.days,time.year);
+					at_cipsend("Time was successfully set!\r\n");
+					} else {
+					at_cipsend("Wrong time format or timeout!\r\n");
 				}
-				time.year = atoi(token);
-				rtc_set_time(time.seconds,time.minutes,time.hours,time.days,time.year);	
-				at_cipsend("Time was successfully set!\r\n");
+				
+			} else if (strstr(telnet_cmd,"ssid")) {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend(SSID);
+				at_cipsend("\r\n");
+				} else {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Not a valid command\r\n");
+			}
+		} else if (strstr(telnet_cmd,"wifi")) {
+			if (strstr(telnet_cmd,"off")) {
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Turning off wifi. Use BTN1 to turn it on again.\r\n");
+				esp8266_off();
+				break;
 			} else {
-				at_cipsend("Wrong time format or timeout!\r\n");
+				memset(telnet_cmd, 0, 50);
+				at_cipsend("Command not found \r\n");
 			}
-			
-		} else if (strstr(telnet_cmd,"ssid")) {
+		} else if (strstr(telnet_cmd,"man")) {
 			memset(telnet_cmd, 0, 50);
-			at_cipsend(SSID);
-			at_cipsend("\r\n");
-		} else {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Not a valid command\r\n");
-		}
-	} else if (strstr(telnet_cmd,"wifi")) {
-		if (strstr(telnet_cmd,"off")) {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Turning off wifi. Use BTN1 to turn it on again.\r\n");
-			esp8266_off();
-		} else {
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("Command not found \r\n");
-		}
-	} else if (strstr(telnet_cmd,"man")) {
-		memset(telnet_cmd, 0, 50);
-		at_cipsend("-----------------------------------\r\n");
-		at_cipsend("led on - Turns the entire LED array on.\r\n");
-		at_cipsend("led off - Turns the entire LED array off.\r\n");
-		at_cipsend("-----------------------------------\r\n");
-		at_cipsend("set time - Sets the time and date of the clock. Format [hh:mm:ss:yyyy]\r\n");
-		at_cipsend("set ssid - Sets the SSID for the WiFi connection \r\n");
-		at_cipsend("set password - Sets the PASSWORD for the WiFi connection. \r\n");
-		at_cipsend("-----------------------------------\r\n");
-		at_cipsend("get time - Show the time and date of the clock. \r\n");
-		at_cipsend("get ssid - Show the SSID for the WiFi connection \r\n");
-		at_cipsend("get password - Show the PASSWORD for the WiFi connection. \r\n");
-		at_cipsend("-----------------------------------\r\n");
+			at_cipsend("-----------------------------------\r\n");
+			at_cipsend("led on - Turns the entire LED array on.\r\n");
+			at_cipsend("led off - Turns the entire LED array off.\r\n");
+			at_cipsend("-----------------------------------\r\n");
+			at_cipsend("set time - Sets the time and date of the clock. Format [hh:mm:ss:yyyy]\r\n");
+			at_cipsend("set ssid - Sets the SSID for the WiFi connection \r\n");
+			at_cipsend("set password - Sets the PASSWORD for the WiFi connection. \r\n");
+			at_cipsend("-----------------------------------\r\n");
+			at_cipsend("get time - Show the time and date of the clock. \r\n");
+			at_cipsend("get ssid - Show the SSID for the WiFi connection \r\n");
+			at_cipsend("get password - Show the PASSWORD for the WiFi connection. \r\n");
+			at_cipsend("-----------------------------------\r\n");
+		}	
 	}
 }
 

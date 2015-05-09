@@ -17,8 +17,8 @@ void rtc_setup(void) {
 	CLK.RTCCTRL = CLK_RTCSRC_TOSC32_gc | CLK_RTCEN_bm;
 	while (RTC.STATUS & RTC_SYNCBUSY_bm);
 	
-	//RTC.PER = 32768;
-	RTC.PER = 1000;
+	RTC.PER = 32768;
+	//RTC.PER = 100;
 	RTC.INTCTRL = RTC_OVFINTLVL_MED_gc;
 	RTC.CNT = 0;
 	RTC.COMP = 0;
@@ -46,12 +46,11 @@ uint16_t y) {
 	
 	cli();
 	
-	//time.seconds = s;
+	time.seconds = s;
 	time.minutes = m;
 	time.hours = h;
-	//time.days = d;
-	//time.weeks = w;
-	//time.year = y;
+	time.days = d;
+	time.year = y;
 	
 	rtc_update_display(BOTTOM,time.minutes);
 	rtc_update_display(TOP,time.hours);
@@ -164,7 +163,31 @@ void rtc_update_display_alt(void) {
 	ht1632c_scroll_print(buffer,2,2);
 }
 
+void rtc_update_seconds(void) {
+	
+	//This needs to be changed
+	static uint8_t x = 0;
+	static uint8_t y = 0;
+	
+	ht1632c_draw_pixel(x,y,0);
+	
+	if (x < 15 && y == 0)
+	{
+		x++;
+	} else if (x == 15 && y < 15) {
+		y++;
+	} else if (y == 15 && x > 0) {
+		x--;
+	} else if (x == 0 && y > 0) {
+		y--;
+	}
+	ht1632c_draw_pixel(x,y,1);
+	
+	ht1632c_refresh_screen();
+}
+
 ISR(RTC_OVF_vect) {
+	//rtc_update_seconds();
 	if (++time.seconds == 60) {
 		
 		time.seconds = 0;
@@ -172,19 +195,19 @@ ISR(RTC_OVF_vect) {
 		if (++time.minutes == 60) {
 			
 			time.minutes = 0;
-			//rtc_update_display(BOTTOM,time.minutes);
+			rtc_update_display(BOTTOM,time.minutes);
 			
 			if (++time.hours == 24) {
 				time.weeks += (++time.days)/7;
 				time.year += time.weeks/52;
 				time.hours = 0;
-				//rtc_update_display(TOP,time.hours);
+				rtc_update_display(TOP,time.hours);
 			} else {
-				//rtc_update_display(TOP,time.hours);
+				rtc_update_display(TOP,time.hours);
 			}
 			time.minutes = 0;
 		} else {
-			//rtc_update_display(BOTTOM,time.minutes);
+			rtc_update_display(BOTTOM,time.minutes);
 		}
 	}
 }

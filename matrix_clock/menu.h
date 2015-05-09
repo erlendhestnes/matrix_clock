@@ -11,6 +11,6 @@
 
 #include "global.h"
 
-
+void menu_state_machine(void);
 
 #endif /* MENU_H_ */

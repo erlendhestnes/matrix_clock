@@ -26,8 +26,6 @@
 #include "drivers/sensors/si114x/Si114x_functions.h"
 #include "drivers/sensors/si114x/Si114x_handler.h"
 
-static volatile uint16_t counter = 0;
-
 FATFS FatFs;		// FatFs work area needed for each volume
 FIL Fil;			// File object needed for each open file
 BYTE Buff[2048];	// Working buffer 2048
@@ -69,149 +67,36 @@ static inline void sd_card(void) {
 	puts(Buff);
 }
 
-void print_token(jsmntok_t *tokens, char *js, uint8_t i) {
-	int len;
-	jsmntok_t key;
-
-	key = tokens[i];
-	len = key.end - key.start;
-	char keyString[ len+1 ];
-	memcpy( keyString, &js[ key.start ], len );
-	keyString[ len ] = '\0';
-	//printf( "Key[%d]: %s\n", i, keyString );
-	puts(keyString);
-}
-
-void tcc_setup(void) {
-	TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
-	TCC1.PERL = 0x80;
-	TCC1.PERH = 0x0C;
-	TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
-}
-
-void proximity_fade_demo(void) {
-	
-	uint8_t flip = 1;
-	
-	uint8_t reg0 = i2c_read_data(SI114X_ADDR,REG_PS1_DATA0);
-	uint8_t reg1 = i2c_read_data(SI114X_ADDR,REG_PS1_DATA1);
-
-	uint16_t reg01 = ((u16)reg1 << 8) | reg0;
-	
-	if (reg01 < 2200)
-	{
-		if (flip) {
-			ht1632c_send_command(HT1632_LED_OFF);
-			flip = 0;
-		}
-		} else {
-		if (!flip) {
-			ht1632c_send_command(HT1632_LED_ON);
-			flip = 1;
-		}
-		ht1632_fade(reg01/400);
-	}
-}
-
 int main(void) {
-
-	//Note to self: There is a memory issue, try to reduce size of buffers
-	SI114X_IRQ_SAMPLE sensor_data;
-	
-	jsmn_parser p;
-	//jsmntok_t tokens[100];
-	jsmnerr_t r;
-	
-	char *cmd;
-	//char json_buffer[RX_BUFFER];
-	
-	esp8266_status_t status;
 	
 	clock_setup_32_mhz();
 	ht1632c_setup(HT1632_COMMON_16NMOS);
 	ht1632c_set_brightness(0);
 	ht1632c_clear_screen();
+	esp8266_off();
 	
 	uart_setup();
+	stdout = stdin = &mystdout;
+	puts("LED MATRIX Clock - By: Erlend Hestnes\r\n");
+	
 	pmic_setup();
 	twi_setup(&TWIC);
 	si114x_reset(SI114X_ADDR);
-	//si114x_setup();
-	//tcc_setup();
+	twi_off();
+	
 	btn_setup();
-	//rtc_setup();
-	//rtc_init_time();
-	jsmn_init(&p);
+	rtc_setup();
+	rtc_set_time(30,0,0,0,2015);
 	
-	stdout = stdin = &mystdout;
-	puts("LED MATRIX Clock - By: Erlend Hestnes\r\n");
-
-	//rtc_set_time(18,50,0);
-	
-	//sd_card();
+	//ht1632_dummy();
 	
 	sei();
 	
-	//esp8266_off();
-	esp8266_on();
-	esp8266_setup_webserver(true);
-	
-	/*
-	do {status = esp8266_setup(); } while (status != ESP8266_SUCCESS);
-	ht1632c_scroll_print("Wifi on",0,0);
-	do {status = esp8266_join_ap(SSID,PASS); } while (status != ESP8266_SUCCESS);
-	ht1632c_scroll_print(SSID,0,0);
-	status = esp8266_connect(DST_IP,ADDRESS,json_buffer);
-	ht1632c_scroll_print("Got Data",0,0);
-	esp8266_off();
-	puts("GOT DATA:");
-	puts(json_buffer);
-	
-	r = jsmn_parse(&p,json_buffer,strlen(json_buffer),tokens,100);
-	
-	print_token(tokens,json_buffer,3);
-	print_token(tokens,json_buffer,4);
-	print_token(tokens,json_buffer,5);
-	
-	//uint8_t *data;
-	//uint8_t flip = 1;
-	
-	*/
-	//play_sound("whatever!");
-	
+	SLEEP.CTRL |= SLEEP_MODE_PWR_SAVE;
+		
 	while (1) {
-		
-		esp8266_telnet_server();
-		
-		//ht1632c_scroll_print("16:04",4,4);
-		//esp8266_run_simple_webserver(Buff);
-		
-		/*
-		sensor_data.timestamp = counter;
-		si114x_get_data(&sensor_data);
-		si114x_process_samples(SI114X_ADDR,&sensor_data); 
-		*/
-		
-		/*
-		if (sensor_data.ps1 < 1600)
-		{
-			if (flip) {
-				ht1632c_send_command(HT1632_LED_OFF);
-				flip = 0;
-			}
-			} else {
-			if (!flip) {
-				ht1632c_send_command(HT1632_LED_ON);
-				flip = 1;
-			}
-			ht1632_fade(sensor_data.ps1/300);
-		}
-		*/
-		//rtc_update_display_alt();
+		//menu_state_machine();
+		SLEEP.CTRL |= SLEEP_SEN_bm;
+		asm("sleep");
 	}
-}
-
-//Used for SI114x Timestamp
-ISR(TCC1_OVF_vect) {
-	counter++;
 }

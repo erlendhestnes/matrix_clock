@@ -24,7 +24,11 @@ menu.d menu.o: .././menu.c .././menu.h .././global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
  .././drivers/rtc/rtc.h .././drivers/rtc/../../global.h \
  .././drivers/port/port.h .././drivers/port/../../global.h \
- .././drivers/ht1632c/ht1632c.h .././drivers/ht1632c/../../global.h
+ .././drivers/ht1632c/ht1632c.h .././drivers/ht1632c/../../global.h \
+ .././drivers/esp8266/esp8266.h .././drivers/esp8266/../../global.h \
+ .././drivers/sensors/si114x/Si114x_functions.h \
+ .././drivers/sensors/si114x/Si114x_types.h \
+ .././drivers/sensors/si114x/User_defs.h .././json/jsmn.h
 
 .././menu.h:
 
@@ -87,3 +91,15 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 .././drivers/ht1632c/ht1632c.h:
 
 .././drivers/ht1632c/../../global.h:
+
+.././drivers/esp8266/esp8266.h:
+
+.././drivers/esp8266/../../global.h:
+
+.././drivers/sensors/si114x/Si114x_functions.h:
+
+.././drivers/sensors/si114x/Si114x_types.h:
+
+.././drivers/sensors/si114x/User_defs.h:
+
+.././json/jsmn.h:

@@ -41,6 +41,14 @@ void twi_setup(TWI_t* const TWI) {
 	TWIC.MASTER.STATUS = TWI_MASTER_BUSSTATE_IDLE_gc;
 }
 
+void twi_off(void) {
+	TWIC.MASTER.CTRLA &= ~(TWI_MASTER_ENABLE_bm);
+}
+
+void twi_on(void) {
+	TWIC.MASTER.CTRLA = TWI_MASTER_ENABLE_bm;
+}
+
 void twi_stop_transmission(TWI_t* const TWI) {
 	TWI->MASTER.CTRLC = TWI_MASTER_ACKACT_bm | TWI_MASTER_CMD_STOP_gc;
 }
