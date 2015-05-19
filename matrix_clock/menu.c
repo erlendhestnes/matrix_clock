@@ -37,6 +37,31 @@ void print_token(jsmntok_t *tokens, char *js, uint8_t i) {
 
 void menu_state_machine(void) {
 	if (btn_status != NONE) {
+		rtc_disable_time_render();
+		if (btn_status == BTN4)
+		{
+			ht1632c_slide_out_to_right();
+			ht1632c_draw_char_small(1,7,'M',1,1);
+			ht1632c_draw_char_small(5,7,'E',1,1);
+			ht1632c_draw_char_small(9,7,'N',1,1);
+			ht1632c_draw_char_small(13,7,'U',1,1);
+			ht1632c_slide_in_from_left();
+		} else if (btn_status == BTN2) {
+			ht1632c_clear_screen();
+			rtc_enable_time_render();
+		} else {
+
+			ht1632c_slide_out_to_left();
+			ht1632c_draw_char_small(2,7,'I',1,1);
+			ht1632c_draw_char_small(6,7,'N',1,1);
+			ht1632c_draw_char_small(10,7,'F',1,1);
+			ht1632c_draw_char_small(14,7,'O',1,1);
+			ht1632c_slide_in_from_right();
+		}
+
+		btn_status = NONE;
+	}
+		/*
 		esp8266_status_t status;
 		
 		SI114X_IRQ_SAMPLE sensor_data;
@@ -102,11 +127,12 @@ void menu_state_machine(void) {
 				print_token(tokens,json_buffer,5);
 				break;
 			case BTN4:
-
-			break;
+				ht1632c_shift_right();
+				break;
 		}
 		btn_status = NONE;
 	}
+	*/
 }
 
 //Used for SI114x Timestamp

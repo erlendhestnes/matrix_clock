@@ -234,6 +234,8 @@ static inline void at_cipsend(char *str) {
 
 esp8266_status_t esp8266_telnet_server(void) {
 	
+	//Todo - lookup would be faster here
+	
 	while(1) {
 		if (status == ESP8266_CONNECT) {
 			status = ESP8266_NONE;
@@ -245,19 +247,19 @@ esp8266_status_t esp8266_telnet_server(void) {
 				memset(telnet_cmd, 0, 50);
 				ht1632c_fill_screen();
 				at_cipsend("Turning on LEDs\r\n>");
-				} else if (strstr(telnet_cmd,"off")) {
+			} else if (strstr(telnet_cmd,"off")) {
 				ht1632c_clear_screen();
 				memset(telnet_cmd, 0, 50);
 				at_cipsend("Turning of LEDs\r\n>");
-				} else if (strstr(telnet_cmd,"down")) {
+			} else if (strstr(telnet_cmd,"down")) {
 				ht1632c_set_brightness(0);
 				memset(telnet_cmd, 0, 50);
 				at_cipsend("Dimming down LEDs\r\n>");
-				} else if (strstr(telnet_cmd,"up")) {
+			} else if (strstr(telnet_cmd,"up")) {
 				ht1632c_set_brightness(15);
 				memset(telnet_cmd, 0, 50);
 				at_cipsend("Dimming up LEDs\r\n>");
-				} else {
+			} else {
 				memset(telnet_cmd, 0, 50);
 				at_cipsend("Command not found \r\n>");
 			}
@@ -304,65 +306,88 @@ esp8266_status_t esp8266_telnet_server(void) {
 					
 					token = strtok(telnet_cmd,":");
 					if (token == NULL) {
-						at_cipsend("Wrong time format!\r\n");
+						at_cipsend("Wrong time format!\r\n>");
 						return ESP8266_ERROR;
 					}
 					
 					token = strtok(NULL,":");
 					if (token == NULL) {
-						at_cipsend("Wrong time format...failed at hours!\r\n");
+						at_cipsend("Wrong time format...failed at hours!\r\n>");
 						return ESP8266_ERROR;
 					}
 					
 					time.hours = atoi(token);
 					if (time.hours > 23) {
-						at_cipsend("Wrong time format...failed at hours!\r\n");
+						at_cipsend("Wrong time format...failed at hours!\r\n>");
 						return ESP8266_ERROR;
 					}
 					
 					token = strtok(NULL,":");
 					if (token == NULL) {
-						at_cipsend("Wrong time format...failed at minutes!\r\n");
+						at_cipsend("Wrong time format...failed at minutes!\r\n>");
 						return ESP8266_ERROR;
 					}
 					
 					time.minutes = atoi(token);
 					if (time.minutes > 59) {
-						at_cipsend("Wrong time format...failed at minutes!\r\n");
+						at_cipsend("Wrong time format...failed at minutes!\r\n>");
 						return ESP8266_ERROR;
 					}
 					
 					token = strtok(NULL,":");
 					if (token == NULL) {
-						at_cipsend("Wrong time format...failed at seconds!\r\n");
+						at_cipsend("Wrong time format...failed at seconds!\r\n>");
 						return ESP8266_ERROR;
 					}
 					
 					time.seconds = atoi(token);
 					if (time.seconds > 59) {
-						at_cipsend("Wrong time format...failed at seconds!\r\n");
+						at_cipsend("Wrong time format...failed at seconds!\r\n>");
 						return ESP8266_ERROR;
 					}
 					
 					token = strtok(NULL,":");
 					if (token == NULL) {
-						at_cipsend("Wrong time format...failed at years!\r\n");
+						at_cipsend("Wrong time format...failed at years!\r\n>");
 						return ESP8266_ERROR;
 					}
 					time.year = atoi(token);
 					rtc_set_time(time.seconds,time.minutes,time.hours,time.days,time.year);
-					at_cipsend("Time was successfully set!\r\n");
-					} else {
-					at_cipsend("Wrong time format or timeout!\r\n");
+					at_cipsend("Time was successfully set!\r\n>");
+				} else {
+					at_cipsend("Wrong time format or timeout!\r\n>");
 				}
 				
 			} else if (strstr(telnet_cmd,"ssid")) {
-				memset(telnet_cmd, 0, 50);
-				at_cipsend(SSID);
-				at_cipsend("\r\n");
+				
+					uint16_t timeout = 1000;
+					uint16_t cnt = 0;
+					char *token;
+					memset(telnet_cmd, 0, 50);
+					
+					at_cipsend("Enter SSID, max 32 characters\r\n>");
+					
+					while(!got_reply && (++cnt < timeout)) {
+						_delay_ms(60);
+					}
+					
+					if (token == NULL) {
+						at_cipsend("Something went wrong!\r\n>");
+						return ESP8266_ERROR;
+					}
+					
+					token = strtok(NULL,":");
+				
+					EEPROM_WaitForNVM();
+					for (uint8_t i = 0; i < EEPROM_PAGESIZE; ++i) {
+						EEPROM(SSID_EEPROM_PAGE, i) = *token++;
+					}
+					
+					memset(telnet_cmd, 0, 50);
+					at_cipsend("SSID set\r\n>");
 				} else {
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Not a valid command\r\n");
+					memset(telnet_cmd, 0, 50);
+					at_cipsend("Not a valid command\r\n>");
 			}
 		} else if (strstr(telnet_cmd,"wifi")) {
 			if (strstr(telnet_cmd,"off")) {

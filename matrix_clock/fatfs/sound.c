@@ -96,9 +96,9 @@ ISR(TCC0_OVF_vect)
 	fcb->ct = ct;
 	fcb->ri = ri & (fcb->sz_buff - 1);
 	
-	uint16_t data = smooth(l1,0.35,data);
+	//uint16_t data = smooth(l1,0.35,data);
 	
-	DACB.CH0DATA = data;
+	DACB.CH0DATA = l1;//data;
 	
 	//prev = data;
 }

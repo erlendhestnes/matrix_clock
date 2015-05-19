@@ -39,4 +39,7 @@ void rtc_decrement_minute(void);
 void rtc_set_time_mode(void);
 void rtc_time_mode(void);
 
+void rtc_disable_time_render(void);
+void rtc_enable_time_render(void);
+
 #endif

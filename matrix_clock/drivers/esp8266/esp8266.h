@@ -22,6 +22,8 @@
 #define ESP_RST		PIN4_bm
 #define CH_EN		PIN5_bm
 
+#define SSID_EEPROM_PAGE	0
+
 typedef enum {
 	ESP8266_ERROR,
 	ESP8266_SUCCESS,

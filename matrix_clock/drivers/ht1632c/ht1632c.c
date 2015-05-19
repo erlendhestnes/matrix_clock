@@ -20,7 +20,7 @@
 #define WIDTH 16
 #define HEIGHT 16
 
-static uint8_t ledmatrix[48]; // 16 * 24 / 8
+static uint8_t ledmatrix[32]; // 16 * 24 / 8
 
 static int16_t cursor_x;
 static int16_t cursor_y;
@@ -173,7 +173,7 @@ void ht1632c_draw_line(int8_t x0, int8_t y0, int8_t x1, int8_t y1,uint8_t color)
 	}
 }
 
-void ht1632c_fill_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h,uint8_t color) {
+void ht1632c_draw_filled_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h,uint8_t color) {
 	
 	for (uint8_t i=x; i<x+w; i++) {
 		for (uint8_t j=y; j<y+h; j++) {
@@ -218,7 +218,7 @@ void ht1632c_draw_circle(uint8_t x0, uint8_t y0, uint8_t r,uint8_t color) {
 	}
 }
 
-void ht1632c_fill_circle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color) {
+void ht1632c_draw_filled_circle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color) {
 
 	int16_t f = 1 - r;
 	int16_t ddF_x = 1;
@@ -266,7 +266,7 @@ void ht1632c_refresh_screen() {
 	// send with address 0
 	ht1632c_write_data(0, 7);
 
-	for (uint16_t i=0; i<(WIDTH*HEIGHT/8); i+=2) {
+	for (uint16_t i=0; i < 32; i+=2) {
 		uint16_t d = ledmatrix[i];
 		d <<= 8;
 		d |= ledmatrix[i+1];
@@ -274,6 +274,76 @@ void ht1632c_refresh_screen() {
 		ht1632c_write_data(d, 16);
 	}
 	HT1632_PORT.OUTSET = _cs;
+}
+
+void ht1632c_slide_in_from_left(void) {
+	
+	uint8_t temp[32];
+	
+	memset(temp,0,32);
+	memcpy(temp,ledmatrix,32);
+	memset(ledmatrix,0,32);
+	
+	int8_t i;
+	
+	for (i = 31; i >= 17; i -= 2)
+	{
+		ledmatrix[0] = temp[i-16];
+		ledmatrix[16] = temp[i];
+		ht1632c_shift_right();
+	}
+	
+	for (i = 30; i >= 16; i -= 2)
+	{
+		ledmatrix[0] = temp[i-16];
+		ledmatrix[16] = temp[i];
+		ht1632c_shift_right();
+	}
+	
+}
+
+void ht1632c_slide_in_from_right(void) {
+	
+	uint8_t temp[32];
+	
+	memset(temp,0,32);
+	memcpy(temp,ledmatrix,32);
+	memset(ledmatrix,0,32);
+	
+	int8_t i;
+	
+	for (i = 0; i <= 14; i += 2)
+	{
+		ledmatrix[15] = temp[i];
+		ledmatrix[31] = temp[i+16];
+		ht1632c_shift_left();
+	}
+	
+	for (i = 1; i <= 15; i += 2)
+	{
+		ledmatrix[15] = temp[i];
+		ledmatrix[31] = temp[i+16];
+		ht1632c_shift_left();
+	}
+	
+}
+
+void ht1632c_slide_out_to_right(void) {
+	
+	uint8_t i;
+	
+	for (i = 0; i < 31; i++) {
+		ht1632c_shift_right();
+	}
+}
+
+void ht1632c_slide_out_to_left(void) {
+	
+	uint8_t i;
+	
+	for (i = 0; i < 31; i++) {
+		ht1632c_shift_left();
+	}
 }
 
 void ht1632c_fill_screen() {
@@ -301,7 +371,7 @@ static inline void ht1632c_clear_buffer() {
 
 void ht1632c_write_data(uint16_t d, uint8_t bits) {
 	HT1632_PORT.DIRSET = _data;
-	for (uint8_t i=bits; i > 0; i--) {
+	for (uint8_t i = bits; i > 0; i--) {
 		HT1632_PORT.OUTCLR = _wr;
 		if (d & _BV(i-1)) {
 			HT1632_PORT.OUTSET = _data;
@@ -359,7 +429,7 @@ void ht1632c_draw_char(int16_t x, int16_t y, char c,uint16_t color, uint8_t size
 					}
 				}
 				else {  // big size
-					ht1632c_fill_rect(x+i*size, y+j*size, size, size, color);
+					ht1632c_draw_filled_rect(x+i*size, y+j*size, size, size, color);
 				}
 			}
 			line >>= 1;
@@ -367,7 +437,7 @@ void ht1632c_draw_char(int16_t x, int16_t y, char c,uint16_t color, uint8_t size
 	}
 }
 
-void ht1632c_draw_char_2(int16_t x, int16_t y, char c,uint16_t color, uint8_t size) {
+void ht1632c_draw_char_small(int16_t x, int16_t y, char c,uint16_t color, uint8_t size) {
 	
 	int8_t i;
 	int8_t j;
@@ -382,7 +452,7 @@ void ht1632c_draw_char_2(int16_t x, int16_t y, char c,uint16_t color, uint8_t si
 					}
 				}
 				else {  // big size
-					ht1632c_fill_rect(x+j*size, y-i*size, size, size, color);
+					ht1632c_draw_filled_rect(x+j*size, y-i*size, size, size, color);
 				}
 			}
 			line >>= 1;
@@ -398,7 +468,7 @@ void ht1632c_print(uint8_t *str, bool big_font) {
 			ht1632c_draw_char(cursor_x, cursor_y, *str++, 1, textsize);
 			cursor_x += textsize*6;
 		} else {
-			ht1632c_draw_char_2(cursor_x, cursor_y, *str++, 1, textsize);
+			ht1632c_draw_char_small(cursor_x, cursor_y, *str++, 1, textsize);
 			cursor_x += textsize*4;
 		}
 	}
@@ -519,7 +589,7 @@ void ht1632_fade(uint8_t pwm) {
 	prev_pwm = pwm;
 }
 
-void delay_ms( int ms )
+static inline void delay_ms( int ms )
 {
 	for (int i = 0; i < ms; i++)
 	{
@@ -530,12 +600,14 @@ void delay_ms( int ms )
 void ht1632c_loading(void) {
 	uint8_t i;
 	for (i = 0; i < WIDTH; i++) {
+		ht1632c_set_brightness(i);
 		ht1632c_draw_pixel(i-1,0,0);
 		ht1632c_draw_pixel(i,0,1);
 		ht1632c_refresh_screen();
 		delay_ms(i*7);
 	}
 	for (i = WIDTH; i > 0; i--) {
+		ht1632c_set_brightness(i);
 		ht1632c_draw_pixel(i+1,0,0);
 		ht1632c_draw_pixel(i,0,1);
 		ht1632c_refresh_screen();
@@ -545,19 +617,114 @@ void ht1632c_loading(void) {
 }
 
 void ht1632c_shift_left(void) {
-	for (int k = 48; k > 0; k--)
-	{
-		ledmatrix[k]=ledmatrix[k-1];
-		ht1632c_refresh_screen();
-		_delay_ms(100);
+	
+	int8_t i;
+	
+	for (i = 0; i <= 30; i += 2) {
+		if (i == 14) {
+			ledmatrix[14] = ledmatrix[1];
+			} else if(i == 30) {
+			ledmatrix[30] = ledmatrix[17];
+			} else {
+			ledmatrix[i] = ledmatrix[i+2];
+		}
 	}
+	
+	for (i = 1; i <= 31; i += 2) {
+		if (i == 15) {
+			ledmatrix[15] = 0;
+		} else if (i == 31) {
+			ledmatrix[31] = 0;
+		} else {
+			ledmatrix[i] = ledmatrix[i+2];
+		}
+	}
+	
+	ht1632c_refresh_screen();
+	_delay_ms(15);
 }
 
+void ht1632c_shift_right(void) {
+	
+	int8_t i;
+	
+	for (i = 31; i > 0; i -= 2) {
+		if (i == 1) {
+			ledmatrix[1] = ledmatrix[14];
+		} else if(i == 17) {
+			ledmatrix[17] = ledmatrix[30];
+		} else {
+			ledmatrix[i] = ledmatrix[i-2];
+		}
+	}
+	for (i = 30; i >= 0; i -= 2) {
+		if (i == 0) {
+			ledmatrix[0] = 0;
+		} else if(i == 16) {
+			ledmatrix[16] = 0;
+		} else {
+			ledmatrix[i] = ledmatrix[i-2];
+		}
+	}
+	
+	ht1632c_refresh_screen();
+	_delay_ms(15);
+	
+}
+
+void ht1632c_shift_right_in(void) {
+	uint8_t ledmatrix_2[32];
+	memset(ledmatrix_2,0,32);
+	
+	ledmatrix_2[31] = 0x0f;
+	ledmatrix_2[30] = 0x07;
+	ledmatrix_2[29] = 0x03;
+	ledmatrix_2[28] = 0x01;
+	
+	int8_t i;
+	
+	for (i = 31; i > 0; i--)
+	{
+		ledmatrix[0] = ledmatrix_2[i];
+		ht1632c_shift_right();
+	}
+	
+}
+
+
+
+
 void ht1632_dummy(void) {
-	ht1632c_draw_char_2(1,7,'1',1,1);
-	ht1632c_draw_char_2(5,7,'7',1,1);
+	ht1632c_draw_char_small(1,7,'1',1,1);
+	ht1632c_draw_char_small(5,7,'7',1,1);
 	//ht1632c_draw_char_2(7,8,':',1,1);
-	ht1632c_draw_char_2(10,7,'3',1,1);
-	ht1632c_draw_char_2(14,7,'4',1,1);
+	ht1632c_draw_char_small(10,7,'3',1,1);
+	ht1632c_draw_char_small(14,7,'4',1,1);
+	//ht1632c_refresh_screen();
+}
+
+void ht1632c_draw_button_info(void) {
+	ht1632c_draw_pixel(1,15,1);
+	ht1632c_draw_pixel(0,14,1);
+	ht1632c_draw_pixel(1,14,1);
+	ht1632c_draw_pixel(1,13,1);
+	
+	ht1632c_draw_pixel(14,15,1);
+	ht1632c_draw_pixel(14,14,1);
+	ht1632c_draw_pixel(15,14,1);
+	ht1632c_draw_pixel(14,13,1);
+	
+	ht1632c_draw_pixel(4,15,1);
+	ht1632c_draw_pixel(6,15,1);
+	ht1632c_draw_pixel(5,14,1);
+	ht1632c_draw_pixel(4,13,1);
+	ht1632c_draw_pixel(6,13,1);
+	
+	ht1632c_draw_pixel(10,15,1);
+	ht1632c_draw_pixel(9,14,1);
+	ht1632c_draw_pixel(10,14,1);
+	ht1632c_draw_pixel(11,14,1);
+	ht1632c_draw_pixel(10,13,1);
+	
 	ht1632c_refresh_screen();
 }

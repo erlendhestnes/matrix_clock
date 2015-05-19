@@ -37,7 +37,8 @@ main.d main.o: .././main.c .././drivers/ht1632c/ht1632c.h \
  .././drivers/sensors/si114x/Si114x_types.h \
  .././drivers/sensors/si114x/User_defs.h \
  .././drivers/sensors/si114x/Si114x_handler.h \
- .././drivers/sensors/si114x/Si114x_functions.h
+ .././drivers/sensors/si114x/Si114x_functions.h \
+ .././drivers/eeprom/eeprom.h .././drivers/eeprom/../../global.h
 
 .././drivers/ht1632c/ht1632c.h:
 
@@ -144,3 +145,7 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 .././drivers/sensors/si114x/Si114x_handler.h:
 
 .././drivers/sensors/si114x/Si114x_functions.h:
+
+.././drivers/eeprom/eeprom.h:
+
+.././drivers/eeprom/../../global.h:
