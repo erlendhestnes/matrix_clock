@@ -20,42 +20,51 @@
 
 void si114x_setup(void)
 {
+	_delay_ms(50);
 	si114x_reset(SI114X_ADDR);
+	_delay_ms(50);
 	si114x_init(SI114X_ADDR);
+	_delay_ms(50);
 }
 
-void si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data) 
+u8 si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data) 
 {
 	u16 data_16;
 	u8 data_8[2];
 	
-	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS1_DATA0,data_8,2);
+	puts("enter get_data()");
+	
+	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_PS1_DATA0,data_8,2);
 	data_16 = ((u16)data_8[1] << 8) | data_8[0];
 	sensor_data->ps1 = data_16;
 	
-	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS2_DATA0,data_8,2);
+	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_PS2_DATA0,data_8,2);
 	data_16 = ((u16)data_8[1] << 8) | data_8[0];
 	sensor_data->ps2 = data_16;
 	
-	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_PS3_DATA0,data_8,2);
+	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_PS3_DATA0,data_8,2);
 	data_16 = ((u16)data_8[1] << 8) | data_8[0];
 	sensor_data->ps3 = data_16;
 	
-	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_ALS_IR_DATA0,data_8,2);
+	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_ALS_IR_DATA0,data_8,2);
 	data_16 = ((u16)data_8[1] << 8) | data_8[0];
 	sensor_data->ir = data_16;
 	
-	twi_read_packet(&TWIC,SI114X_ADDR,1000,REG_ALS_VIS_DATA0,data_8,2);
+	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_ALS_VIS_DATA0,data_8,2);
 	data_16 = ((u16)data_8[1] << 8) | data_8[0];
 	sensor_data->vis = data_16;
+	
+	puts("left get_data()");
+	
+	return 0;
 }
 
 s16 si114x_init(HANDLE si114x_handle)
 {
 	s16 retval   = 0;
 
-	u8  code current_LED1  = 0x0f;   // 359 mA
-	u8  code current_LED2  = 0x0f;   // 359 mA
+	u8  code current_LED1  = 0x05;   // 359 mA
+	u8  code current_LED2  = 0x05;   // 359 mA
 	u8  code current_LED3  = 0x00;   //   0 mA
 
 	u8  tasklist      = 0x77;   // IR, PS1, PS2

@@ -1067,8 +1067,8 @@ static const unsigned char font_4x6[] PROGMEM = {
     /*
      * code=78, hex=0x4E, ascii="N"
      */
+    0x60,  /* 0111 */
     0x50,  /* 0101 */
-    0x70,  /* 0111 */
     0x50,  /* 0101 */
     0x50,  /* 0101 */
     0x50,  /* 0101 */
@@ -1077,11 +1077,11 @@ static const unsigned char font_4x6[] PROGMEM = {
     /*
      * code=79, hex=0x4F, ascii="O"
      */
-    0x20,  /* 0010 */
+    0x70,  /* 0111 */
     0x50,  /* 0101 */
     0x50,  /* 0101 */
     0x50,  /* 0101 */
-    0x20,  /* 0010 */
+    0x70,  /* 0111 */
     0x00,  /* 0000 */
 
     /*

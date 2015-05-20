@@ -36,7 +36,10 @@ typedef struct {
 	uint16_t id;
 	char *name;
 	char *time; //maybe a time_t struct?
+	int8_t temperature;
 } env_variables_t;
+
+static volatile uint16_t counter = 0;
 
 #define TEST_BYTE_1 0x55
 #define TEST_BYTE_2 0xAA
@@ -96,7 +99,6 @@ int main(void) {
 	clock_setup_32_mhz();
 	ht1632c_setup(HT1632_COMMON_16NMOS);
 	ht1632c_set_brightness(0);
-	//ht1632c_fill_screen();
 	ht1632c_clear_screen();
 	
 	esp8266_off();
@@ -107,14 +109,14 @@ int main(void) {
 	
 	pmic_setup();
 	twi_setup(&TWIC);
-	si114x_reset(SI114X_ADDR);
-	twi_off();
+	si114x_setup();
+	//btn_si114x_setup();
 	
 	btn_setup();
 	rtc_setup();
-	rtc_set_time(30,0,0,0,2015);
-	
-	sei();
+	rtc_init_time();
+	rtc_set_time(20,20,12,1,2015);
+
 	/*
 	SLEEP.CTRL |= SLEEP_MODE_PWR_SAVE;
 	
@@ -138,10 +140,27 @@ int main(void) {
 		}
 	}
 	*/
+	
+	TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
+	TCC1.PERL = 0x80;
+	TCC1.PERH = 0x0C;
+	TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
+	
+	sei();
+	
+	SI114X_IRQ_SAMPLE sensor_data;
+	
 	while (1) { 
-		
-		//menu_state_machine();
+		sensor_data.timestamp = counter;
+		si114x_get_data(&sensor_data);
+		si114x_process_samples(SI114X_ADDR,&sensor_data);
+
+		menu_state_machine(&sensor_data);
 		//SLEEP.CTRL |= SLEEP_SEN_bm;
 		//asm("sleep");
 	}
+}
+
+ISR(TCC1_OVF_vect) {
+	counter++;
 }

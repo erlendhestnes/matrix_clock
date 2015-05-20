@@ -319,7 +319,7 @@ void ht1632c_slide_in_from_right(void) {
 		ht1632c_shift_left();
 	}
 	
-	for (i = 1; i <= 15; i += 2)
+	for (i = 1; i <= 13; i += 2)
 	{
 		ledmatrix[15] = temp[i];
 		ledmatrix[31] = temp[i+16];
@@ -641,7 +641,7 @@ void ht1632c_shift_left(void) {
 	}
 	
 	ht1632c_refresh_screen();
-	_delay_ms(15);
+	_delay_ms(10);
 }
 
 void ht1632c_shift_right(void) {
@@ -668,7 +668,7 @@ void ht1632c_shift_right(void) {
 	}
 	
 	ht1632c_refresh_screen();
-	_delay_ms(15);
+	_delay_ms(10);
 	
 }
 

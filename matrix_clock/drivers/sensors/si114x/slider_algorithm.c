@@ -274,7 +274,7 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
    int16_t tmp_x = 16-((x.u16[LSB])/35);
    
 	ht1632c_motion_print("o",tmp_x);
-	*/
+   */
    // Set raw channel data for x (channel 2) and z (channel 3)
    // REPLACE_0_PS3( x.u16[LSB] );
    // REPLACE_0_AUX( z );
@@ -282,7 +282,6 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
    // If a swipe was detected, determine the direction (L/R), set up LED state machine
    // to indicate swipe gesture, and post the swipe event.
    
-   /*
    if (swipe_detect == 1)
    {
        if (xdiff > 150)             // Left Swipe
@@ -294,6 +293,7 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
 
             // send LEFT_SWIPE gesture
             printf("                            %s: %d, %d\n", "LEFT_SWIPE", swipe_speed, xdiff) ;
+			samples->gesture = 1;
        }
        else if (xdiff < -150)       // Right Swipe
        {
@@ -303,8 +303,11 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
             } // LED_State should be 8 when this loop is finished
 
             // send RIGHT_SWIPE gesture
-            printf("                            %s: %d, %d\n", "RIGHT_SWIPE", swipe_speed, -xdiff) ;            
+            printf("                            %s: %d, %d\n", "RIGHT_SWIPE", swipe_speed, -xdiff) ; 
+			samples->gesture = 2;           
        }
+   } else {
+	   samples->gesture = 0;
    }
    // End of Position calculation and swipe gesture detection
    ////////////////////////////////////////////////////////////////////////////
@@ -336,7 +339,7 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
          LED_flash_timeout = QS_GlobalCounterOverflow;
 
          // Write to Port 1 of the MCU
-         PortSet( 1, LED_flash_pattern[(--LED_State)%8]); 
+         // PortSet( 1, LED_flash_pattern[(--LED_State)%8]); 
 
          Pause_gesture_timeout = QS_GlobalCounterOverflow;
       } // when all states are done, LED_State will be back to 0
@@ -387,7 +390,6 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
        //REPLACE_0_AUX( 0 ); 
 	    //printf("no touch \r\n");
    }
-   */
 }
 
 

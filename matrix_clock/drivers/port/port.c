@@ -13,6 +13,8 @@
 #define BUTTON2 PIN7_bm
 #define BUTTON3 PIN0_bm
 
+#define SI114X_INT PIN2_bm
+
 void btn_setup(void) {
 	
 	PORTA.DIRCLR = BUTTON0 | BUTTON1 | BUTTON2;
@@ -30,6 +32,14 @@ void btn_setup(void) {
 	PORTA.INTCTRL = PORT_INT0LVL_HI_gc;
 	PORTB.INTCTRL = PORT_INT0LVL_HI_gc;
 
+}
+
+void btn_si114x_setup(void) {
+	
+	PORTA.DIRCLR = SI114X_INT;
+	PORTA.PIN2CTRL = PORT_ISC_FALLING_gc;
+	PORTA.INT1MASK = SI114X_INT;
+	PORTA.INTCTRL = PORT_INT0LVL_HI_gc;
 }
 
 void btn_top_setup(void) {
@@ -72,4 +82,8 @@ ISR(PORTA_INT0_vect) {
 ISR(PORTB_INT0_vect) {
 	btn_status = btn_check_press();
 	//printf("%d",btn_status);
+}
+
+ISR(PORTA_INT1_vect) {
+	ht1632c_fill_screen();
 }

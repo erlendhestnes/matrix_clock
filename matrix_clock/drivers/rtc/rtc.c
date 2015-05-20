@@ -20,7 +20,7 @@ void rtc_setup(void) {
 	while (RTC.STATUS & RTC_SYNCBUSY_bm);
 	
 	//RTC.PER = 32768;
-	RTC.PER = 2000;
+	RTC.PER = 3000;
 	RTC.INTCTRL = RTC_OVFINTLVL_MED_gc;
 	RTC.CNT = 0;
 	RTC.COMP = 0;
@@ -30,14 +30,16 @@ void rtc_setup(void) {
 void rtc_init_time(void) {
 	ht1632c_clear_screen();
 	
-	time.hours = 0;
-	time.minutes = 0;
 	time.seconds = 0;
+	time.minutes = 0;
+	time.hours = 0;
 	time.days = 0;
+	time.weeks = 0;
 	time.year = 0;
 	
 	rtc_update_display(BOTTOM,time.minutes);
 	rtc_update_display(TOP,time.hours);
+	ht1632c_refresh_screen();
 }
 
 void rtc_disable_time_render(void) {
@@ -56,19 +58,17 @@ uint8_t m,
 uint8_t h,
 uint16_t d,
 uint16_t y) {
-	
-	cli();
-	
+
 	time.seconds = s;
 	time.minutes = m;
 	time.hours = h;
 	time.days = d;
 	time.year = y;
 	
-	rtc_update_display(BOTTOM,time.minutes);
 	rtc_update_display(TOP,time.hours);
-	
-	sei();
+	rtc_update_display(BOTTOM,time.minutes);
+	ht1632c_refresh_screen();
+
 }
 
 void rtc_increment_hour(void) {
@@ -78,7 +78,7 @@ void rtc_increment_hour(void) {
 		time.hours = 0;
 		rtc_update_display(TOP,time.hours);	
 	}
-	sei();
+	ht1632c_refresh_screen();
 }
 
 void rtc_decrement_hour(void) {
@@ -88,6 +88,7 @@ void rtc_decrement_hour(void) {
 		time.hours = 59;
 		rtc_update_display(TOP,time.hours);	
 	}
+	ht1632c_refresh_screen();
 }
 
 void rtc_increment_minute(void) {
@@ -97,6 +98,7 @@ void rtc_increment_minute(void) {
 		time.minutes = 0;
 		rtc_update_display(BOTTOM,time.minutes);
 	}
+	ht1632c_refresh_screen();
 }
 
 void rtc_decrement_minute(void) {
@@ -106,6 +108,7 @@ void rtc_decrement_minute(void) {
 		time.minutes = 59;
 		rtc_update_display(BOTTOM,time.minutes);
 	}
+	ht1632c_refresh_screen();
 }
 
 void rtc_set_time_mode(void) {
@@ -138,8 +141,6 @@ void rtc_update_display(uint8_t pos, uint8_t t) {
 	//Write new numbers
 	ht1632c_draw_char(2,pos,buffer[0],1,1);
 	ht1632c_draw_char(9,pos,buffer[1],1,1);
-	
-	ht1632c_refresh_screen();
 }
 
 void rtc_update_display_alt(void) {
@@ -210,6 +211,7 @@ ISR(RTC_OVF_vect) {
 			time.minutes = 0;
 			if (disp_time) { 
 				rtc_update_display(BOTTOM,time.minutes);
+				ht1632c_refresh_screen();
 			}
 			
 			if (++time.hours == 24) {
@@ -217,17 +219,20 @@ ISR(RTC_OVF_vect) {
 				time.year += time.weeks/52;
 				time.hours = 0;
 				if (disp_time) {
-					rtc_update_display(TOP,time.hours);	
+					rtc_update_display(TOP,time.hours);
+					ht1632c_refresh_screen();	
 				}
 			} else {
 				if (disp_time) {
 					rtc_update_display(TOP,time.hours);
+					ht1632c_refresh_screen();
 				}
 			}
 			time.minutes = 0;
 		} else {
 			if (disp_time) {
-				rtc_update_display(BOTTOM,time.minutes);	
+				rtc_update_display(BOTTOM,time.minutes);
+				ht1632c_refresh_screen();	
 			}
 		}
 	}

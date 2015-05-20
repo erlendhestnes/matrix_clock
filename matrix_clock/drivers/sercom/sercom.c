@@ -104,14 +104,20 @@ const uint8_t data)
 }
 
 uint8_t twi_receive_byte(TWI_t* const TWI, 
+const uint8_t timeout_ms,
 uint8_t* const data, 
 const uint8_t end_of_data)
 {
+	uint16_t timeout_remaining;
+	
 	if ((TWI->MASTER.STATUS & (TWI_MASTER_BUSERR_bm | TWI_MASTER_ARBLOST_bm)) == (TWI_MASTER_BUSERR_bm | TWI_MASTER_ARBLOST_bm)) {
 		return false;
 	}
-
-	while (!(TWI->MASTER.STATUS & TWI_MASTER_RIF_bm));
+	timeout_remaining = (timeout_ms * 100);
+	while (!(TWI->MASTER.STATUS & TWI_MASTER_RIF_bm) && timeout_remaining) {
+		_delay_us(10);
+		timeout_remaining--;
+	}
 
 	*data = TWI->MASTER.DATA;
 
@@ -147,7 +153,7 @@ uint8_t length)
 		{
 			while (length--)
 			{
-				if (!(twi_receive_byte(TWI, data++, (length == 0))))
+				if (!(twi_receive_byte(TWI, timeout_ms, data++, (length == 0))))
 				{
 					error_code = TWI_ERROR_SLAVE_NAK;
 					break;

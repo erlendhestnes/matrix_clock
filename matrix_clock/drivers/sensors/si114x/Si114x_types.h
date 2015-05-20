@@ -34,6 +34,7 @@ typedef struct
     u16  ps2;            // PS2
     u16  ps3;            // PS3
     u16  aux;            // AUX
+	u8	 gesture;		 // Gesture from algo
 } SI114X_IRQ_SAMPLE;
 
 #define code

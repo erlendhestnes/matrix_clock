@@ -23,6 +23,8 @@ volatile button_t btn_status;
 
 void btn_setup(void);
 void btn_top_setup(void);
+void btn_si114x_setup(void);
+
 button_t btn_check_press(void);
 
 #endif

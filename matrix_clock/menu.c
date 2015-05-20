@@ -35,10 +35,11 @@ void print_token(jsmntok_t *tokens, char *js, uint8_t i) {
 	puts(keyString);
 }
 
-void menu_state_machine(void) {
-	if (btn_status != NONE) {
+void menu_state_machine(SI114X_IRQ_SAMPLE *samples) {
+	if (samples->gesture != 0) {
+		puts("enter state_machine()");
 		rtc_disable_time_render();
-		if (btn_status == BTN4)
+		if (samples->gesture == 1)
 		{
 			ht1632c_slide_out_to_right();
 			ht1632c_draw_char_small(1,7,'M',1,1);
@@ -46,20 +47,22 @@ void menu_state_machine(void) {
 			ht1632c_draw_char_small(9,7,'N',1,1);
 			ht1632c_draw_char_small(13,7,'U',1,1);
 			ht1632c_slide_in_from_left();
-		} else if (btn_status == BTN2) {
+		} else if (samples->gesture == 2) {
+			ht1632c_slide_out_to_left();	
 			ht1632c_clear_screen();
 			rtc_enable_time_render();
+			ht1632c_slide_in_from_right();
 		} else {
 
-			ht1632c_slide_out_to_left();
-			ht1632c_draw_char_small(2,7,'I',1,1);
-			ht1632c_draw_char_small(6,7,'N',1,1);
-			ht1632c_draw_char_small(10,7,'F',1,1);
-			ht1632c_draw_char_small(14,7,'O',1,1);
+			ht1632c_slide_out_to_left();		
+			ht1632c_draw_char_small(1,7,'I',1,1);
+			ht1632c_draw_char_small(5,7,'N',1,1);
+			ht1632c_draw_char_small(9,7,'F',1,1);
+			ht1632c_draw_char_small(13,7,'O',1,1);
 			ht1632c_slide_in_from_right();
 		}
-
 		btn_status = NONE;
+		puts("left state_machine()");
 	}
 		/*
 		esp8266_status_t status;
@@ -136,6 +139,6 @@ void menu_state_machine(void) {
 }
 
 //Used for SI114x Timestamp
-ISR(TCC1_OVF_vect) {
+/*ISR(TCC1_OVF_vect) {
 	counter++;
-}
+}*/
