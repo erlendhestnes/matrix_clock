@@ -25,7 +25,13 @@
 //
 
 void si114x_setup(void);
+void si114x_setup_ps1_only(void);
+
+void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data);
+
 s16 si114x_init(HANDLE si114x_handle);
+s16 si114x_init_ps1(HANDLE si114x_handle);
+s16 si114x_init_als(HANDLE si114x_handle);
 
 u8 si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data);
 
@@ -516,6 +522,5 @@ s16 si114x_get_calibration( HANDLE si114x_handle, SI114X_CAL_S *si114x_cal, char
 //
 
 s16 si114x_set_ucoef( HANDLE si114x_handle, u8 input_ucoef[], SI114X_CAL_S *si114x_cal );
-
 
 #endif // #define SI114X_FUNCTIONS_H

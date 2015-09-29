@@ -35,6 +35,7 @@ typedef struct
     u16  ps3;            // PS3
     u16  aux;            // AUX
 	u8	 gesture;		 // Gesture from algo
+	u8	 x_axis;		 // Calculated x axis value, between 0-15
 } SI114X_IRQ_SAMPLE;
 
 #define code

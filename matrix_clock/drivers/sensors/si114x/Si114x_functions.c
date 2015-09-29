@@ -15,16 +15,69 @@
 //
 //-----------------------------------------------------------------------------
 #include "si114x_functions.h"
+#include "Si114x_handler.h"
+#include "../../ht1632c/ht1632c.h"
 #include "../../sercom/sercom.h"
 #include <avr/io.h>
+#include <util/delay.h>
+
+static volatile uint16_t counter = 0;
 
 void si114x_setup(void)
 {
-	_delay_ms(50);
+	//Start timer
+	TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
+	TCC1.PERL = 0x80;
+	TCC1.PERH = 0x0C;
+	TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
+	
 	si114x_reset(SI114X_ADDR);
 	_delay_ms(50);
 	si114x_init(SI114X_ADDR);
+}
+
+void si114x_setup_ps1_only(void)
+{
+	si114x_reset(SI114X_ADDR);
 	_delay_ms(50);
+	si114x_init_ps1(SI114X_ADDR);
+	btn_si114x_enable_interrupt();
+}
+
+void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data) 
+{	
+	si114x_setup();
+	
+	initial_baseline_counter = 128;
+	
+#ifdef SHOW_MANUAL
+	ht1632c_scroll_print("CALIBRATING.. HANDS AWAY FROM DISPLAY",false);
+#endif
+	do {
+		ht1632c_draw_char(5,5,'X',1,1);
+		ht1632c_refresh_screen();
+		si114x_get_data(sensor_data);
+#ifdef DEBUG_ON
+		printf("%d \n",sensor_data->ps1);
+#endif
+	} while (sensor_data->ps1 > PROXIMITY_THRESHOLD);
+		
+	//Store for calibration usage
+	env_var.ps1 = sensor_data->ps1;
+		
+	_delay_ms(1000);
+		
+	uint16_t cnt = 128;
+	while (cnt--) {
+		sensor_data->timestamp = counter;
+		si114x_get_data(sensor_data);
+		si114x_process_samples(SI114X_ADDR,sensor_data);
+	}
+		
+#ifdef SHOW_MANUAL
+	ht1632c_scroll_print("CALIBRATION COMPLETE",false);
+#endif
+
 }
 
 u8 si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data) 
@@ -32,7 +85,10 @@ u8 si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data)
 	u16 data_16;
 	u8 data_8[2];
 	
-	puts("enter get_data()");
+	//Timestamp
+	sensor_data->timestamp = counter;
+	
+	//This could be simplified as one read!
 	
 	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_PS1_DATA0,data_8,2);
 	data_16 = ((u16)data_8[1] << 8) | data_8[0];
@@ -54,17 +110,165 @@ u8 si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data)
 	data_16 = ((u16)data_8[1] << 8) | data_8[0];
 	sensor_data->vis = data_16;
 	
-	puts("left get_data()");
-	
 	return 0;
+}
+
+s16 si114x_init_ps1(HANDLE si114x_handle) 
+{
+	s16 retval   = 0;
+
+	u8  code current_LED1  = 0x0f;   // 0-359 mA
+
+	u8  tasklist      = 0x01;   // PS1 only
+
+	u8  measrate      = 0x94;   // Samplingsrate
+
+	u8  psrate        = 0x08;
+
+	#ifdef GENERAL
+	u8  code psrange  =  1;     // PS Range
+	#endif
+
+	#ifdef INDOORS
+	u8  code psrange  =  0;     // PS Range
+	#endif
+
+	u8  code psgain   =  0;     // PS ADC Gain
+
+	u8  code irrange  =  1;     // IR Range
+	u8  code irgain   =  0;     // IR ADC Gain
+
+	u8  code visrange =  1;     // VIS Range
+	u8  code visgain  =  0;     // VIS ADC Gain
+
+	SI114X_CAL_S xdata si114x_cal;
+
+	// Choose IR PD Size
+	u8  code ps1pdsize     = 1;      // PD Choice for PS1
+	// 0 = Small, 1= Large
+	u8  code irpd          = 1;      // PD Choice for IR Ambient
+	// 0 = Small, 1= Large
+
+	// Select which PD is enabled per PS measurement
+	u8  code ps1ledsel     = LED1_EN;
+
+
+	// Turn off RTC and reset
+	retval+=Si114xWriteToRegister(si114x_handle, REG_MEAS_RATE,     0 );
+	retval+=Si114xWriteToRegister(si114x_handle, REG_PS_RATE,       0 );
+	retval+=Si114xWriteToRegister(si114x_handle, REG_ALS_RATE,      0 );
+
+	retval+=si114x_reset(si114x_handle);
+
+	// Program LED Currents
+	u8 i21;
+	i21 = current_LED1;
+	retval+=Si114xWriteToRegister(si114x_handle, REG_PS_LED21, i21);
+
+	retval+=Si114xParamSet(si114x_handle, PARAM_CH_LIST, tasklist);
+		
+	retval+=Si114xWriteToRegister(si114x_handle, REG_INT_CFG, ICG_INTOE + ICG_INTMODE);
+	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE,IE_PS1_EXCEED_TH);
+	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1,IM1_PS1_EXCEED_TH);
+		
+	retval+=Si114xParamSet(si114x_handle, PARAM_PS1_ADC_MUX, 0x03*ps1pdsize);
+	retval+=Si114xParamSet(si114x_handle, PARAM_IR_ADC_MUX, 0x03*irpd);
+	retval+=Si114xParamSet(si114x_handle, PARAM_PS_ADC_GAIN, psgain);
+	retval+=Si114xParamSet(si114x_handle, PARAM_PSLED12_SELECT, ps1ledsel);
+	retval+=Si114xParamSet(si114x_handle, PARAM_PS_ADC_COUNTER, RECCNT_511);
+	retval+=Si114xParamSet(si114x_handle, PARAM_PS_ADC_MISC, RANGE_EN*psrange + PS_MEAS_MODE);
+		
+	u16 threshold_val = PROXIMITY_THRESHOLD;
+	retval += Si114xWriteToRegister(si114x_handle, REG_PS1_TH_LSB,(u8)threshold_val);
+	retval += Si114xWriteToRegister(si114x_handle, REG_PS1_TH_MSB,(u8)(threshold_val >> 8));
+		
+	if( measrate > 0 )
+	{
+		retval+=Si114xWriteToRegister(si114x_handle, REG_MEAS_RATE, measrate);
+		retval+=Si114xWriteToRegister(si114x_handle, REG_PS_RATE,   psrate);
+		retval+=Si114xPsAuto(si114x_handle);
+	}
+	return retval;
+}
+
+s16 si114x_init_als(HANDLE si114x_handle)
+{
+	s16 retval   = 0;
+
+	u8  tasklist      = 0x30;   // ALS, IR
+
+	u8  measrate      = 0x94;   // 0xa0 every 30.0 ms
+	u8  psrate        = 0x08;
+	u8  alsrate       = 0x08;
+	#ifdef GENERAL
+	u8  code psrange  =  1;     // PS Range
+	#endif
+
+	#ifdef INDOORS
+	u8  code psrange  =  0;     // PS Range
+	#endif
+
+	u8  code psgain   =  0;     // PS ADC Gain
+
+	u8  code irrange  =  1;     // IR Range
+	u8  code irgain   =  0;     // IR ADC Gain
+
+	u8  code visrange =  1;     // VIS Range
+	u8  code visgain  =  0;     // VIS ADC Gain
+
+	SI114X_CAL_S xdata si114x_cal;
+
+	u8  code irpd          = 1;      // PD Choice for IR Ambient
+	// 0 = Small, 1= Large
+
+	// Turn off RTC and reset
+	retval+=Si114xWriteToRegister(si114x_handle, REG_MEAS_RATE,     0 );
+	retval+=Si114xWriteToRegister(si114x_handle, REG_PS_RATE,       0 );
+	retval+=Si114xWriteToRegister(si114x_handle, REG_ALS_RATE,      0 );
+
+	retval+=si114x_reset(si114x_handle);
+
+	retval+=Si114xParamSet(si114x_handle, PARAM_CH_LIST, tasklist);
+		
+	// Set IRQ Modes and INT CFG to interrupt on every sample
+	retval+=Si114xWriteToRegister(si114x_handle, REG_INT_CFG, ICG_INTOE);
+	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE, IE_ALS_EVRYSAMPLE);
+	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1, IM1_ALS_VIS_EXIT);
+
+	retval+=Si114xParamSet(si114x_handle, PARAM_IR_ADC_MUX,  0x03*irpd);
+
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSIR_ADC_GAIN, irgain);
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSVIS_ADC_GAIN, visgain);
+		
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSIR_ADC_COUNTER, RECCNT_511);
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSVIS_ADC_COUNTER, RECCNT_511);
+
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSIR_ADC_MISC, RANGE_EN*irrange );
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSVIS_ADC_MISC,RANGE_EN*visrange);
+
+	u16 threshold_val = 300;
+	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_LO_TH_LSB,(u8)threshold_val);
+	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_LO_TH_MSB,(u8)(threshold_val >> 8));
+	
+	threshold_val = 400;
+	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_HI_TH_LSB,(u8)threshold_val);
+	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_HI_TH_MSB,(u8)(threshold_val >> 8));
+
+	if( measrate > 0 )
+	{
+		retval+=Si114xWriteToRegister(si114x_handle, REG_MEAS_RATE, measrate);
+		retval+=Si114xWriteToRegister(si114x_handle, REG_ALS_RATE,  alsrate);
+		retval+=Si114xAlsAuto(si114x_handle);
+	}
+	return retval;
 }
 
 s16 si114x_init(HANDLE si114x_handle)
 {
 	s16 retval   = 0;
 
-	u8  code current_LED1  = 0x05;   // 359 mA
-	u8  code current_LED2  = 0x05;   // 359 mA
+	u8  code current_LED1  = 0x0f;   // 359 mA
+	u8  code current_LED2  = 0x0f;   // 359 mA
 	u8  code current_LED3  = 0x00;   //   0 mA
 
 	u8  tasklist      = 0x77;   // IR, PS1, PS2
@@ -311,6 +515,10 @@ s16 Si114xPsForce   (HANDLE si114x_handle) {return _sendCmd(si114x_handle,0x05);
 s16 Si114xAlsForce  (HANDLE si114x_handle) {return _sendCmd(si114x_handle,0x06);}
 
 s16 Si114xPsAlsForce(HANDLE si114x_handle) {return _sendCmd(si114x_handle,0x07);}
+
+s16 Si114xPsAuto (HANDLE si114x_handle) {return _sendCmd(si114x_handle,0x0D);}
+	
+s16 Si114xAlsAuto (HANDLE si114x_handle) {return _sendCmd(si114x_handle,0x0E);}
 
 s16 Si114xPsAlsAuto (HANDLE si114x_handle) {return _sendCmd(si114x_handle,0x0F);}
 
@@ -1331,4 +1539,9 @@ s16 si114x_set_ucoef( HANDLE si114x_handle, u8 *input_ucoef, SI114X_CAL_S *si114
 	response = Si114xBlockWrite( si114x_handle, REG_UCOEF0, 4, &ucoef[0] );
 	return response;
 }
+
+ISR(TCC1_OVF_vect) {
+	counter++;
+}
+
 #endif // INCLUDE_SI114X_CALIBRATION_CODE

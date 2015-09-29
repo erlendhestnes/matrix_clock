@@ -38,9 +38,9 @@ SUBDIRS :=  \
 ../drivers/esp8266 \
 ../drivers/ht1632c \
 ../drivers/eeprom \
+../drivers/port/ \
 ../drivers/rtc \
 ../drivers/sercom \
-../drivers/port \
 ../drivers/power \
 ../drivers/sensors \
 ../drivers/sensors/si114x/ \
@@ -55,6 +55,7 @@ C_SRCS +=  \
 ../drivers/adc/adc.c \
 ../drivers/clock/clock.c \
 ../drivers/dma/dma.c \
+../drivers/dma/dma_functions.c \
 ../drivers/eeprom/eeprom.c \
 ../drivers/esp8266/esp8266.c \
 ../drivers/ht1632c/ht1632c.c \
@@ -72,7 +73,8 @@ C_SRCS +=  \
 ../json/jsmn.c \
 ../main.c \
 ../menu.c \
-../uart.c
+../uart.c \
+../_StackInstrument.c
 
 
 PREPROCESSING_SRCS += 
@@ -86,6 +88,7 @@ OBJS +=  \
 drivers/adc/adc.o \
 drivers/clock/clock.o \
 drivers/dma/dma.o \
+drivers/dma/dma_functions.o \
 drivers/eeprom/eeprom.o \
 drivers/esp8266/esp8266.o \
 drivers/ht1632c/ht1632c.o \
@@ -103,13 +106,15 @@ fatfs/sound.o \
 json/jsmn.o \
 main.o \
 menu.o \
-uart.o
+uart.o \
+_StackInstrument.o
 
 OBJS_AS_ARGS +=  \
 4x6_font.o \
 drivers/adc/adc.o \
 drivers/clock/clock.o \
 drivers/dma/dma.o \
+drivers/dma/dma_functions.o \
 drivers/eeprom/eeprom.o \
 drivers/esp8266/esp8266.o \
 drivers/ht1632c/ht1632c.o \
@@ -127,13 +132,15 @@ fatfs/sound.o \
 json/jsmn.o \
 main.o \
 menu.o \
-uart.o
+uart.o \
+_StackInstrument.o
 
 C_DEPS +=  \
 4x6_font.d \
 drivers/adc/adc.d \
 drivers/clock/clock.d \
 drivers/dma/dma.d \
+drivers/dma/dma_functions.d \
 drivers/eeprom/eeprom.d \
 drivers/esp8266/esp8266.d \
 drivers/ht1632c/ht1632c.d \
@@ -151,13 +158,15 @@ fatfs/sound.d \
 json/jsmn.d \
 main.d \
 menu.d \
-uart.d
+uart.d \
+_StackInstrument.d
 
 C_DEPS_AS_ARGS +=  \
 4x6_font.d \
 drivers/adc/adc.d \
 drivers/clock/clock.d \
 drivers/dma/dma.d \
+drivers/dma/dma_functions.d \
 drivers/eeprom/eeprom.d \
 drivers/esp8266/esp8266.d \
 drivers/ht1632c/ht1632c.d \
@@ -175,7 +184,8 @@ fatfs/sound.d \
 json/jsmn.d \
 main.d \
 menu.d \
-uart.d
+uart.d \
+_StackInstrument.d
 
 OUTPUT_FILE_PATH +=matrix_clock.elf
 
@@ -188,6 +198,10 @@ OUTPUT_FILE_DEP:= ./makedep.mk
 LIB_DEP+= 
 
 # AVR32/GNU C Compiler
+
+
+
+
 
 
 

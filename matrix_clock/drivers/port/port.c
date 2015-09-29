@@ -7,6 +7,7 @@
 
 #include "port.h"
 #include "../ht1632c/ht1632c.h"
+#include "../sensors/si114x/Si114x_functions.h"
 
 #define BUTTON0 PIN5_bm
 #define BUTTON1 PIN6_bm
@@ -15,59 +16,81 @@
 
 #define SI114X_INT PIN2_bm
 
-void btn_setup(void) {
+void btn_setup(bool enable_interrupt) {
 	
-	PORTA.DIRCLR = BUTTON0 | BUTTON1 | BUTTON2;
-	PORTB.DIRCLR = BUTTON3;
+	PORTA.DIRCLR |= BUTTON0 | BUTTON1 | BUTTON2;
+	PORTB.DIRCLR |= BUTTON3;
 	
-	PORTA.PIN5CTRL = PORT_ISC_FALLING_gc;
-	PORTA.PIN6CTRL = PORT_ISC_FALLING_gc;
-	PORTA.PIN7CTRL = PORT_ISC_FALLING_gc;
-	
-	PORTB.PIN0CTRL = PORT_ISC_FALLING_gc;
-	
-	PORTA.INT0MASK = BUTTON0 | BUTTON1 | BUTTON2;
-	PORTB.INT0MASK = BUTTON3;
-	
-	PORTA.INTCTRL = PORT_INT0LVL_HI_gc;
-	PORTB.INTCTRL = PORT_INT0LVL_HI_gc;
-
+	if (enable_interrupt)
+	{
+		PORTA.PIN5CTRL |= PORT_ISC_FALLING_gc;
+		PORTA.PIN6CTRL |= PORT_ISC_FALLING_gc;
+		PORTA.PIN7CTRL |= PORT_ISC_FALLING_gc;
+		
+		PORTB.PIN0CTRL |= PORT_ISC_FALLING_gc;
+		
+		PORTA.INT0MASK |= BUTTON0 | BUTTON1 | BUTTON2;
+		PORTB.INT0MASK |= BUTTON3;
+		
+		PORTA.INTCTRL |= PORT_INT0LVL_HI_gc;
+		PORTB.INTCTRL |= PORT_INT0LVL_HI_gc;
+	} else {
+		PORTA.PIN5CTRL &= ~(PORT_ISC_FALLING_gc);
+		PORTA.PIN6CTRL &= ~(PORT_ISC_FALLING_gc);
+		PORTA.PIN7CTRL &= ~(PORT_ISC_FALLING_gc);
+		
+		PORTB.PIN0CTRL &= ~(PORT_ISC_FALLING_gc);
+		
+		PORTA.INT0MASK &= ~(BUTTON0 | BUTTON1 | BUTTON2);
+		PORTB.INT0MASK &= ~(BUTTON3);
+		
+		PORTA.INTCTRL &= ~(PORT_INT0LVL_HI_gc);
+		PORTB.INTCTRL &= ~(PORT_INT0LVL_HI_gc);
+	}
 }
 
-void btn_si114x_setup(void) {
+void btn_si114x_enable_interrupt(void) {
 	
-	PORTA.DIRCLR = SI114X_INT;
-	PORTA.PIN2CTRL = PORT_ISC_FALLING_gc;
-	PORTA.INT1MASK = SI114X_INT;
-	PORTA.INTCTRL = PORT_INT0LVL_HI_gc;
+	PORTA.DIRCLR |= SI114X_INT;
+	PORTA.PIN2CTRL |= PORT_ISC_FALLING_gc;
+	PORTA.INT1MASK |= SI114X_INT;
+	PORTA.INTCTRL |= PORT_INT1LVL_HI_gc;
+}
+
+void btn_si114x_disable_interrupt(void) {
+	
+	PORTA.DIRCLR &= ~(SI114X_INT);
+	PORTA.PIN2CTRL &= ~(PORT_ISC_FALLING_gc);
+	PORTA.INT1MASK &= ~(SI114X_INT);
+	PORTA.INTCTRL &= ~(PORT_INT1LVL_HI_gc);
 }
 
 void btn_top_setup(void) {
 	
-	PORTC.DIRCLR = PIN2_bm;
-	PORTC.PIN2CTRL = PORT_OPC_PULLDOWN_gc | PORT_ISC_RISING_gc;
-	PORTC.INT0MASK = PIN2_bm;
-	PORTC.INTCTRL = PORT_INT0LVL_HI_gc;
+	PORTC.DIRCLR |= PIN2_bm;
+	PORTC.PIN2CTRL |= PORT_OPC_PULLDOWN_gc | PORT_ISC_RISING_gc;
+	PORTC.INT0MASK |= PIN2_bm;
+	PORTC.INTCTRL |= PORT_INT0LVL_HI_gc;
 	
 }
 
 button_t btn_check_press(void) {
 	
 	if (!(PORTA.IN & BUTTON0)) {
-		//uwrite_hex(DACB.CH0OFFSETCAL);
-		//DACB.CH0OFFSETCAL += 1;
+		uwrite_hex(DACB.CH0OFFSETCAL);
+		DACB.CH0OFFSETCAL += 1;
 		return BTN1;
 	} else if (!(PORTA.IN & BUTTON1)) {
-		//uwrite_hex(DACB.CH0OFFSETCAL);
-		//DACB.CH0OFFSETCAL -= 1;
+		uwrite_hex(DACB.CH0OFFSETCAL);
+		DACB.CH0OFFSETCAL -= 1;
 		return BTN2;
 	} else if (!(PORTA.IN & BUTTON2)) {
-		//uwrite_hex(DACB.CH0GAINCAL);
-		//DACB.CH0GAINCAL += 1;
+		uwrite_hex(DACB.CH0GAINCAL);
+		DACB.CH0GAINCAL += 1;
 		return BTN3;
 	} else if (!(PORTB.IN & BUTTON3)) {
-		//uwrite_hex(DACB.CH0GAINCAL);
-		//DACB.CH0GAINCAL -= 1;
+		uwrite_hex(DACB.CH0GAINCAL);
+		DACB.CH0GAINCAL -= 1;
 		return BTN4;
 	} else {
 		return NONE;
@@ -81,9 +104,16 @@ ISR(PORTA_INT0_vect) {
 
 ISR(PORTB_INT0_vect) {
 	btn_status = btn_check_press();
-	//printf("%d",btn_status);
+	printf("%d",btn_status);
 }
 
 ISR(PORTA_INT1_vect) {
-	ht1632c_fill_screen();
+	
+	uint8_t data[2];
+	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_IRQ_STATUS,data,1);
+	si114x_status = data[0];
+	//data[0] = 0x00;
+	//twi_write_packet(&TWIC,SI114X_ADDR,50,REG_IRQ_STATUS,data,1);
+
+	puts("Interrupt from Si114x! \n");
 }

@@ -24,7 +24,10 @@ drivers/port/port.d drivers/port/port.o: ../drivers/port/port.c \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
  ../drivers/port/../ht1632c/ht1632c.h \
- ../drivers/port/../ht1632c/../../global.h
+ ../drivers/port/../ht1632c/../../global.h \
+ ../drivers/port/../sensors/si114x/Si114x_functions.h \
+ ../drivers/port/../sensors/si114x/Si114x_types.h \
+ ../drivers/port/../sensors/si114x/User_defs.h
 
 ../drivers/port/port.h:
 
@@ -79,3 +82,9 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 ../drivers/port/../ht1632c/ht1632c.h:
 
 ../drivers/port/../ht1632c/../../global.h:
+
+../drivers/port/../sensors/si114x/Si114x_functions.h:
+
+../drivers/port/../sensors/si114x/Si114x_types.h:
+
+../drivers/port/../sensors/si114x/User_defs.h:

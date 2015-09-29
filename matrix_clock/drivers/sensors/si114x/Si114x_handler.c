@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-u8 xdata initial_baseline_counter=128;
+//u8 xdata initial_baseline_counter=128;
 u16 xdata maxLeakage[3] = { 0, 0, 0};
 u16 xdata baseline[3];    // Array to store calcBaseline return values
 

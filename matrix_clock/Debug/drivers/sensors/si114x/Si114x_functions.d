@@ -6,8 +6,10 @@ drivers/sensors/si114x/Si114x_functions.d \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdint.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdint.h \
  ../drivers/sensors/si114x/User_defs.h \
- ../drivers/sensors/si114x/../../sercom/sercom.h \
- ../drivers/sensors/si114x/../../sercom/../../global.h \
+ ../drivers/sensors/si114x/Si114x_handler.h \
+ ../drivers/sensors/si114x/Si114x_functions.h \
+ ../drivers/sensors/si114x/../../ht1632c/ht1632c.h \
+ ../drivers/sensors/si114x/../../ht1632c/../../global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\inttypes.h \
@@ -28,7 +30,9 @@ drivers/sensors/si114x/Si114x_functions.d \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdio.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
- c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h
+ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
+ ../drivers/sensors/si114x/../../sercom/sercom.h \
+ ../drivers/sensors/si114x/../../sercom/../../global.h
 
 ../drivers/sensors/si114x/si114x_functions.h:
 
@@ -40,9 +44,13 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 ../drivers/sensors/si114x/User_defs.h:
 
-../drivers/sensors/si114x/../../sercom/sercom.h:
+../drivers/sensors/si114x/Si114x_handler.h:
 
-../drivers/sensors/si114x/../../sercom/../../global.h:
+../drivers/sensors/si114x/Si114x_functions.h:
+
+../drivers/sensors/si114x/../../ht1632c/ht1632c.h:
+
+../drivers/sensors/si114x/../../ht1632c/../../global.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h:
 
@@ -85,3 +93,7 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
+
+../drivers/sensors/si114x/../../sercom/sercom.h:
+
+../drivers/sensors/si114x/../../sercom/../../global.h:

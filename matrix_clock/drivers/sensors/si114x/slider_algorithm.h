@@ -32,7 +32,7 @@ extern u16 xdata baseline[2];
 // Adjustable timing parameters. 1 = ~12.8ms
 #define LED_STATE_TIME  (3*13)
 #define PAUSE_TIMEOUT   (50*13)
-#define SWIPE_TIMEOUT   (45*13)
+#define SWIPE_TIMEOUT   (25*13)
 
 s16 QS_Counts_to_Distance (u16 counts, u8 led);
 void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale);

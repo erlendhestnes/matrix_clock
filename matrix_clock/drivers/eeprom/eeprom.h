@@ -138,5 +138,7 @@ void EEPROM_AtomicWritePage( uint8_t pageAddr );
 void EEPROM_ErasePage( uint8_t pageAddress );
 void EEPROM_SplitWritePage( uint8_t pageAddr );
 void EEPROM_EraseAll( void );
+uint8_t EEPROM_WriteEnv(void);
+uint8_t EEPROM_ReadEnv(void);
 
 #endif

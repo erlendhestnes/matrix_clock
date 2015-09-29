@@ -328,3 +328,47 @@ void EEPROM_EraseAll( void )
 	NVM_EXEC();
 }
 
+uint8_t EEPROM_WriteEnv(void) {
+	
+	uint8_t b[sizeof(env_var)];
+	uint16_t page_addr;
+	uint8_t page;
+	
+	EEPROM_FlushBuffer();
+	EEPROM_DisableMapping();
+	memcpy(b, &env_var, sizeof(env_var));
+	
+	for(page_addr = 0; page_addr < (sizeof(env_var)/EEPROM_PAGE_SIZE) + 1; page_addr += 1) {
+		for(page = 0; page < EEPROM_PAGE_SIZE; page++) {
+			EEPROM_WriteByte(page_addr,page,b[page+(page_addr*EEPROM_PAGE_SIZE)]);
+			if (page+(page_addr*EEPROM_PAGE_SIZE) >= sizeof(env_var)) {
+				break;
+			}
+		}
+	}
+	
+	return 1;
+}
+
+uint8_t EEPROM_ReadEnv(void) {
+	
+	uint8_t b[sizeof(env_var)];
+	uint16_t page_addr;
+	uint8_t page;
+	
+	for(page_addr = 0; page_addr < (sizeof(env_var)/EEPROM_PAGE_SIZE) + 1; page_addr += 1) {
+		for(page = 0; page < EEPROM_PAGE_SIZE; page++) {
+			b[page+(page_addr*EEPROM_PAGE_SIZE)] = EEPROM_ReadByte(page_addr,page);
+			if (page+(page_addr*EEPROM_PAGE_SIZE) >= sizeof(env_var)) {
+				break;
+			}
+		}
+	}
+	memcpy(&env_var, b, sizeof(env_var));
+	
+	if (env_var.id != 0) {
+		return 1;
+	}
+	
+	return 0;
+}

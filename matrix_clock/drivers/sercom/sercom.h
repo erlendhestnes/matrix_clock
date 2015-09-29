@@ -40,7 +40,7 @@ enum TWI_ErrorCodes_t
 #define TWI_ADDRESS_WRITE        0x00
 #define TWI_DEVICE_ADDRESS_MASK  0xFE
 
-void spi_on(void);
+void spi_setup(void);
 void spi_off(void);
 uint8_t spi_wr_rd(uint8_t spi_data);
 
@@ -58,7 +58,7 @@ void twi_on(void);
 
 void twi_stop_transmission(TWI_t* const TWI);
 uint8_t twi_start_transmission(TWI_t* const TWI, const uint8_t slave_address, const uint8_t timeout_ms);
-uint8_t twi_send_byte(TWI_t* const TWI, const uint8_t data);
+uint8_t twi_send_byte(TWI_t* const TWI, const uint8_t timeout_ms, const uint8_t data);
 uint8_t twi_receive_byte(TWI_t* const TWI, const uint8_t timeout_ms, uint8_t* const data, const uint8_t end_of_data);
 uint8_t twi_read_packet(TWI_t* const TWI, const uint8_t slave_address, const uint8_t timeout_ms, const uint8_t reg, uint8_t* data, uint8_t length);
 uint8_t twi_write_packet(TWI_t* const TWI, const uint8_t slave_address, const uint8_t timeout_ms, const uint8_t reg, const uint8_t* data, uint8_t length);

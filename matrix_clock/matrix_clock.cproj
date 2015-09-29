@@ -24,7 +24,7 @@
     <UncachedRange />
     <OverrideVtorValue>exception_table</OverrideVtorValue>
     <BootSegment>2</BootSegment>
-    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <eraseonlaunchrule>1</eraseonlaunchrule>
     <AsfFrameworkConfig>
       <framework-data xmlns="">
         <options />
@@ -53,7 +53,7 @@
     <com_atmel_avrdbg_tool_jtagice3plus>
       <ToolOptions>
         <InterfaceProperties>
-          <PdiClock>4000000</PdiClock>
+          <PdiClock>7500000</PdiClock>
         </InterfaceProperties>
         <InterfaceName>PDI</InterfaceName>
       </ToolOptions>
@@ -140,6 +140,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="drivers\dma\dma.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\dma\dma_functions.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\dma\dma_functions.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="drivers\eeprom\eeprom.c">
@@ -259,6 +265,9 @@
     <Compile Include="uart.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="_StackInstrument.c">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="drivers\adc" />
@@ -267,9 +276,9 @@
     <Folder Include="drivers\esp8266" />
     <Folder Include="drivers\ht1632c" />
     <Folder Include="drivers\eeprom" />
+    <Folder Include="drivers\port\" />
     <Folder Include="drivers\rtc" />
     <Folder Include="drivers\sercom" />
-    <Folder Include="drivers\port" />
     <Folder Include="drivers\power" />
     <Folder Include="drivers\sensors" />
     <Folder Include="drivers\sensors\si114x\" />

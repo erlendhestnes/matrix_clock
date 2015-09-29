@@ -10,6 +10,8 @@ drivers\clock\clock.c
 
 drivers\dma\dma.c
 
+drivers\dma\dma_functions.c
+
 drivers\eeprom\eeprom.c
 
 drivers\esp8266\esp8266.c
@@ -45,4 +47,6 @@ main.c
 menu.c
 
 uart.c
+
+_StackInstrument.c
 

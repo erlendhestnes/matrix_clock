@@ -98,7 +98,7 @@ ISR(TCC0_OVF_vect)
 	
 	//uint16_t data = smooth(l1,0.35,data);
 	
-	DACB.CH0DATA = l1;//data;
+	DACB.CH0DATA = l1;
 	
 	//prev = data;
 }
@@ -131,10 +131,10 @@ int sound_start (
 	DACB.CTRLB = DAC_CHSEL_SINGLE_gc;
 	
 	//From calibration rows
-	DACB.CH0OFFSETCAL = 0xE8;
-	DACB.CH0GAINCAL = 0xB6;
-	DACB.CH1GAINCAL = 0x0C;
-	DACB.CH1OFFSETCAL = 0x13;
+	DACB.CH0OFFSETCAL = 0x07;
+	DACB.CH0GAINCAL = 0x1B;
+	//DACB.CH1GAINCAL = 0x0C;
+	//DACB.CH1OFFSETCAL = 0x13;
 	
 	//DACB.CH1DATA = 255;
 	

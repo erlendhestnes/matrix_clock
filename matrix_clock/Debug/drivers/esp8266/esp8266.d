@@ -24,11 +24,17 @@ drivers/esp8266/esp8266.d drivers/esp8266/esp8266.o: \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
+ ../drivers/esp8266/../../json/jsmn.h \
  ../drivers/esp8266/../ht1632c/ht1632c.h \
  ../drivers/esp8266/../ht1632c/../../global.h \
  ../drivers/esp8266/../eeprom/eeprom.h \
  ../drivers/esp8266/../eeprom/../../global.h \
- ../drivers/esp8266/../rtc/rtc.h ../drivers/esp8266/../rtc/../../global.h
+ ../drivers/esp8266/../rtc/rtc.h ../drivers/esp8266/../rtc/../../global.h \
+ ../drivers/esp8266/../port/port.h \
+ ../drivers/esp8266/../port/../../global.h \
+ ../drivers/esp8266/../../fatfs/ff.h \
+ ../drivers/esp8266/../../fatfs/integer.h \
+ ../drivers/esp8266/../../fatfs/ffconf.h
 
 ../drivers/esp8266/esp8266.h:
 
@@ -80,6 +86,8 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
 
+../drivers/esp8266/../../json/jsmn.h:
+
 ../drivers/esp8266/../ht1632c/ht1632c.h:
 
 ../drivers/esp8266/../ht1632c/../../global.h:
@@ -91,3 +99,13 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 ../drivers/esp8266/../rtc/rtc.h:
 
 ../drivers/esp8266/../rtc/../../global.h:
+
+../drivers/esp8266/../port/port.h:
+
+../drivers/esp8266/../port/../../global.h:
+
+../drivers/esp8266/../../fatfs/ff.h:
+
+../drivers/esp8266/../../fatfs/integer.h:
+
+../drivers/esp8266/../../fatfs/ffconf.h:

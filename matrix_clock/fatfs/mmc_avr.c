@@ -78,7 +78,7 @@ void power_on (void)
 	//TCC1.PER = F_CPU/DIVIDER;
 	//TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
 	
-	spi_on();
+	spi_setup();
 }
 
 static

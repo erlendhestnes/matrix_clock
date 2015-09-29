@@ -19,11 +19,19 @@ typedef enum {
 	BTN5
 } button_t;
 
-volatile button_t btn_status;
+typedef enum {
+	ALS_INT_1 = 1,
+	ALS_INT_2 = 2,
+	PS1_INT = 4
+} si114x_int_t;
 
-void btn_setup(void);
+volatile button_t btn_status;
+volatile si114x_int_t si114x_status;
+
+void btn_setup(bool enable_interrupt);
 void btn_top_setup(void);
-void btn_si114x_setup(void);
+void btn_si114x_enable_interrupt(void);
+void btn_si114x_disable_interrupt(void);
 
 button_t btn_check_press(void);
 

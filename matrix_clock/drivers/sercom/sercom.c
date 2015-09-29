@@ -7,7 +7,7 @@
 
 #include "sercom.h"
 
-void spi_on(void) {
+void spi_setup(void) {
 	
 	SD_PORT.DIRSET = SD_CS | SD_MOSI | SD_SCK;	
 	SD_PORT.OUTSET = SD_CS;	
@@ -94,11 +94,18 @@ const uint8_t timeout_ms)
 }
 
 uint8_t twi_send_byte(TWI_t* const TWI, 
+const uint8_t timeout_ms,
 const uint8_t data)
 {
+	uint16_t timeout_remaining;
+	
 	TWI->MASTER.DATA = data;
-
-	while (!(TWI->MASTER.STATUS & TWI_MASTER_WIF_bm));
+	
+	timeout_remaining = (timeout_ms * 100);
+	while (!(TWI->MASTER.STATUS & TWI_MASTER_WIF_bm)&& timeout_remaining) {
+		_delay_us(10);
+		timeout_remaining--;
+	}
 
 	return (TWI->MASTER.STATUS & TWI_MASTER_WIF_bm) && !(TWI->MASTER.STATUS & TWI_MASTER_RXACK_bm);
 }
@@ -142,7 +149,7 @@ uint8_t length)
 	if ((error_code = twi_start_transmission(TWI, (slave_address << 1) | TWI_ADDRESS_WRITE,
 	timeout_ms)) == TWI_ERROR_NO_ERROR)
 	{
-		if (!(twi_send_byte(TWI, reg)))
+		if (!(twi_send_byte(TWI, timeout_ms, reg)))
 		{
 			error_code = TWI_ERROR_SLAVE_NAK;
 			return error_code;
@@ -179,7 +186,7 @@ uint8_t length)
 	if ((error_code = twi_start_transmission(TWI, (slave_address << 1) | TWI_ADDRESS_WRITE,
 	timeout_ms)) == TWI_ERROR_NO_ERROR)
 	{
-		if (!(twi_send_byte(TWI, reg)))
+		if (!(twi_send_byte(TWI, timeout_ms, reg)))
 		{
 			error_code = TWI_ERROR_SLAVE_NAK;
 			return error_code;
@@ -187,7 +194,7 @@ uint8_t length)
 
 		while (length--)
 		{
-			if (!(twi_send_byte(TWI, *(data++))))
+			if (!(twi_send_byte(TWI, timeout_ms, *(data++))))
 			{
 				error_code = TWI_ERROR_SLAVE_NAK;
 				break;

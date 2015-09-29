@@ -1,5 +1,6 @@
-drivers/rtc/rtc.d drivers/rtc/rtc.o: ../drivers/rtc/rtc.c \
- ../drivers/rtc/rtc.h ../drivers/rtc/../../global.h \
+drivers/dma/dma_functions.d drivers/dma/dma_functions.o: \
+ ../drivers/dma/dma_functions.c ../drivers/dma/dma.h \
+ ../drivers/dma/../../global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\inttypes.h \
@@ -23,13 +24,11 @@ drivers/rtc/rtc.d drivers/rtc/rtc.o: ../drivers/rtc/rtc.c \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
- ../drivers/rtc/../ht1632c/ht1632c.h \
- ../drivers/rtc/../ht1632c/../../global.h \
- c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h
+ ../drivers/dma/dma_functions.h
 
-../drivers/rtc/rtc.h:
+../drivers/dma/dma.h:
 
-../drivers/rtc/../../global.h:
+../drivers/dma/../../global.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h:
 
@@ -77,8 +76,4 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
 
-../drivers/rtc/../ht1632c/ht1632c.h:
-
-../drivers/rtc/../ht1632c/../../global.h:
-
-c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h:
+../drivers/dma/dma_functions.h:

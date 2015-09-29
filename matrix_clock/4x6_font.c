@@ -4,6 +4,7 @@
 #ifndef FONT5X7_H
 #define FONT5X7_H
 
+/*
 static const unsigned char IMG_SPEAKER_A [] PROGMEM = {0b00011000, 0b00011000, 0b00111100, 0b01000010, 0b10100101, 0b00011000};
 static const unsigned char IMG_SPEAKER_B [] PROGMEM = {0b00011000, 0b00011000, 0b00111100, 0b01000010, 0b10111101, 0b00000000};
 #define IMG_SPEAKER_WIDTH 	 6
@@ -24,6 +25,8 @@ static const unsigned char IMG_FB [] PROGMEM = {0b00111111, 0b01000000, 0b100001
 static const unsigned char IMG_TWITTER [] PROGMEM = {0b01111110, 0b10000001, 0b10111001, 0b10010101, 0b10010101, 0b10000001, 0b01111110};
 #define IMG_TWITTER_WIDTH 	 7
 #define IMG_TWITTER_HEIGHT 	 8
+
+*/
 
 static const unsigned char  font_5x7[] PROGMEM = {
     0x00, 0x00, 0x00, 0x00, 0x00,   
