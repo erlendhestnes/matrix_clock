@@ -6,88 +6,18 @@
  */ 
 
 #include "menu.h"
-#include "drivers/rtc/rtc.h"
-#include "drivers/port/port.h"
-#include "drivers/ht1632c/ht1632c.h"
-#include "drivers/esp8266/esp8266.h"
-#include "drivers/sensors/si114x/Si114x_functions.h"
-#include "drivers/sensors/si114x/slider_algorithm.h"
-#include "json/jsmn.h"
+#include "../../drivers/rtc/rtc.h"
+#include "../../drivers/port/port.h"
+#include "../../drivers/ht1632c/ht1632c.h"
+#include "../../drivers/esp8266/esp8266.h"
+#include "../../drivers/sensors/si114x/Si114x_functions.h"
+#include "../../drivers/sensors/si114x/slider_algorithm.h"
+#include "../../json/jsmn.h"
 
 static volatile uint16_t counter = 0;
 
-void get_json_token(jsmntok_t *tokens, char *js, char *buffer, uint8_t i) {
-	int len;
-	jsmntok_t key;
-
-	key = tokens[i];
-	len = key.end - key.start;
-	char keyString[ len+1 ];
-	memcpy( keyString, &js[ key.start ], len );
-	keyString[ len ] = '\0';
-	
-	strcpy(buffer,keyString);
-}
-
-esp8266_status_t get_week(void) {
-	char *json;
-	json = (char *) calloc(125, sizeof(char));
-	
-	jsmn_parser p;
-	jsmnerr_t r;
-	jsmntok_t tokens[25];
-	
-	esp8266_status_t status;
-	
-	esp8266_on();
-	
-	status = esp8266_setup();
-	if (status != ESP8266_SUCCESS) {
-		return status;
-	}
-	
-	status = esp8266_join_ap(SSID,PASS);
-	if (status != ESP8266_SUCCESS) {
-		return status;
-	}
-	
-	status = esp8266_get_json(TIME_IP,TIME_ADDR,json, 125);
-	if (status != ESP8266_SUCCESS) {
-		return status;
-	}
-	
-	esp8266_off();
-	
-	//printf("got data: %s \r\n",json);
-	puts(json);
-	jsmn_init(&p);
-	r = jsmn_parse(&p,json,strlen(json),tokens,25);
-	
-	char *buffer;
-	buffer = (char *) calloc(20, sizeof(char));
-
-	get_json_token(tokens,json,buffer,2);
-	env_var.time.week = atoi(buffer);
-	
-	/*
-	char *buffer;
-	buffer = (char *) calloc(20, sizeof(char));
-
-	get_token(tokens,json,buffer,22);
-	strncpy(env_var.temperature,buffer,strlen(buffer));
-	
-	get_token(tokens,json,buffer,24);
-	strncpy(env_var.weather_info,buffer,strlen(buffer));
-	*/
-	
-	free(buffer);
-	free(json);
-	
-	return ESP8266_SUCCESS;
-}
-
 void start_loading(void) {
-	ht1632c_clear_screen();
+	display_clear_screen();
 	
 	TCC0.CNT = 0;
 	TCC0.PER = 3125;
@@ -100,17 +30,10 @@ void start_loading(void) {
 
 void stop_loading(void) {
 	TCC0.CTRLA = TC_CLKSEL_OFF_gc;
-	ht1632c_clear_screen();
+	display_clear_screen();
 }
 
-int dayofweek(int d, int m, int y)
-{
-	static int t[] = { 0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4 };
-	y -= m < 3;
-	return ( y + y/4 - y/100 + y/400 + t[m-1] + d) % 7;
-}
-
-esp8266_status_t get_temperature(void) {
+esp8266_status_t get_internet_variables(bool get_time, bool get_temperature) {
 	
 	char json[250];
 	jsmn_parser p;
@@ -146,53 +69,60 @@ esp8266_status_t get_temperature(void) {
 	r = jsmn_parse(&p,json,strlen(json),tokens,25);
 
 	char token_buffer[20];
-	int year, month, day, hour, minute, second;
+	if (get_time)
+	{
+		int year, month, day, hour, minute, second;
 	
-	get_json_token(tokens,json,token_buffer,6);
-	if (sscanf(token_buffer,"%d-%d-%dT%d:%d:%dZ",&year, &month, &day, &hour, &minute, &second) != 6) {
+		json_get_token(tokens,json,token_buffer,6);
+		if (sscanf(token_buffer,"%d-%d-%dT%d:%d:%dZ",&year, &month, &day, &hour, &minute, &second) != 6) {
 #ifdef DEBUG_ON
-		puts("Failed to parse time");
+			puts("Failed to parse time for some reason...");
 #endif
-	} else {
+		} else {
 #ifdef DEBUG_ON
-		puts("Parsed time");
+			puts("Parsed time successfully!");
 #endif
-		env_var.time.year = year;
-		env_var.time.month = month;
-		env_var.time.day = day;
-		env_var.time.hours = hour + 2;
-		env_var.time.minutes = minute;
-		env_var.time.seconds = second;
-		env_var.time.weekday = dayofweek(day+1,month,year);
-		printf("Weekday: %d \r\n",env_var.time.weekday);
+			env_var.time.year = year;
+			env_var.time.month = month;
+			env_var.time.day = day;
+			env_var.time.hours = hour + 2;
+			env_var.time.minutes = minute;
+			env_var.time.seconds = second;
+			env_var.time.weekday = time_get_day_of_week(day+1,month,year);
+#ifdef DEBUG_ON
+			printf("Weekday: %d \r\n",env_var.time.weekday);
+#endif
+		}
+		//printf("%d , %d , %d , %d , %d , %d \r\n",year,month,day,hour,minute,second);
 	}
-	//printf("%d , %d , %d , %d , %d , %d \r\n",year,month,day,hour,minute,second);
+	if (get_temperature)
+	{
+		json_get_token(tokens,json,token_buffer,22);
+		strncpy(env_var.temperature,token_buffer,strlen(token_buffer));
+			
+		json_get_token(tokens,json,token_buffer,24);
+		strncpy(env_var.weather_info,token_buffer,strlen(token_buffer));
+	}
 
-	get_json_token(tokens,json,token_buffer,22);
-	strncpy(env_var.temperature,token_buffer,strlen(token_buffer));
-	
-	get_json_token(tokens,json,token_buffer,24);
-	strncpy(env_var.weather_info,token_buffer,strlen(token_buffer));
-	
 	return ESP8266_SUCCESS;
 }
 
 void menu_draw_temperature_frame(void) {
-	ht1632c_draw_char_small(1,10,'T',1,1);
-	ht1632c_draw_char_small(5,10,'E',1,1);
-	ht1632c_draw_char_small(9,10,'M',1,1);
-	ht1632c_draw_char_small(13,10,'P',1,1);
+	display_draw_small_char(1,10,'T',1,1);
+	display_draw_small_char(5,10,'E',1,1);
+	display_draw_small_char(9,10,'M',1,1);
+	display_draw_small_char(13,10,'P',1,1);
 	
-	ht1632c_draw_char_small(3,3,env_var.temperature[0],1,1);
-	ht1632c_draw_char_small(7,3,env_var.temperature[1],1,1);
-	ht1632c_draw_char_small(11,3,'C',1,1);
+	display_draw_small_char(3,3,env_var.temperature[0],1,1);
+	display_draw_small_char(7,3,env_var.temperature[1],1,1);
+	display_draw_small_char(11,3,'C',1,1);
 }
 
 void menu_draw_date_frame(void) {
-	ht1632c_draw_char_small(1,10,'D',1,1);
-	ht1632c_draw_char_small(5,10,'A',1,1);
-	ht1632c_draw_char_small(9,10,'T',1,1);
-	ht1632c_draw_char_small(13,10,'E',1,1);
+	display_draw_small_char(1,10,'D',1,1);
+	display_draw_small_char(5,10,'A',1,1);
+	display_draw_small_char(9,10,'T',1,1);
+	display_draw_small_char(13,10,'E',1,1);
 	
 	char buffer[2];
 	char temp;
@@ -206,9 +136,9 @@ void menu_draw_date_frame(void) {
 		buffer[1] = temp;
 	}
 	
-	ht1632c_draw_char_small(1,3,buffer[0],1,1);
-	ht1632c_draw_char_small(4,3,buffer[1],1,1);
-	ht1632c_draw_char_small(7,3,'.',1,1);
+	display_draw_small_char(1,3,buffer[0],1,1);
+	display_draw_small_char(4,3,buffer[1],1,1);
+	display_draw_small_char(7,3,'.',1,1);
 	
 	itoa_simple(buffer,env_var.time.month);
 	
@@ -219,15 +149,15 @@ void menu_draw_date_frame(void) {
 		buffer[1] = temp;
 	}
 	
-	ht1632c_draw_char_small(10,3,buffer[0],1,1);
-	ht1632c_draw_char_small(13,3,buffer[1],1,1);
+	display_draw_small_char(10,3,buffer[0],1,1);
+	display_draw_small_char(13,3,buffer[1],1,1);
 }
 
 void menu_draw_week_frame(void) {
-	ht1632c_draw_char_small(1,10,'W',1,1);
-	ht1632c_draw_char_small(5,10,'E',1,1);
-	ht1632c_draw_char_small(9,10,'E',1,1);
-	ht1632c_draw_char_small(13,10,'K',1,1);
+	display_draw_small_char(1,10,'W',1,1);
+	display_draw_small_char(5,10,'E',1,1);
+	display_draw_small_char(9,10,'E',1,1);
+	display_draw_small_char(13,10,'K',1,1);
 	
 	char buffer[2];
 	char temp;
@@ -241,11 +171,40 @@ void menu_draw_week_frame(void) {
 		buffer[1] = temp;
 	}
 	
-	ht1632c_draw_char_small(5,3,buffer[0],1,1);
-	ht1632c_draw_char_small(9,3,buffer[1],1,1);
+	display_draw_small_char(5,3,buffer[0],1,1);
+	display_draw_small_char(9,3,buffer[1],1,1);
 }
 
-void menu_state_machine(SI114X_IRQ_SAMPLE *samples) {
+void menu_draw_config_frame(void) {
+	display_draw_three_letter_word("CFG");
+}
+
+void menu_set_env_variables(void) 
+{
+	EEPROM_EraseAll();
+	
+	strncpy(env_var.name,CLOCK_NAME,sizeof(env_var.name));
+	env_var.id = CLOCK_ID;
+	env_var.temperature[0] = '0';
+	env_var.brightness = 1;
+	env_var.menu_id = 0;
+	strncpy(env_var.wifi_pswd,PASS,sizeof(env_var.wifi_pswd));
+	strncpy(env_var.wifi_ssid,SSID,sizeof(env_var.wifi_ssid));
+	
+	env_var.time.seconds = 30;
+	env_var.time.minutes = 59;
+	env_var.time.hours = 23;
+	env_var.time.day = 31;
+	env_var.time.weekday = Sunday;
+	env_var.time.week = 52;
+	env_var.time.month = December;
+	env_var.time.year = 2015;
+	
+	env_var.alarm.hours = 0;
+	env_var.alarm.minutes = 0;
+}
+
+menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples) {
 	
 	//Menu ID select
 	if (samples->gesture != NO_GESTURE) {
@@ -266,12 +225,10 @@ void menu_state_machine(SI114X_IRQ_SAMPLE *samples) {
 	
 	if (samples->gesture == LEFT_SWIPE) {
 		rtc_disable_time_render();
-		ht1632c_slide_out_to_right();
+		display_slide_out_to_right();
 	} else if (samples->gesture == RIGHT_SWIPE) {
 		rtc_disable_time_render();
-		ht1632c_slide_out_to_left();
-	} else if (samples->gesture == PAUSE) {
-		ht1632c_fade_blink();
+		display_slide_out_to_left();
 	}
 	
 	//Switch between menus
@@ -290,7 +247,7 @@ void menu_state_machine(SI114X_IRQ_SAMPLE *samples) {
 				menu_draw_temperature_frame();
 				break;
 			case 4:
-				ht1632c_draw_three_letter_word("CFG");
+				menu_draw_config_frame();
 				break;
 			default:
 				break;
@@ -298,38 +255,43 @@ void menu_state_machine(SI114X_IRQ_SAMPLE *samples) {
 	}
 	
 	if (samples->gesture == LEFT_SWIPE) {
-		ht1632c_slide_in_from_left();
+		display_slide_in_from_left();
 	} else if (samples->gesture == RIGHT_SWIPE) {
-		ht1632c_slide_in_from_right();
+		display_slide_in_from_right();
 	}
 	
 	btn_status = NONE;
 
 	if (samples->gesture == PAUSE) {
+		
 		if (env_var.menu_id == 4)
 		{
-			ht1632c_slide_out_to_top();
+			display_fade_blink();
+			
+			display_slide_out_to_top();
 #ifdef SHOW_MANUAL
-			ht1632c_scroll_print("CONFIG MENU, USE BUTTONS",false);
+			display_print_scrolling_text("CONFIG MENU, USE BUTTONS",false);
 #endif
-			ht1632c_draw_char_small(2,7,'<',1,1);
-			ht1632c_draw_char_small(13,7,'>',1,1);
-			ht1632c_slide_in_from_bottom();
-			while(menu_configuration());
+			display_draw_small_char(2,7,'<',1,1);
+			display_draw_small_char(13,7,'>',1,1);
+			display_slide_in_from_bottom();
+			while(menu_configuration() == MENU_SUCCESS);
 			
 			env_var.menu_id = 0;
 			rtc_enable_time_render();
-			ht1632c_slide_in_from_top();
+			display_slide_in_from_top();
 			
 			_delay_ms(1000);
 		} else if (env_var.menu_id == 3) {
-			ht1632c_slide_out_to_top();
+			display_fade_blink();
+			
+			display_slide_out_to_top();
 #ifdef SHOW_MANUAL
-			ht1632c_scroll_print("GETTING TEMPERATURE...",false);
+			display_print_scrolling_text("GETTING TEMPERATURE...",false);
 #endif
 			esp8266_status_t status;
 			start_loading();
-			status = get_temperature();
+			status = get_internet_variables(true,true);
 			stop_loading();
 			
 #ifdef SHOW_MANUAL
@@ -339,24 +301,19 @@ void menu_state_machine(SI114X_IRQ_SAMPLE *samples) {
 				strcat(weather_info,env_var.temperature);
 				strcat(weather_info,"C, ");
 				strcat(weather_info,toupper(env_var.weather_info));
-				ht1632c_scroll_print(weather_info, false);
+				display_print_scrolling_text(weather_info, false);
 			} else {
-				ht1632c_scroll_print("COULD NOT GET TEMPERATURE...", false);
+				display_print_scrolling_text("COULD NOT GET TEMPERATURE...", false);
 			}
 #endif
 			menu_draw_temperature_frame();
-			ht1632c_slide_in_from_top();
+			display_slide_in_from_top();
 			
-		} else if (env_var.menu_id == 2) {
-			ht1632c_slide_out_to_top();
-			get_week();
-			menu_draw_week_frame();
-			ht1632c_slide_in_from_top();
 		}
 	}
 }
 
-uint8_t menu_configuration(void) {
+menu_status_t menu_configuration(void) {
 	
 	btn_status = btn_check_press();
 	
@@ -379,31 +336,31 @@ uint8_t menu_configuration(void) {
 	
 	if (btn_status == BTN1) {
 		rtc_disable_time_render();
-		ht1632c_slide_out_to_right();
+		display_slide_out_to_right();
 	} else if (btn_status == BTN4) {
 		rtc_disable_time_render();
-		ht1632c_slide_out_to_left();
+		display_slide_out_to_left();
 	} else if (btn_status == BTN3) {
-		ht1632c_fade_blink();
+		display_fade_blink();
 	}
 	
 	//Switch between menus
 	if (btn_status != NONE) {
 		switch(env_var.menu_id) {
 			case 0:
-				ht1632c_draw_four_letter_word("LGHT");
+				display_draw_four_letter_word("LGHT");
 				break;
 			case 1:
-				ht1632c_draw_four_letter_word("TIME");
+				display_draw_four_letter_word("TIME");
 				break;
 			case 2:
-				ht1632c_draw_four_letter_word("WIFI");
+				display_draw_four_letter_word("WIFI");
 				break;
 			case 3:
-				ht1632c_draw_four_letter_word("ALRM");
+				display_draw_four_letter_word("ALRM");
 				break;
 			case 4:
-				ht1632c_draw_four_letter_word("EXIT");
+				display_draw_four_letter_word("EXIT");
 				break;
 			default:
 				break;
@@ -411,9 +368,9 @@ uint8_t menu_configuration(void) {
 	}
 	
 	if (btn_status == BTN1) {
-		ht1632c_slide_in_from_left();
+		display_slide_in_from_left();
 	} else if (btn_status == BTN4) {
-		ht1632c_slide_in_from_right();
+		display_slide_in_from_right();
 	}
 	
 	//Menu actions
@@ -422,17 +379,17 @@ uint8_t menu_configuration(void) {
 		esp8266_status_t status;
 		switch(env_var.menu_id) {
 			case 0:
-				ht1632c_slide_out_to_bottom();
+				display_slide_out_to_bottom();
 #ifdef SHOW_MANUAL
-				ht1632c_scroll_print("USE BUTTONS TO ADJUST BRIGHTNESS",false);
+				display_print_scrolling_text("USE BUTTONS TO ADJUST BRIGHTNESS",false);
 #endif
 				menu_configure_brightnesss();
 				ht1632c_set_brightness(MAX_BRIGHTNESS);
 				break;
 			case 1:
-				ht1632c_slide_out_to_bottom();
+				display_slide_out_to_bottom();
 #ifdef SHOW_MANUAL
-				ht1632c_scroll_print("USE BUTTONS TO SET THE TIME",false);
+				display_print_scrolling_text("USE BUTTONS TO SET THE TIME",false);
 				_delay_ms(500);
 #endif
 				menu_set_time();
@@ -440,7 +397,7 @@ uint8_t menu_configuration(void) {
 			case 2:
 				esp8266_on();
 #ifdef SHOW_MANUAL
-				ht1632c_scroll_print("STARTING TELNET SERVICE",false);
+				display_print_scrolling_text("STARTING TELNET SERVICE",false);
 #endif
 				status = esp8266_setup_webserver(true, false);
 				if (status == ESP8266_SUCCESS) {
@@ -448,28 +405,28 @@ uint8_t menu_configuration(void) {
 					//esp8266_telnet_server();
 				} else {
 #ifdef SHOW_MANUAL
-					ht1632c_scroll_print("ERROR: COULD NOT START TELNET SERVICE",false);
+					display_print_scrolling_text("ERROR: COULD NOT START TELNET SERVICE",false);
 #endif
 				}
 				break;
 			case 3:
 #ifdef SHOW_MANUAL
-				ht1632c_scroll_print("USE BUTTONS TO SET THE ALARM",false);
+				display_print_scrolling_text("USE BUTTONS TO SET THE ALARM",false);
 				_delay_ms(500);
 #endif
-				ht1632c_slide_out_to_bottom();
+				display_slide_out_to_bottom();
 				menu_set_alarm();
 			case 4:
-				ht1632c_slide_out_to_bottom();
-				return 0;
+				display_slide_out_to_bottom();
+				return MENU_CLOSE;
 			default:
 				break;
 		}
-		ht1632c_slide_out_to_bottom();
-		ht1632c_draw_four_letter_word("<  >");
-		ht1632c_slide_in_from_top();
+		display_slide_out_to_bottom();
+		display_draw_four_letter_word("<  >");
+		display_slide_in_from_top();
 	}	
-	return 1;
+	return MENU_SUCCESS;
 }
 
 void menu_configure_brightnesss(void) {
@@ -477,8 +434,8 @@ void menu_configure_brightnesss(void) {
 	bool quit = false;
 	
 	ht1632c_set_brightness(env_var.brightness);
-	ht1632c_draw_filled_rect(7,0,2,env_var.brightness,1);
-	ht1632c_refresh_screen();
+	display_draw_filled_rect(7,0,2,env_var.brightness,1);
+	display_refresh_screen();
 	
 	while(!quit) {
 		btn_status = btn_check_press();
@@ -486,26 +443,26 @@ void menu_configure_brightnesss(void) {
 		switch(btn_status) {
 			case BTN1:
 				if (env_var.brightness < 15) {
-					ht1632c_draw_filled_rect(7,0,2,env_var.brightness,0);
+					display_draw_filled_rect(7,0,2,env_var.brightness,0);
 					ht1632c_set_brightness(++env_var.brightness);
 					//printf("Brightness: %d \n",env_var.brightness);
-					ht1632c_draw_filled_rect(7,0,2,env_var.brightness,1);
-					ht1632c_refresh_screen();
+					display_draw_filled_rect(7,0,2,env_var.brightness,1);
+					display_refresh_screen();
 				}
 				_delay_ms(100);
 				break;
 			case BTN2:
 				if (env_var.brightness > 1) {
-					ht1632c_draw_filled_rect(7,0,2,env_var.brightness,0);
+					display_draw_filled_rect(7,0,2,env_var.brightness,0);
 					ht1632c_set_brightness(--env_var.brightness);
 					//printf("Brightness: %d \n",env_var.brightness);
-					ht1632c_draw_filled_rect(7,0,2,env_var.brightness,1);
-					ht1632c_refresh_screen();
+					display_draw_filled_rect(7,0,2,env_var.brightness,1);
+					display_refresh_screen();
 				}
 				_delay_ms(100);
 				break;
 			case BTN4:
-				ht1632c_clear_screen();
+				display_clear_screen();
 				quit = true;
 				EEPROM_WriteEnv();
 				break;
@@ -522,12 +479,12 @@ uint8_t menu_set_time(void) {
 	bool quit = false;
 	bool next = false;
 	
-	ht1632c_draw_three_letter_word("HRS");
-	ht1632c_slide_in_from_right();
+	display_draw_three_letter_word("HRS");
+	display_slide_in_from_right();
 	_delay_ms(1000);
-	ht1632c_slide_out_to_left();
+	display_slide_out_to_left();
 	rtc_update_display(5,env_var.time.hours);
-	ht1632c_slide_in_from_right();
+	display_slide_in_from_right();
 	ht1632c_blink(true);
 	
 	//Set hours
@@ -535,13 +492,13 @@ uint8_t menu_set_time(void) {
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN1:
-				ht1632c_clear_screen();
-				rtc_increment_hour();
+				display_clear_screen();
+				display_draw_and_increment_hour();
 				_delay_ms(250);
 				break;
 			case BTN2:
-				ht1632c_clear_screen();
-				rtc_decrement_hour();
+				display_clear_screen();
+				display_draw_and_decrement_hour();
 				_delay_ms(250);
 				break;
 			case BTN3:
@@ -559,13 +516,13 @@ uint8_t menu_set_time(void) {
 	next = false;
 	
 	ht1632c_blink(false);
-	ht1632c_slide_out_to_left();
-	ht1632c_draw_three_letter_word("MIN");
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	display_draw_three_letter_word("MIN");
+	display_slide_in_from_right();
 	_delay_ms(1000);
-	ht1632c_slide_out_to_left();
+	display_slide_out_to_left();
 	rtc_update_display(5,env_var.time.minutes);
-	ht1632c_slide_in_from_right();
+	display_slide_in_from_right();
 	ht1632c_blink(true);
 	
 	//Set minutes
@@ -573,13 +530,13 @@ uint8_t menu_set_time(void) {
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN1:
-				ht1632c_clear_screen();
-				rtc_increment_minute();
+				display_clear_screen();
+				display_draw_and_increment_minute();
 				_delay_ms(250);
 				break;
 			case BTN2:
-				ht1632c_clear_screen();
-				rtc_decrement_minute();
+				display_clear_screen();
+				display_draw_and_decrement_minute();
 				_delay_ms(250);
 				break;
 			case BTN3:
@@ -597,13 +554,13 @@ uint8_t menu_set_time(void) {
 	next = false;
 	
 	ht1632c_blink(false);
-	ht1632c_slide_out_to_left();
-	ht1632c_draw_three_letter_word("SEC");
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	display_draw_three_letter_word("SEC");
+	display_slide_in_from_right();
 	_delay_ms(1000);
-	ht1632c_slide_out_to_left();
+	display_slide_out_to_left();
 	rtc_update_display(5,env_var.time.seconds);
-	ht1632c_slide_in_from_right();
+	display_slide_in_from_right();
 	ht1632c_blink(true);
 	
 	//Set seconds
@@ -611,13 +568,13 @@ uint8_t menu_set_time(void) {
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN1:
-				ht1632c_clear_screen();
-				rtc_increment_second();
+				display_clear_screen();
+				display_draw_and_increment_second();
 				_delay_ms(250);
 				break;
 			case BTN2:
-				ht1632c_clear_screen();
-				rtc_decrement_second();
+				display_clear_screen();
+				display_draw_and_decrement_second();
 				_delay_ms(250);
 				break;
 			case BTN3:
@@ -635,13 +592,13 @@ uint8_t menu_set_time(void) {
 	next = false;
 	
 	ht1632c_blink(false);
-	ht1632c_slide_out_to_left();
-	ht1632c_draw_three_letter_word("DAY");
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	display_draw_three_letter_word("DAY");
+	display_slide_in_from_right();
 	_delay_ms(1000);
-	ht1632c_slide_out_to_left();
-	ht1632c_draw_three_letter_word(get_day_name(env_var.time.weekday));
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	display_draw_three_letter_word(time_get_day_name(env_var.time.weekday));
+	display_slide_in_from_right();
 	ht1632c_blink(true);
 	
 	//Set day
@@ -649,13 +606,13 @@ uint8_t menu_set_time(void) {
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN1:
-				ht1632c_clear_screen();
-				rtc_increment_day();
+				display_clear_screen();
+				display_draw_and_increment_day();
 				_delay_ms(250);
 				break;
 			case BTN2:
-				ht1632c_clear_screen();
-				rtc_decrement_day();
+				display_clear_screen();
+				display_draw_and_decrement_day();
 				_delay_ms(250);
 				break;
 			case BTN3:
@@ -673,13 +630,13 @@ uint8_t menu_set_time(void) {
 	next = false;
 	
 	ht1632c_blink(false);
-	ht1632c_slide_out_to_left();
-	ht1632c_draw_four_letter_word("MNTH");
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	display_draw_four_letter_word("MNTH");
+	display_slide_in_from_right();
 	_delay_ms(1000);
-	ht1632c_slide_out_to_left();
-	ht1632c_draw_three_letter_word(get_month_name(env_var.time.month));
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	display_draw_three_letter_word(time_get_month_name(env_var.time.month));
+	display_slide_in_from_right();
 	ht1632c_blink(true);
 	
 	//Set month
@@ -687,13 +644,13 @@ uint8_t menu_set_time(void) {
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN1:
-				ht1632c_clear_screen();
-				rtc_increment_month();
+				display_clear_screen();
+				display_draw_and_increment_month();
 				_delay_ms(250);
 				break;
 			case BTN2:
-				ht1632c_clear_screen();
-				rtc_decrement_month();
+				display_clear_screen();
+				display_draw_and_decrement_month();
 				_delay_ms(250);
 				break;
 			case BTN3:
@@ -711,15 +668,15 @@ uint8_t menu_set_time(void) {
 	next = false;
 	
 	ht1632c_blink(false);
-	ht1632c_slide_out_to_left();
-	ht1632c_draw_four_letter_word("YEAR");
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	display_draw_four_letter_word("YEAR");
+	display_slide_in_from_right();
 	_delay_ms(1000);
-	ht1632c_slide_out_to_left();
+	display_slide_out_to_left();
 	char *year;
 	itoa_simple(year,env_var.time.year);
-	ht1632c_draw_four_letter_word(year);
-	ht1632c_slide_in_from_right();
+	display_draw_four_letter_word(year);
+	display_slide_in_from_right();
 	ht1632c_blink(true);
 	
 	//Set year
@@ -727,13 +684,13 @@ uint8_t menu_set_time(void) {
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN1:
-				ht1632c_clear_screen();
-				rtc_increment_year();
+				display_clear_screen();
+				display_draw_and_increment_year();
 				_delay_ms(250);
 				break;
 			case BTN2:
-				ht1632c_clear_screen();
-				rtc_decrement_year();
+				display_clear_screen();
+				display_draw_and_decrement_year();
 				_delay_ms(250);
 				break;
 			case BTN3:
@@ -755,24 +712,24 @@ uint8_t menu_set_time(void) {
 	EEPROM_WriteEnv();
 	
 #ifdef SHOW_MANUAL
-	ht1632c_scroll_print("TIME AND DATE IS NOW UPDATED",false);
+	display_print_scrolling_text("TIME AND DATE IS NOW UPDATED",false);
 #endif
 	
 	return 1;
 }
 
-uint8_t menu_set_alarm(void) {
-	
+uint8_t menu_set_alarm(void) 
+{
 	bool quit = false;
 	bool next = false;
 	
-	ht1632c_draw_three_letter_word("HRS");
-	ht1632c_slide_in_from_right();
+	display_draw_three_letter_word("HRS");
+	display_slide_in_from_right();
 	_delay_ms(1000);
-	ht1632c_slide_out_to_left();
-	ht1632c_increment_hour(env_var.alarm.hours);
-	ht1632c_increment_minute(env_var.alarm.minutes);
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	display_alarm_increment_hour(env_var.alarm.hours);
+	display_alarm_increment_minute(env_var.alarm.minutes);
+	display_slide_in_from_right();
 	ht1632c_blink(true);
 	
 	//Set hours
@@ -780,13 +737,13 @@ uint8_t menu_set_alarm(void) {
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN1:
-				ht1632c_clear_screen();
-				ht1632c_increment_hour(env_var.alarm.hours++);
+				display_clear_screen();
+				display_alarm_increment_hour(env_var.alarm.hours++);
 				_delay_ms(250);
 				break;
 			case BTN2:
-				ht1632c_clear_screen();
-				ht1632c_decrement_hour(env_var.alarm.hours--);
+				display_clear_screen();
+				display_alarm_decrement_hour(env_var.alarm.hours--);
 				_delay_ms(250);
 				break;
 			case BTN3:
@@ -804,13 +761,13 @@ uint8_t menu_set_alarm(void) {
 	next = false;
 	
 	ht1632c_blink(false);
-	ht1632c_slide_out_to_left();
-	ht1632c_draw_three_letter_word("MIN");
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	display_draw_three_letter_word("MIN");
+	display_slide_in_from_right();
 	_delay_ms(1000);
-	ht1632c_slide_out_to_left();
-	rtc_update_display(5,env_var.time.minutes);
-	ht1632c_slide_in_from_right();
+	display_slide_out_to_left();
+	rtc_update_display(5,env_var.alarm.minutes);
+	display_slide_in_from_right();
 	ht1632c_blink(true);
 	
 	//Set minutes
@@ -818,13 +775,13 @@ uint8_t menu_set_alarm(void) {
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN1:
-				ht1632c_clear_screen();
-				ht1632c_increment_minute(env_var.alarm.minutes++);
+				display_clear_screen();
+				display_alarm_increment_minute(env_var.alarm.minutes++);
 				_delay_ms(250);
 				break;
 			case BTN2:
-				ht1632c_clear_screen();
-				ht1632c_decrement_minute(env_var.alarm.minutes--);
+				display_clear_screen();
+				display_alarm_decrement_minute(env_var.alarm.minutes--);
 				_delay_ms(250);
 				break;
 			case BTN3:
@@ -846,16 +803,12 @@ uint8_t menu_set_alarm(void) {
 	EEPROM_WriteEnv();
 	
 #ifdef SHOW_MANUAL
-	ht1632c_scroll_print("ALARM IS NOW SET",false);
+	display_print_scrolling_text("ALARM IS NOW SET",false);
 #endif
-	
+
 	return 1;
 }
 
 ISR(TCC0_CCA_vect) {
-	ht1632c_loading2();
-}
-
-ISR(TCC0_CCB_vect) {
-	//ht1632c_loading3();
+	display_show_loading_square();
 }

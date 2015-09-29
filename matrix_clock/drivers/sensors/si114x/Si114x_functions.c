@@ -17,7 +17,7 @@
 #include "si114x_functions.h"
 #include "Si114x_handler.h"
 #include "../../ht1632c/ht1632c.h"
-#include "../../sercom/sercom.h"
+#include "../../sercom/twi.h"
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -51,10 +51,10 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 	initial_baseline_counter = 128;
 	
 #ifdef SHOW_MANUAL
-	ht1632c_scroll_print("CALIBRATING.. HANDS AWAY FROM DISPLAY",false);
+	display_print_scrolling_text("CALIBRATING.. HANDS AWAY FROM DISPLAY",false);
 #endif
 	do {
-		ht1632c_draw_char(5,5,'X',1,1);
+		display_draw_char(5,5,'X',1,1);
 		ht1632c_refresh_screen();
 		si114x_get_data(sensor_data);
 #ifdef DEBUG_ON
@@ -75,7 +75,7 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 	}
 		
 #ifdef SHOW_MANUAL
-	ht1632c_scroll_print("CALIBRATION COMPLETE",false);
+	display_print_scrolling_text("CALIBRATION COMPLETE",false);
 #endif
 
 }

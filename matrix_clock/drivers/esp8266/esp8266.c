@@ -11,8 +11,6 @@
 #include "../port/port.h"
 #include "../../fatfs/ff.h"
 
-#include <stdio.h>
-
 volatile bool json_found = false;
 volatile bool got_reply = false;
 
@@ -21,7 +19,6 @@ static char rx_buffer[RX_BUFFER];
 
 char ip_address[19];
 char telnet_cmd[50];
-char internet_time[35];
 
 esp8266_status_t status;
 
@@ -221,7 +218,7 @@ esp8266_status_t esp8266_setup_webserver(bool telnet, bool ap) {
 	esp8266_send_cmd("AT+CIFSR", 100);
 	
 	//Show ip address to user
-	ht1632c_scroll_print(ip_address,false);
+	display_print_scrolling_text(ip_address,false);
 	
 	//Configure multiple connections
 	esp8266_send_cmd("AT+CIPMUX=1",100);
@@ -229,7 +226,7 @@ esp8266_status_t esp8266_setup_webserver(bool telnet, bool ap) {
 	//Start server
 	if (telnet) {
 		esp8266_send_cmd("AT+CIPSERVER=1,8888",100);
-		ht1632c_scroll_print("TELNET ON",false);	
+		display_print_scrolling_text("TELNET ON",false);	
 	} else {
 		esp8266_send_cmd("AT+CIPSERVER=1,80",100);	
 	}
@@ -636,8 +633,6 @@ ISR(USARTD0_RXC_vect) {
 			status = ESP8266_CONNECT;
 		} else if (strstr(rx_buffer,"CLOSED")) {
 			status = ESP8266_CLOSED;
-		} else if (strstr(rx_buffer,"Date")) {
-			strncpy(internet_time,rx_buffer,35);
 		} else if (strstr(rx_buffer,"192")) {
 			strncpy(ip_address,strchr(rx_buffer,'\"'),19);
 		//This might be error prone...
@@ -655,6 +650,7 @@ ISR(USARTD0_RXC_vect) {
 		}
 	} else {
 		rx_buffer[rx_ptr++] = rx_temp;
+		
 		//Buffer overflow guard
 		if (rx_ptr == RX_BUFFER) {
 			rx_ptr = 0;

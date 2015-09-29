@@ -10,7 +10,7 @@ drivers/sensors/si114x/Si114x_sys_out.d \
  ../drivers/sensors/si114x/Si114x_types.h \
  ../drivers/sensors/si114x/Si114x_functions.h \
  ../drivers/sensors/si114x/User_defs.h \
- ../drivers/sensors/si114x/../../sercom/sercom.h \
+ ../drivers/sensors/si114x/../../sercom/twi.h \
  ../drivers/sensors/si114x/../../sercom/../../global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
@@ -48,7 +48,7 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 ../drivers/sensors/si114x/User_defs.h:
 
-../drivers/sensors/si114x/../../sercom/sercom.h:
+../drivers/sensors/si114x/../../sercom/twi.h:
 
 ../drivers/sensors/si114x/../../sercom/../../global.h:
 

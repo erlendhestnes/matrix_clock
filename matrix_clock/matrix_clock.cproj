@@ -93,31 +93,31 @@
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
       <AvrGcc>
-  <avrgcc.common.optimization.RelaxBranches>True</avrgcc.common.optimization.RelaxBranches>
-  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
-  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
-  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
-  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
-  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
-  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
-  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
-  <avrgcc.compiler.symbols.DefSymbols>
-    <ListValues>
-      <Value>DEBUG</Value>
-    </ListValues>
-  </avrgcc.compiler.symbols.DefSymbols>
-  <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
-  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
-  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
-  <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
-  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
-  <avrgcc.linker.libraries.Libraries>
-    <ListValues>
-      <Value>libm</Value>
-    </ListValues>
-  </avrgcc.linker.libraries.Libraries>
-  <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
-</AvrGcc>
+        <avrgcc.common.optimization.RelaxBranches>True</avrgcc.common.optimization.RelaxBranches>
+        <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+        <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+        <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+        <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+        <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+        <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+        <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+        <avrgcc.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>DEBUG</Value>
+          </ListValues>
+        </avrgcc.compiler.symbols.DefSymbols>
+        <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
+        <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+        <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+        <avrgcc.compiler.optimization.DebugLevel>Default (-g2)</avrgcc.compiler.optimization.DebugLevel>
+        <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+        <avrgcc.linker.libraries.Libraries>
+          <ListValues>
+            <Value>libm</Value>
+          </ListValues>
+        </avrgcc.linker.libraries.Libraries>
+        <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
+      </AvrGcc>
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
@@ -211,10 +211,22 @@
     <Compile Include="drivers\sensors\si114x\User_defs.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="drivers\sercom\sercom.c">
+    <Compile Include="drivers\sercom\spi.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="drivers\sercom\sercom.h">
+    <Compile Include="drivers\sercom\spi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sercom\twi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sercom\twi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sercom\uart.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\sercom\uart.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="fatfs\diskio.h">
@@ -250,19 +262,31 @@
     <Compile Include="json\jsmn.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="json\json_functions.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="json\json_functions.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="menu.c">
+    <Compile Include="modules\display\display.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="menu.h">
+    <Compile Include="modules\display\display.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="uart.c">
+    <Compile Include="modules\menu\menu.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="uart.h">
+    <Compile Include="modules\menu\menu.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\time\time_functions.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\time\time_functions.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="_StackInstrument.c">
@@ -285,6 +309,10 @@
     <Folder Include="fatfs" />
     <Folder Include="json" />
     <Folder Include="drivers" />
+    <Folder Include="modules" />
+    <Folder Include="modules\display" />
+    <Folder Include="modules\menu" />
+    <Folder Include="modules\time" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

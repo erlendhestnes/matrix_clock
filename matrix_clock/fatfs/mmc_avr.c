@@ -13,7 +13,7 @@
 
 #include <avr/io.h>
 #include "diskio.h"
-#include "../drivers/sercom/sercom.h"
+#include "../drivers/sercom/spi.h"
 #include "../global.h"
 
 /* Port controls  (Platform dependent) */

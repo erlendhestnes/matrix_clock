@@ -1,37 +1,11 @@
 /*
- * spi.c
+ * twi.c
  *
- * Created: 12/13/2014 5:52:36 PM
+ * Created: 9/29/2015 9:25:52 PM
  *  Author: Administrator
  */ 
 
-#include "sercom.h"
-
-void spi_setup(void) {
-	
-	SD_PORT.DIRSET = SD_CS | SD_MOSI | SD_SCK;	
-	SD_PORT.OUTSET = SD_CS;	
-	SD_SPI.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV4_gc;
-}
-
-void spi_off(void) {
-	
-	SD_SPI.CTRL &= ~(SPI_ENABLE_bm);
-	SD_PORT.DIRCLR = SD_CS | SD_MOSI | SD_SCK;
-	SD_PORT.PIN4CTRL = PORT_OPC_PULLUP_gc;
-	SD_PORT.PIN5CTRL = PORT_OPC_PULLUP_gc;
-	SD_PORT.PIN6CTRL = PORT_OPC_PULLUP_gc;
-	SD_PORT.PIN7CTRL = PORT_OPC_PULLUP_gc;
-}
-
-uint8_t spi_wr_rd(uint8_t spi_data) {
-	
-	SD_SPI.DATA = spi_data;
-	while(!(SPIC.STATUS & SPI_IF_bm));
-	return SD_SPI.DATA;
-}
-
-//--------------LUFA-------------------------
+#include "twi.h"
 
 void twi_setup(TWI_t* const TWI) {
 	//TWIC.CTRL = TWI_SDAHOLD_50NS_gc;
@@ -53,8 +27,8 @@ void twi_stop_transmission(TWI_t* const TWI) {
 	TWI->MASTER.CTRLC = TWI_MASTER_ACKACT_bm | TWI_MASTER_CMD_STOP_gc;
 }
 
-uint8_t twi_start_transmission(TWI_t* const TWI, 
-const uint8_t slave_address, 
+uint8_t twi_start_transmission(TWI_t* const TWI,
+const uint8_t slave_address,
 const uint8_t timeout_ms)
 {
 	uint16_t timeout_remaining;
@@ -93,7 +67,7 @@ const uint8_t timeout_ms)
 	return TWI_ERROR_BUS_CAP_TIMEOUT;
 }
 
-uint8_t twi_send_byte(TWI_t* const TWI, 
+uint8_t twi_send_byte(TWI_t* const TWI,
 const uint8_t timeout_ms,
 const uint8_t data)
 {
@@ -110,9 +84,9 @@ const uint8_t data)
 	return (TWI->MASTER.STATUS & TWI_MASTER_WIF_bm) && !(TWI->MASTER.STATUS & TWI_MASTER_RXACK_bm);
 }
 
-uint8_t twi_receive_byte(TWI_t* const TWI, 
+uint8_t twi_receive_byte(TWI_t* const TWI,
 const uint8_t timeout_ms,
-uint8_t* const data, 
+uint8_t* const data,
 const uint8_t end_of_data)
 {
 	uint16_t timeout_remaining;

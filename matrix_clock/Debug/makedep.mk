@@ -32,7 +32,11 @@ drivers\sensors\si114x\Si114x_sys_out.c
 
 drivers\sensors\si114x\slider_algorithm.c
 
-drivers\sercom\sercom.c
+drivers\sercom\spi.c
+
+drivers\sercom\twi.c
+
+drivers\sercom\uart.c
 
 fatfs\ff.c
 
@@ -42,11 +46,15 @@ fatfs\sound.c
 
 json\jsmn.c
 
+json\json_functions.c
+
 main.c
 
-menu.c
+modules\display\display.c
 
-uart.c
+modules\menu\menu.c
+
+modules\time\time_functions.c
 
 _StackInstrument.c
 

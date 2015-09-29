@@ -16,8 +16,8 @@
 
 #define SI114X_INT PIN2_bm
 
-void btn_setup(bool enable_interrupt) {
-	
+void btn_setup(bool enable_interrupt) 
+{	
 	PORTA.DIRCLR |= BUTTON0 | BUTTON1 | BUTTON2;
 	PORTB.DIRCLR |= BUTTON3;
 	
@@ -49,47 +49,46 @@ void btn_setup(bool enable_interrupt) {
 	}
 }
 
-void btn_si114x_enable_interrupt(void) {
-	
+void btn_si114x_enable_interrupt(void) 
+{	
 	PORTA.DIRCLR |= SI114X_INT;
 	PORTA.PIN2CTRL |= PORT_ISC_FALLING_gc;
 	PORTA.INT1MASK |= SI114X_INT;
 	PORTA.INTCTRL |= PORT_INT1LVL_HI_gc;
 }
 
-void btn_si114x_disable_interrupt(void) {
-	
+void btn_si114x_disable_interrupt(void) 
+{	
 	PORTA.DIRCLR &= ~(SI114X_INT);
 	PORTA.PIN2CTRL &= ~(PORT_ISC_FALLING_gc);
 	PORTA.INT1MASK &= ~(SI114X_INT);
 	PORTA.INTCTRL &= ~(PORT_INT1LVL_HI_gc);
 }
 
-void btn_top_setup(void) {
-	
+void btn_top_setup(void) 
+{	
 	PORTC.DIRCLR |= PIN2_bm;
 	PORTC.PIN2CTRL |= PORT_OPC_PULLDOWN_gc | PORT_ISC_RISING_gc;
 	PORTC.INT0MASK |= PIN2_bm;
 	PORTC.INTCTRL |= PORT_INT0LVL_HI_gc;
-	
 }
 
 button_t btn_check_press(void) {
 	
 	if (!(PORTA.IN & BUTTON0)) {
-		uwrite_hex(DACB.CH0OFFSETCAL);
+		uart_write_hex(DACB.CH0OFFSETCAL);
 		DACB.CH0OFFSETCAL += 1;
 		return BTN1;
 	} else if (!(PORTA.IN & BUTTON1)) {
-		uwrite_hex(DACB.CH0OFFSETCAL);
+		uart_write_hex(DACB.CH0OFFSETCAL);
 		DACB.CH0OFFSETCAL -= 1;
 		return BTN2;
 	} else if (!(PORTA.IN & BUTTON2)) {
-		uwrite_hex(DACB.CH0GAINCAL);
+		uart_write_hex(DACB.CH0GAINCAL);
 		DACB.CH0GAINCAL += 1;
 		return BTN3;
 	} else if (!(PORTB.IN & BUTTON3)) {
-		uwrite_hex(DACB.CH0GAINCAL);
+		uart_write_hex(DACB.CH0GAINCAL);
 		DACB.CH0GAINCAL -= 1;
 		return BTN4;
 	} else {

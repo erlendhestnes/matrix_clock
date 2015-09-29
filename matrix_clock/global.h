@@ -106,9 +106,20 @@ static inline void delay_ms( int ms )
 }
 
 /**
- * reverse:  reverse first l chars of string s in place
+ * reverse_byte:  reverse byteorder
  */
-static inline void reverse( char *s, int l )
+static inline char reverse_byte(char b)
+{
+	b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+	b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+	b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+	return b;
+}
+
+/**
+ * reverse_string:  reverse first l chars of string s in place
+ */
+static inline void reverse_string( char *s, int l )
 {
 	int i, j;
 	char c;
@@ -143,7 +154,7 @@ static inline void itoa_simple( char *s, long num ) {
 		*s++ = (n % 10) + '0';   /* get next digit */
 	} while ((n /= 10) > 0);     /* delete it */
 
-	reverse( rev, s - rev);
+	reverse_string( rev, s - rev);
 
 	return s - begin;
 }

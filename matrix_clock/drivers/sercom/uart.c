@@ -38,7 +38,7 @@ void uart_write_str(char *str) {
 	uart_put_char('\n');
 }
 
-void uwrite_hex(unsigned char n) {
+void uart_write_hex(unsigned char n) {
 	if(((n>>4) & 15) < 10)
 	uart_put_char('0' + ((n>>4)&15));
 	else

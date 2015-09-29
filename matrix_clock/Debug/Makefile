@@ -46,7 +46,11 @@ SUBDIRS :=  \
 ../drivers/sensors/si114x/ \
 ../fatfs \
 ../json \
-../drivers
+../drivers \
+../modules \
+../modules/display \
+../modules/menu \
+../modules/time
 
 
 # Add inputs and outputs from these tool invocations to the build variables 
@@ -66,14 +70,18 @@ C_SRCS +=  \
 ../drivers/sensors/si114x/Si114x_handler.c \
 ../drivers/sensors/si114x/Si114x_sys_out.c \
 ../drivers/sensors/si114x/slider_algorithm.c \
-../drivers/sercom/sercom.c \
+../drivers/sercom/spi.c \
+../drivers/sercom/twi.c \
+../drivers/sercom/uart.c \
 ../fatfs/ff.c \
 ../fatfs/mmc_avr.c \
 ../fatfs/sound.c \
 ../json/jsmn.c \
+../json/json_functions.c \
 ../main.c \
-../menu.c \
-../uart.c \
+../modules/display/display.c \
+../modules/menu/menu.c \
+../modules/time/time_functions.c \
 ../_StackInstrument.c
 
 
@@ -99,14 +107,18 @@ drivers/sensors/si114x/Si114x_functions.o \
 drivers/sensors/si114x/Si114x_handler.o \
 drivers/sensors/si114x/Si114x_sys_out.o \
 drivers/sensors/si114x/slider_algorithm.o \
-drivers/sercom/sercom.o \
+drivers/sercom/spi.o \
+drivers/sercom/twi.o \
+drivers/sercom/uart.o \
 fatfs/ff.o \
 fatfs/mmc_avr.o \
 fatfs/sound.o \
 json/jsmn.o \
+json/json_functions.o \
 main.o \
-menu.o \
-uart.o \
+modules/display/display.o \
+modules/menu/menu.o \
+modules/time/time_functions.o \
 _StackInstrument.o
 
 OBJS_AS_ARGS +=  \
@@ -125,14 +137,18 @@ drivers/sensors/si114x/Si114x_functions.o \
 drivers/sensors/si114x/Si114x_handler.o \
 drivers/sensors/si114x/Si114x_sys_out.o \
 drivers/sensors/si114x/slider_algorithm.o \
-drivers/sercom/sercom.o \
+drivers/sercom/spi.o \
+drivers/sercom/twi.o \
+drivers/sercom/uart.o \
 fatfs/ff.o \
 fatfs/mmc_avr.o \
 fatfs/sound.o \
 json/jsmn.o \
+json/json_functions.o \
 main.o \
-menu.o \
-uart.o \
+modules/display/display.o \
+modules/menu/menu.o \
+modules/time/time_functions.o \
 _StackInstrument.o
 
 C_DEPS +=  \
@@ -151,14 +167,18 @@ drivers/sensors/si114x/Si114x_functions.d \
 drivers/sensors/si114x/Si114x_handler.d \
 drivers/sensors/si114x/Si114x_sys_out.d \
 drivers/sensors/si114x/slider_algorithm.d \
-drivers/sercom/sercom.d \
+drivers/sercom/spi.d \
+drivers/sercom/twi.d \
+drivers/sercom/uart.d \
 fatfs/ff.d \
 fatfs/mmc_avr.d \
 fatfs/sound.d \
 json/jsmn.d \
+json/json_functions.d \
 main.d \
-menu.d \
-uart.d \
+modules/display/display.d \
+modules/menu/menu.d \
+modules/time/time_functions.d \
 _StackInstrument.d
 
 C_DEPS_AS_ARGS +=  \
@@ -177,14 +197,18 @@ drivers/sensors/si114x/Si114x_functions.d \
 drivers/sensors/si114x/Si114x_handler.d \
 drivers/sensors/si114x/Si114x_sys_out.d \
 drivers/sensors/si114x/slider_algorithm.d \
-drivers/sercom/sercom.d \
+drivers/sercom/spi.d \
+drivers/sercom/twi.d \
+drivers/sercom/uart.d \
 fatfs/ff.d \
 fatfs/mmc_avr.d \
 fatfs/sound.d \
 json/jsmn.d \
+json/json_functions.d \
 main.d \
-menu.d \
-uart.d \
+modules/display/display.d \
+modules/menu/menu.d \
+modules/time/time_functions.d \
 _StackInstrument.d
 
 OUTPUT_FILE_PATH +=matrix_clock.elf
@@ -198,6 +222,14 @@ OUTPUT_FILE_DEP:= ./makedep.mk
 LIB_DEP+= 
 
 # AVR32/GNU C Compiler
+
+
+
+
+
+
+
+
 
 
 
@@ -339,6 +371,27 @@ fatfs/%.o: ../fatfs/%.c
 	
 
 json/%.o: ../json/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+modules/display/%.o: ../modules/display/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+modules/menu/%.o: ../modules/menu/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+modules/time/%.o: ../modules/time/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
 	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

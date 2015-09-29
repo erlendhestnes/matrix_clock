@@ -1,4 +1,5 @@
-uart.d uart.o: .././uart.c .././uart.h .././global.h \
+drivers/sercom/twi.d drivers/sercom/twi.o: ../drivers/sercom/twi.c \
+ ../drivers/sercom/twi.h ../drivers/sercom/../../global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\inttypes.h \
@@ -23,9 +24,9 @@ uart.d uart.o: .././uart.c .././uart.h .././global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h
 
-.././uart.h:
+../drivers/sercom/twi.h:
 
-.././global.h:
+../drivers/sercom/../../global.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h:
 

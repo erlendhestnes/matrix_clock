@@ -1,6 +1,5 @@
-drivers/sercom/sercom.d drivers/sercom/sercom.o: \
- ../drivers/sercom/sercom.c ../drivers/sercom/sercom.h \
- ../drivers/sercom/../../global.h \
+drivers/sercom/spi.d drivers/sercom/spi.o: ../drivers/sercom/spi.c \
+ ../drivers/sercom/spi.h ../drivers/sercom/../../global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\inttypes.h \
@@ -25,7 +24,7 @@ drivers/sercom/sercom.d drivers/sercom/sercom.o: \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h
 
-../drivers/sercom/sercom.h:
+../drivers/sercom/spi.h:
 
 ../drivers/sercom/../../global.h:
 

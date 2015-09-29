@@ -3,7 +3,7 @@
 #include "Si114x_types.h"
 //#include "Si114x_PGM_Toolkit.h"
 #include "Si114x_functions.h"
-#include "../../sercom/sercom.h"
+#include "../../sercom/twi.h"
 #include <util/delay.h>
 
 extern HANDLE mcu_handle;
