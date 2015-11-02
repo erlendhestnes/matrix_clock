@@ -50,7 +50,7 @@ SUBDIRS :=  \
 ../modules \
 ../modules/display \
 ../modules/menu \
-../modules/time
+../modules/time_functions
 
 
 # Add inputs and outputs from these tool invocations to the build variables 
@@ -81,7 +81,7 @@ C_SRCS +=  \
 ../main.c \
 ../modules/display/display.c \
 ../modules/menu/menu.c \
-../modules/time/time_functions.c \
+../modules/time_functions/time_functions.c \
 ../_StackInstrument.c
 
 
@@ -118,7 +118,7 @@ json/json_functions.o \
 main.o \
 modules/display/display.o \
 modules/menu/menu.o \
-modules/time/time_functions.o \
+modules/time_functions/time_functions.o \
 _StackInstrument.o
 
 OBJS_AS_ARGS +=  \
@@ -148,7 +148,7 @@ json/json_functions.o \
 main.o \
 modules/display/display.o \
 modules/menu/menu.o \
-modules/time/time_functions.o \
+modules/time_functions/time_functions.o \
 _StackInstrument.o
 
 C_DEPS +=  \
@@ -178,7 +178,7 @@ json/json_functions.d \
 main.d \
 modules/display/display.d \
 modules/menu/menu.d \
-modules/time/time_functions.d \
+modules/time_functions/time_functions.d \
 _StackInstrument.d
 
 C_DEPS_AS_ARGS +=  \
@@ -208,7 +208,7 @@ json/json_functions.d \
 main.d \
 modules/display/display.d \
 modules/menu/menu.d \
-modules/time/time_functions.d \
+modules/time_functions/time_functions.d \
 _StackInstrument.d
 
 OUTPUT_FILE_PATH +=matrix_clock.elf
@@ -391,7 +391,7 @@ modules/menu/%.o: ../modules/menu/%.c
 	@echo Finished building: $<
 	
 
-modules/time/%.o: ../modules/time/%.c
+modules/time_functions/%.o: ../modules/time_functions/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
 	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

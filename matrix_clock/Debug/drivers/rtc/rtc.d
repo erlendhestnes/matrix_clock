@@ -25,8 +25,8 @@ drivers/rtc/rtc.d drivers/rtc/rtc.o: ../drivers/rtc/rtc.c \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
  ../drivers/rtc/../ht1632c/ht1632c.h \
  ../drivers/rtc/../ht1632c/../../global.h \
- ../drivers/rtc/../../modules/time/time_functions.h \
- ../drivers/rtc/../../modules/time/../../global.h
+ ../drivers/rtc/../../modules/time_functions/time_functions.h \
+ ../drivers/rtc/../../modules/time_functions/../../global.h
 
 ../drivers/rtc/rtc.h:
 
@@ -82,6 +82,6 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 ../drivers/rtc/../ht1632c/../../global.h:
 
-../drivers/rtc/../../modules/time/time_functions.h:
+../drivers/rtc/../../modules/time_functions/time_functions.h:
 
-../drivers/rtc/../../modules/time/../../global.h:
+../drivers/rtc/../../modules/time_functions/../../global.h:

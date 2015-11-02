@@ -25,7 +25,7 @@
 #include "drivers/eeprom/eeprom.h"
 
 #include "modules/display/display.h"
-#include "modules/time/time_functions.h"
+#include "modules/time_functions/time_functions.h"
 #include "modules/menu/menu.h"
 
 #include "json/jsmn.h"
@@ -42,15 +42,22 @@ void play_sound(void)
 {
 	FATFS FatFs;		// FatFs work area needed for each volume
 	FIL Fil;			// File object needed for each open file
-	BYTE Buff[1024];	// Working buffer 1024
+	BYTE Buff[512];	// Working buffer 1024
 	UINT bw;
 	
 	while (1)
 	{
+		if (f_open(&Fil, "newfilea2.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {	/* Create a file */
+			
+			f_write(&Fil, "It works!\r\n", 11, &bw);	/* Write data to the file */
+			
+			f_close(&Fil);								/* Close the file */
+		}
+		
 		f_mount(&FatFs, "", 0);
 		
 		BYTE res;
-		res = f_open(&Fil, "cold3.wav", FA_READ);
+		res = f_open(&Fil, "rath3.wav", FA_READ);
 		if (!res) {
 			load_wav(&Fil, "**** WAV PLAYER ****", Buff, sizeof Buff);
 			f_close(&Fil);
@@ -65,7 +72,7 @@ int main(void)
 	
 	//System
 	clock_setup_32_mhz();
-	
+	//clock_setup_48_mhz_pll();
 	//LED Matrix init
 	display_setup();
 	
@@ -75,8 +82,6 @@ int main(void)
 	{
 		menu_set_env_variables();
 	}
-	//Guard
-	env_var.menu_id = 0;
 	
 	//WiFi off
 	esp8266_off();
@@ -91,7 +96,7 @@ int main(void)
 
 	//Enable interrupts
 	pmic_setup();
-	btn_setup(false);
+	btn_setup(true);
 	
 	twi_setup(&TWIC);
 
@@ -107,7 +112,7 @@ int main(void)
 	
 	//Turn on RTC
 	rtc_enable_time_render();
-	ht1632c_refresh_screen();
+	display_refresh_screen();
 	rtc_setup();
 	
 	EEPROM_WriteEnv();
@@ -128,6 +133,9 @@ int main(void)
 #ifdef DEBUG_ON
 			puts("Enter gesture mode!");
 #endif
+			//Guard
+			env_var.menu_id = 0;
+
 			si114x_setup();
 			
 			//To avoid first menu item of being selected
@@ -140,7 +148,7 @@ int main(void)
 				menu_state_machine(&sensor_data);
 				
 				if (sensor_data.ps1 < PROXIMITY_THRESHOLD) {
-					if (timeout_ms++ > 15000) {
+					if (timeout_ms++ > MENU_TIMEOUT) {
 						timeout = true;
 					}
 				} else {
@@ -166,6 +174,12 @@ int main(void)
 		} else if (si114x_status == 2) {
 			//Dim light by using the light sensor
 			puts("Somebody turned off the lights!");
+		} else if (btn_status == (BTN1 | BTN4)) {
+			//Calculate baseline for Si114x
+			display_slide_out_to_bottom();
+			si114x_baseline_calibration(&sensor_data);
+			rtc_enable_time_render();
+			display_slide_in_from_top();
 		}
 		
 		SLEEP.CTRL |= SLEEP_SEN_bm;

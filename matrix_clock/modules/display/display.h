@@ -13,6 +13,9 @@
 #include "../../drivers/ht1632c/ht1632c.h"
 
 void display_setup(void);
+void display_fill_screen(void);
+void display_clear_screen(void);
+void display_refresh_screen(void);
 
 //FADE FUNCTIONS
 static inline void display_fade_up(uint8_t pwm, uint8_t prev_pwm);
@@ -35,7 +38,7 @@ void display_draw_bitmap(uint8_t x, uint8_t y,const uint8_t *bitmap, uint8_t w, 
 
 //PRINT FUNCTIONS
 void display_print_scrolling_text(char *str, bool big_font);
-void display_print_buffer(char *buffer, uint8_t length);
+void display_print_buffer(char *buffer, uint16_t length);
 void display_draw_char_to_buffer(int16_t x, char c, char *buffer);
 void display_draw_char(int16_t x, int16_t y, char c,uint16_t color, uint8_t size);
 void display_draw_small_char_to_buffer(int16_t x, char c, char *buffer);
@@ -46,6 +49,7 @@ void display_draw_three_letter_word(char *name);
 //MISC FUNCTIONS
 void display_traverse_screen(bool color);
 void display_draw_button_info(void);
+void display_draw_wifi_icon(void);
 
 //SLIDE FUNCTIONS
 void display_slide_in_from_left(void);
@@ -58,10 +62,10 @@ void display_slide_out_to_top(void);
 void display_slide_out_to_bottom(void);
 
 //TIME FUNCTIONS
-void display_alarm_increment_minute(uint8_t min);
-void display_alarm_decrement_minute(uint8_t min);
-void display_alarm_increment_hour(uint8_t hour);
-void display_alarm_decrement_hour(uint8_t hour);
+void display_alarm_increment_minute(void);
+void display_alarm_decrement_minute(void);
+void display_alarm_increment_hour(void);
+void display_alarm_decrement_hour(void);
 
 void display_draw_and_increment_hour(void);
 void display_draw_and_decrement_hour(void);

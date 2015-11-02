@@ -4,16 +4,15 @@
 #ifndef FONT5X7_H
 #define FONT5X7_H
 
-/*
 static const unsigned char IMG_SPEAKER_A [] PROGMEM = {0b00011000, 0b00011000, 0b00111100, 0b01000010, 0b10100101, 0b00011000};
 static const unsigned char IMG_SPEAKER_B [] PROGMEM = {0b00011000, 0b00011000, 0b00111100, 0b01000010, 0b10111101, 0b00000000};
 #define IMG_SPEAKER_WIDTH 	 6
 #define IMG_SPEAKER_HEIGHT 	 8
-
+/*
 static const unsigned char IMG_HEART [] PROGMEM = {0b01110000, 0b11111000, 0b11111100, 0b11111110, 0b01111111, 0b11111110, 0b11111100, 0b11111000, 0b01110000};
 #define IMG_HEART_WIDTH 	 9
 #define IMG_HEART_HEIGHT 	 8
-
+*/
 static const unsigned char IMG_MAIL [] PROGMEM = {0b11111111, 0b11000001, 0b10100001, 0b10010001, 0b10001001, 0b10000101, 0b10000101, 0b10001001, 0b10010001, 0b10100001, 0b11000001, 0b11111111};
 #define IMG_MAIL_WIDTH 	12
 #define IMG_MAIL_HEIGHT 8
@@ -26,7 +25,6 @@ static const unsigned char IMG_TWITTER [] PROGMEM = {0b01111110, 0b10000001, 0b1
 #define IMG_TWITTER_WIDTH 	 7
 #define IMG_TWITTER_HEIGHT 	 8
 
-*/
 
 static const unsigned char  font_5x7[] PROGMEM = {
     0x00, 0x00, 0x00, 0x00, 0x00,   
@@ -84,7 +82,8 @@ static const unsigned char  font_5x7[] PROGMEM = {
 	0x18, 0x14, 0x12, 0x7F, 0x10, 
 	0x27, 0x45, 0x45, 0x45, 0x39, 
 	0x3C, 0x4A, 0x49, 0x49, 0x31, 
-	0x41, 0x21, 0x11, 0x09, 0x07, 
+	//0x41, 0x21, 0x11, 0x09, 0x07, //This is seven
+	0x01, 0x01, 0x71, 0x09, 0x07, //This is also seven
 	0x36, 0x49, 0x49, 0x49, 0x36, 
 	0x46, 0x49, 0x49, 0x29, 0x1E, 
 	0x00, 0x00, 0x14, 0x00, 0x00, 

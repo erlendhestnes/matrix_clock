@@ -386,7 +386,7 @@ void ht1632c_slide_in_from_top(void) {
 
 /*------------------------------PRINT FUNCTIONS------------------------------*/
 
-void ht1632c_print_buffer(char *buffer, uint8_t length) {
+void ht1632c_print_buffer(char *buffer, uint16_t length) {
 
 	uint16_t i;
 	
@@ -396,13 +396,20 @@ void ht1632c_print_buffer(char *buffer, uint8_t length) {
 		ht1632c_shift_left();
 		ledmatrix[15] = buffer[i] >> 3;
 		ledmatrix[31] = buffer[i] << 5;
-		_delay_ms(35);
+		_delay_ms(30);
 	}
 	
 	//Shift buffer out of visible area
-	for (i = 0; i < (length/4); i++)
-	{
-		ht1632c_shift_left();
-		_delay_ms(35);
+	
+	if ((length/4) < 15) {
+		for (i = 0; i < 30; i++) {
+			ht1632c_shift_left();
+			_delay_ms(30);
+		}
+	} else {
+		for (i = 0; i < (length/4); i++) {
+			ht1632c_shift_left();
+			_delay_ms(30);
+		}
 	}
 }

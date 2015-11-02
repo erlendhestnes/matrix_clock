@@ -13,6 +13,7 @@
 #define RAND_MAX 255
 
 #define PROXIMITY_THRESHOLD 3200
+#define MENU_TIMEOUT 15000
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
@@ -26,13 +27,14 @@
 #include <stdbool.h>
 
 typedef enum {
-	Sunday,
-	Monday,
+	Monday = 1,
 	Tuesday,
 	Wednesday,
 	Thursday,
 	Friday,
-	Saturday
+	Saturday,
+	Sunday,
+	NO_DAY
 } weekdays_t;
 
 typedef enum {
@@ -47,7 +49,8 @@ typedef enum {
 	September,
 	October,
 	November,
-	December
+	December,
+	NO_MONTH
 } months_t;
 
 typedef struct {
@@ -59,19 +62,23 @@ typedef struct {
 	uint8_t week;
 	months_t month;
 	uint16_t year;
+	int8_t timezone;
+	uint8_t DST
 } time_env_t;
 
 typedef struct {
 	uint8_t minutes;
 	uint8_t hours;
+	uint8_t sound;
 } alarm_t;
 
 typedef struct {
 	uint16_t id;
-	char name[10];
+	char name[20];
 	time_env_t time;
 	char temperature[3];
-	char weather_info[25];
+	char weather_info[30];
+	char location[20];
 	int8_t brightness;
 	uint16_t ps1;
 	char wifi_pswd[20];
@@ -82,19 +89,11 @@ typedef struct {
 
 env_variables_t env_var;
 
-//#define SHOW_MANUAL
+#define SHOW_MANUAL
 #define DEBUG_ON
 
 #define CLOCK_NAME "MARK"
 #define CLOCK_ID   1
-
-static inline bool is_leap_year(int year) {
-	if ((year & 3) == 0 && ((year % 25) != 0 || (year & 15) == 0)) {
-		return true;
-	} else {
-		return false;
-	}
-}
 
 //Delay implementation that accepts dynamic parameters
 static inline void delay_ms( int ms )
@@ -157,6 +156,15 @@ static inline void itoa_simple( char *s, long num ) {
 	reverse_string( rev, s - rev);
 
 	return s - begin;
+}
+
+static inline int isNumeric (const char * s)
+{
+	if (s == NULL || *s == '\0' || isspace(*s))
+	return 0;
+	char * p;
+	strtod (s, &p);
+	return *p == '\0';
 }
 
 #endif

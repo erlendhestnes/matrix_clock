@@ -12,13 +12,17 @@
 #include "../../fatfs/ff.h"
 
 volatile bool json_found = false;
-volatile bool got_reply = false;
+volatile bool wdt_triggered = false;
+volatile char link_channel = '0';
 
 volatile static uint16_t rx_ptr = 0;
 static char rx_buffer[RX_BUFFER];
 
 char ip_address[19];
 char telnet_cmd[50];
+
+char ssid[20];
+char password[20];
 
 esp8266_status_t status;
 
@@ -49,13 +53,12 @@ esp8266_status_t esp8266_setup(void) {
     
 	//Reset module
 	esp8266_send_cmd("AT+RST",2000);
-	
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Show firmware version
-	esp8266_send_cmd("AT+GMR",50);
+	//esp8266_send_cmd("AT+GMR",50);
 	
 	//Set Data Mode
 	esp8266_send_cmd("AT+CIPMODE=0",50);
@@ -106,12 +109,13 @@ esp8266_status_t esp8266_join_ap(char *ssid, char *pass) {
 			return status;
 		}
 	}
-	
+	/*
 	esp8266_send_cmd("AT+CWJAP?",100);
 	
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
+	*/
 
 	return ESP8266_SUCCESS;
 }
@@ -182,83 +186,93 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 	return ESP8266_SUCCESS;
 }
 
-esp8266_status_t esp8266_setup_webserver(bool telnet, bool ap) {
+esp8266_status_t esp8266_setup_webserver(bool sta, bool ap) {
 	
 	//Reset module
 	esp8266_send_cmd("AT+RST\r",1000);
+	if (status != ESP8266_SUCCESS) {
+		return status;
+	}
 	
+	//Set Data Mode
+	esp8266_send_cmd("AT+CIPMODE=0",100);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Select mode
-	if (telnet) {
-		esp8266_send_cmd("AT+CWMODE=3",100);
+	if (sta) {
+		esp8266_send_cmd("AT+CWMODE=1",200);
 	} else if (ap) {
-		esp8266_send_cmd("AT+CWMODE=2",100);
+		esp8266_send_cmd("AT+CWMODE=2",200);
+	} else if (ap && sta) {
+		esp8266_send_cmd("AT+CWMODE=3",200);
 	} else {
-		esp8266_send_cmd("AT+CWMODE=1",100);
+		return ESP8266_ERROR;
 	}
 	
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
-	/*
-	if (ap)
-	{
-		esp8266_send_cmd("AT+CWSAP=\"SMART_CLOCK\",\"1234\",0,3",100);
-	}
-	*/
-	if (!telnet) {
-		//Join access point
+	
+	if (sta || (sta && ap)) {
 		esp8266_join_ap(env_var.wifi_ssid,env_var.wifi_pswd);
 	}
 	
 	//List ip addresses
 	esp8266_send_cmd("AT+CIFSR", 100);
+	if (status != ESP8266_SUCCESS) {
+		return status;
+	}
 	
 	//Show ip address to user
+#ifdef SHOW_MANUAL
 	display_print_scrolling_text(ip_address,false);
-	
+#endif
 	//Configure multiple connections
 	esp8266_send_cmd("AT+CIPMUX=1",100);
+	if (status != ESP8266_SUCCESS) {
+		return status;
+	}
 	
 	//Start server
-	if (telnet) {
-		esp8266_send_cmd("AT+CIPSERVER=1,8888",100);
-		display_print_scrolling_text("TELNET ON",false);	
-	} else {
-		esp8266_send_cmd("AT+CIPSERVER=1,80",100);	
+	esp8266_send_cmd("AT+CIPSERVER=1,80",100);	
+	if (status != ESP8266_SUCCESS) {
+		return status;
 	}
 	
 	return ESP8266_SUCCESS;
 }
 
-static inline void at_cipsend(char *str) {
+static inline void at_cipsend(char channel, char *str) {
 	char number_of_bytes[5];
 	char cmd[50];
+	uint16_t timeout = 0;
 	
-	got_reply = false;
-	
-	itoa_simple(number_of_bytes,strlen(number_of_bytes));
-	//itoa(strlen(str),number_of_bytes,10);
-	strcpy(cmd, "AT+CIPSEND=0,");
+	itoa(strlen(str),number_of_bytes,10);
+	if (channel == '0') {
+		strcpy(cmd, "AT+CIPSEND=0,");
+	} else {
+		strcpy(cmd, "AT+CIPSEND=1,");
+	}
 	strcat(cmd,number_of_bytes);
-	strcat(cmd,"\r"); //needs to be here
+	strcat(cmd,"\r");
 
-	esp8266_send_cmd(cmd,10);
-	esp8266_send_cmd(str,10);
+	esp8266_send_cmd(cmd,100);
+	while((rx_buffer[0] != '>') && (timeout++ < 50)) {
+		_delay_ms(100);
+	}
+	printf("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n%s\r\n\r\n",str);
+	_delay_ms(100);
 }
 
-static inline void at_cipsend2(void) {
+static inline void at_cipsend_from_sd_card(void) {
 	char number_of_bytes[5];
 	char cmd[50];
 	
 	FATFS FatFs;		// FatFs work area needed for each volume
 	FIL Fil;			// File object needed for each open file
 	UINT br;
-	
-	got_reply = false;
 	
 	f_mount(&FatFs, "", 0);
 	
@@ -275,17 +289,6 @@ static inline void at_cipsend2(void) {
 			_delay_ms(25);
 		} while (f_eof(&Fil) == 0);
 		
-		/*while(f_gets(line,sizeof(line),&Fil)) {
-			//itoa_simple(number_of_bytes,strlen(line));
-			itoa(strlen(line),number_of_bytes,10);
-			strcpy(cmd, "AT+CIPSEND=0,");
-			strcat(cmd,number_of_bytes);
-			strcat(cmd,"\r"); //needs to be here
-			esp8266_send_cmd(cmd,5);
-			printf("%s",line);
-			_delay_ms(20);	
-		}*/
-		
 		f_close(&Fil);
 	} else {
 		uart_write_str("Could not access sd card...");
@@ -293,8 +296,7 @@ static inline void at_cipsend2(void) {
 	
 	if (f_open(&Fil, "zepto.txt", FA_READ | FA_OPEN_EXISTING) == FR_OK) {
 		uint32_t filesize = f_size(&Fil);
-		do 
-		{ 
+		do { 
 			f_read(&Fil,line,1024,&br);
 			esp8266_send_cmd("AT+CIPSEND=0,1024\r",0);
 			while(status != ESP8266_SUCCESS);
@@ -308,315 +310,100 @@ static inline void at_cipsend2(void) {
 		uart_write_str("Could not access sd card...");
 	}
 }
-/*
-esp8266_status_t esp8266_telnet_server(void) 
-{	
-	//Todo - lookup would be faster here
-	
-	bool quit = false;
-	
-	while(!quit) 
-	{	
-		btn_status = btn_check_press();
-		if (btn_status == BTN4)
-		{
-			quit = true;
+
+esp8266_status_t esp8266_configure_ssid_and_password(void) 
+{
+	if (status == ESP8266_GET_REQ) {
+		
+		at_cipsend(link_channel,"<!DOCTYPE html>\
+		<html>\
+		<body>\
+		<p>Smart Clock - Configuration</p>\
+		<form method=\"post\" target=\"_self\">\
+		SSID: <input type=\"text\" name=\"my_ssid\"><br>\
+		PASS: <input type=\"password\" name=\"my_password\"><br>\
+		ZIP-Code:<input type=\"text\" name=\"zip\"><br>\
+		NAME:<input type=\"text\" name=\"name\"><br>\
+		<input type=\"submit\" value=\"Submit\">\
+		</form>\
+		<p>Input network name (SSID) and password for your router. Then click submit.</p>\
+		</body>\
+		</html>");
+		
+		_delay_ms(1000);
+		
+		if (link_channel == '0') {
+			esp8266_send_cmd("AT+CIPCLOSE=0\r", 100);
+		} else {
+			esp8266_send_cmd("AT+CIPCLOSE=1\r", 100);	
 		}
 		
-		if (status == ESP8266_CONNECT) 
-		{
-			status = ESP8266_NONE;
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("******************************************************\r\n");
-			at_cipsend("***Welcome to the LED Matrix Clock telnet interface***\r\n");
-			at_cipsend("******************************************************\r\n\r\n");
-			at_cipsend("Type \"help\" to view all available commands\r\n>");
-		} 
-		else if (strstr(telnet_cmd,"led")) 
-		{
-			if (strstr(telnet_cmd,"on")) 
-			{
-				memset(telnet_cmd, 0, 50);
-				ht1632c_fill_screen();
-				at_cipsend("Turning on LEDs\r\n>");
-			} 
-			else if (strstr(telnet_cmd,"off")) 
-			{
-				ht1632c_clear_screen();
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Turning of LEDs\r\n>");
-			} 
-			else if (strstr(telnet_cmd,"down")) 
-			{
-				ht1632c_fade(1);
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Dimming down LEDs\r\n>");
-			} 
-			else if (strstr(telnet_cmd,"up")) 
-			{
-				ht1632c_fade(15);
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Dimming up LEDs\r\n>");
-			} 
-			else 
-			{
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Command not found \r\n>");
-			}
-		} 
-		else if (strstr(telnet_cmd,"get")) 
-		{
-			if (strstr(telnet_cmd,"password")) 
-			{
-				memset(telnet_cmd, 0, 50);
-				at_cipsend(PASS);
-				at_cipsend("\r\n>");
-			} 
-			else if (strstr(telnet_cmd,"ssid")) 
-			{
-				memset(telnet_cmd, 0, 50);
-				at_cipsend(SSID);
-				at_cipsend("\r\n>");
-			} 
-			else if (strstr(telnet_cmd,"time")) 
-			{
-				char temp[5];
+	} else if(status == ESP8266_POST_REQ) {
+		uint16_t timeout = 0;
+		
+		while(timeout++ < 30) {
+			_delay_ms(100);
+			if (strstr(rx_buffer,"my_password") != NULL) {
 				
-				memset(telnet_cmd, 0, 50);
+				uint8_t ssid_len = sizeof(env_var.wifi_ssid);
+				uint8_t pass_len = sizeof(env_var.wifi_pswd);
 				
-				itoa(env_var.time.hours,temp,10);
-				at_cipsend("Time - h:");
-				at_cipsend(temp);
-				itoa(env_var.time.minutes,temp,10);
-				at_cipsend(" m:");
-				at_cipsend(temp);
-				itoa(env_var.time.seconds,temp,10);
-				at_cipsend(" s:");
-				at_cipsend(temp);
+				memset(env_var.wifi_ssid,0,ssid_len);
+				memset(env_var.wifi_pswd,0,pass_len);
 				
-				itoa(env_var.time.day,temp,10);
-				at_cipsend(" - Day:");
-				at_cipsend(temp);
-				itoa(env_var.time.week,temp,10);
-				at_cipsend(" Week:");
-				at_cipsend(temp);
-				itoa(env_var.time.month,temp,10);
-				at_cipsend(" Month:");
-				at_cipsend(temp);
-				itoa(env_var.time.year,temp,10);
-				at_cipsend(" Year:");
-				at_cipsend(temp);
+				uint16_t len = strlen(rx_buffer);
+				uint8_t n = 0;
 				
-				at_cipsend("\r\n>");
-				
-			} 
-			else 
-			{
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Command not found \r\n>");
-			}
-		} 
-		else if (strstr(telnet_cmd,"set")) 
-		{
-			if (strstr(telnet_cmd,"time")) 
-			{
-				time_env_t time;
-				uint16_t timeout = 1000;
-				uint16_t cnt = 0;
-				char *token;
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Date format - [hh:mm:ss:yyyy]\r\n>");
-				
-				while(!got_reply && (++cnt < timeout)) 
-				{
-					_delay_ms(60);
+				for (uint16_t i = 0; i < len; i++) {
+					if(rx_buffer[i] == '=') {
+						n++;
+						char temp[20];
+						uint8_t j = 0;
+						memset(temp,0,20);
+						while ((rx_buffer[++i] != '&') && (i != len)) {
+							temp[j++] = rx_buffer[i];
+						}
+						if (n == 1) {
+							if (strlen(temp) < ssid_len)
+								strcpy(env_var.wifi_ssid,temp);
+						} else if (n == 2) {
+							if (strlen(temp) < pass_len)
+								strcpy(env_var.wifi_pswd,temp);
+							break;
+						}
+					}
 				}
 				
-				if (strlen(telnet_cmd) == 24) 
-				{	
-					token = strtok(telnet_cmd,":");
-					if (token == NULL) 
-					{
-						at_cipsend("Wrong time format!\r\n>");
-						return ESP8266_ERROR;
-					}
-					
-					token = strtok(NULL,":");
-					if (token == NULL) 
-					{
-						at_cipsend("Wrong time format...failed at hours!\r\n>");
-						return ESP8266_ERROR;
-					}
-					
-					time.hours = atoi(token);
-					if (time.hours > 23) 
-					{
-						at_cipsend("Wrong time format...failed at hours!\r\n>");
-						return ESP8266_ERROR;
-					}
-					
-					token = strtok(NULL,":");
-					if (token == NULL) 
-					{
-						at_cipsend("Wrong time format...failed at minutes!\r\n>");
-						return ESP8266_ERROR;
-					}
-					
-					time.minutes = atoi(token);
-					if (time.minutes > 59) 
-					{
-						at_cipsend("Wrong time format...failed at minutes!\r\n>");
-						return ESP8266_ERROR;
-					}
-					
-					token = strtok(NULL,":");
-					if (token == NULL) 
-					{
-						at_cipsend("Wrong time format...failed at seconds!\r\n>");
-						return ESP8266_ERROR;
-					}
-					
-					time.seconds = atoi(token);
-					if (time.seconds > 59) 
-					{
-						at_cipsend("Wrong time format...failed at seconds!\r\n>");
-						return ESP8266_ERROR;
-					}
-					
-					token = strtok(NULL,":");
-					if (token == NULL) 
-					{
-						at_cipsend("Wrong time format...failed at years!\r\n>");
-						return ESP8266_ERROR;
-					}
-					time.year = atoi(token);
-					
-					//Store configuration in EEPROM
-					EEPROM_WriteEnv();
-					
-					at_cipsend("Time was successfully set!\r\n>");
-				} 
-				else 
-				{
-					at_cipsend("Wrong time format or timeout!\r\n>");
+				if (link_channel == '0') {
+					esp8266_send_cmd("AT+CIPCLOSE=0\r", 100);
+				} else {
+					esp8266_send_cmd("AT+CIPCLOSE=1\r", 100);
 				}
 				
-			} 
-			else if (strstr(telnet_cmd,"ssid")) 
-			{	
-				uint16_t timeout = 1000;
-				uint16_t cnt = 0;
-				char *token;
-				memset(telnet_cmd, 0, 50);
-					
-				at_cipsend("Enter SSID, max 20 characters\r\n>");
-					
-				while(!got_reply && (++cnt < timeout)) 
-				{
-					_delay_ms(60);
-				}
-					
-				if (token == NULL) 
-				{
-					at_cipsend("Something went wrong!\r\n>");
-					return ESP8266_ERROR;
-				}
-					
-				token = strtok(NULL,":");
-				
-				strncpy(env_var.wifi_ssid,token,sizeof(env_var.wifi_ssid));
-				
-				//Store configuration in EEPROM
-				EEPROM_WriteEnv();
-					
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("SSID set\r\n>");
-			}
-			else if (strstr(telnet_cmd,"password"))
-			{
-				uint16_t timeout = 1000;
-				uint16_t cnt = 0;
-				char *token;
-				memset(telnet_cmd, 0, 50);
-				
-				at_cipsend("Enter PASSWORD, max 20 characters\r\n>");
-				
-				while(!got_reply && (++cnt < timeout))
-				{
-					_delay_ms(60);
-				}
-				
-				if (token == NULL)
-				{
-					at_cipsend("Something went wrong!\r\n>");
-					return ESP8266_ERROR;
-				}
-				
-				token = strtok(NULL,":");
-				
-				strncpy(env_var.wifi_pswd,token,sizeof(env_var.wifi_pswd));
-				
-				//Store configuration in EEPROM
-				EEPROM_WriteEnv();
-				
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("WiFi PASSWORD set\r\n>");
-			} 
-			else 
-			{
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Not a valid command\r\n>");
-			}
-		} 
-		else if (strstr(telnet_cmd,"wifi")) 
-		{
-			if (strstr(telnet_cmd,"off")) 
-			{
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Turning off wifi.\r\n");
 				esp8266_off();
-				quit = true;
-			} 
-			else 
-			{
-				memset(telnet_cmd, 0, 50);
-				at_cipsend("Command not found \r\n");
-			}
-		} 
-		else if (strstr(telnet_cmd,"help")) 
-		{
-			memset(telnet_cmd, 0, 50);
-			at_cipsend("-----------------------------------\r\n");
-			at_cipsend("led on - Turns the entire LED array on.\r\n");
-			at_cipsend("led off - Turns the entire LED array off.\r\n");
-			at_cipsend("led down - Dim down LEDs.\r\n");
-			at_cipsend("led up - Dim up LEDs.\r\n");
-			at_cipsend("-----------------------------------\r\n");
-			//TODO: Add day and month
-			at_cipsend("set time - Sets the time and date of the clock. Format [hh:mm:ss:yyyy]\r\n");
-			at_cipsend("set ssid - Sets the SSID for the WiFi connection \r\n");
-			at_cipsend("set password - Sets the PASSWORD for the WiFi connection. \r\n");
-			at_cipsend("-----------------------------------\r\n");
-			at_cipsend("get time - Show the time and date of the clock. \r\n");
-			at_cipsend("get ssid - Show the SSID for the WiFi connection \r\n");
-			at_cipsend("get password - Show the PASSWORD for the WiFi connection. \r\n");
-			at_cipsend("-----------------------------------\r\n");
-			at_cipsend("wifi off - Turn off wifi and return to menu \r\n");
-			at_cipsend("-----------------------------------\r\n>");
-		}	
-	}
-}
-*/
-esp8266_status_t esp8266_run_simple_webserver(void) 
-{
-	if(rx_ptr > 100) // check if the ESP8266 is sending data
-	//if (status = ESP8266_CONNECT)
-	{
-		_delay_ms(1000);
-		at_cipsend2();
-		_delay_ms(10000);
-		esp8266_send_cmd("AT+CIPCLOSE=0\r", 100);
-		while (1);
+				_delay_ms(1000);
+				esp8266_on();
+				status = esp8266_setup();
+				if (status != ESP8266_SUCCESS) {
+#ifdef SHOW_MANUAL
+					display_print_scrolling_text("COULD NOT JOIN AP",false);
+#endif
+					return ESP8266_TIMEOUT;
+				}
+				
+				status = esp8266_join_ap(env_var.wifi_ssid,env_var.wifi_pswd);
+				if (status != ESP8266_SUCCESS) {
+#ifdef SHOW_MANUAL
+					display_print_scrolling_text("COULD NOT JOIN AP",false);
+#endif
+					return ESP8266_TIMEOUT;
+				}
+#ifdef SHOW_MANUAL
+				display_print_scrolling_text("WIFI CONFIGURED",false);
+#endif
+				return ESP8266_TIMEOUT;
+			}	
+		}
 	}
 }
 
@@ -633,14 +420,20 @@ ISR(USARTD0_RXC_vect) {
 			status = ESP8266_CONNECT;
 		} else if (strstr(rx_buffer,"CLOSED")) {
 			status = ESP8266_CLOSED;
+		} else if (strstr(rx_buffer,"GET")) {
+			link_channel = rx_buffer[5];
+			status = ESP8266_GET_REQ;
+		} else if (strstr(rx_buffer,"POST")) {
+			status = ESP8266_POST_REQ;
 		} else if (strstr(rx_buffer,"192")) {
 			strncpy(ip_address,strchr(rx_buffer,'\"'),19);
-		//This might be error prone...
-		} else if (strstr(rx_buffer,"+IPD")) {
-			got_reply = true;
-			strncpy(telnet_cmd,rx_buffer,50);
-		}
-		
+		} 
+		/*
+		else if (strstr(rx_buffer,"wdt reset")) {
+			wdt_triggered = true;
+		}*/
+		 
+		//if (rx_buffer[0] == '{') {
 		if (strstr(rx_buffer,"{")) {
 			json_found = true;	
 		} else {

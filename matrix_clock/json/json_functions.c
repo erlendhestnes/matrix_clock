@@ -7,17 +7,19 @@
 
 #include "json_functions.h"
 
-void json_get_token(jsmntok_t *tokens, char *js, char *buffer, uint8_t i) {
+void json_get_token(jsmntok_t *tokens, char *js, char *buffer, uint8_t buffer_size, uint8_t i) {
 	int len;
 	jsmntok_t key;
 
 	key = tokens[i];
 	len = key.end - key.start;
 	char keyString[ len+1 ];
-	memcpy( keyString, &js[ key.start ], len );
-	keyString[ len ] = '\0';
-	
-	strcpy(buffer,keyString);
+	if (len < buffer_size) {
+		memcpy( keyString, &js[ key.start ], len );
+		keyString[ len ] = '\0';
+		
+		strcpy(buffer,keyString);
+	}
 }
 
 void json_print_token(jsmntok_t *tokens, char *js, uint8_t i) {

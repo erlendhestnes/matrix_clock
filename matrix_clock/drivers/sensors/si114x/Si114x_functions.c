@@ -51,11 +51,11 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 	initial_baseline_counter = 128;
 	
 #ifdef SHOW_MANUAL
-	display_print_scrolling_text("CALIBRATING.. HANDS AWAY FROM DISPLAY",false);
+	display_print_scrolling_text("CALIBRATING. HANDS AWAY FROM DISPLAY",false);
 #endif
 	do {
 		display_draw_char(5,5,'X',1,1);
-		ht1632c_refresh_screen();
+		display_refresh_screen();
 		si114x_get_data(sensor_data);
 #ifdef DEBUG_ON
 		printf("%d \n",sensor_data->ps1);
@@ -74,9 +74,9 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 		si114x_process_samples(SI114X_ADDR,sensor_data);
 	}
 		
-#ifdef SHOW_MANUAL
-	display_print_scrolling_text("CALIBRATION COMPLETE",false);
-#endif
+//#ifdef SHOW_MANUAL
+//	display_print_scrolling_text("CALIBRATION COMPLETE",false);
+//#endif
 
 }
 

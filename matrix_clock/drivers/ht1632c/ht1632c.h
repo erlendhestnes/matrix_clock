@@ -68,6 +68,6 @@ void ht1632c_slide_in_from_top(void);
 
 /*------------------------------PRINT FUNCTIONS------------------------------*/
 
-void ht1632c_print_buffer(char *buffer, uint8_t length);
+void ht1632c_print_buffer(char *buffer, uint16_t length);
 
 #endif /* HT1632_H_ */

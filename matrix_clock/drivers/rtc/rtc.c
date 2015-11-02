@@ -7,7 +7,7 @@
 
 #include "rtc.h"
 #include "../ht1632c/ht1632c.h"
-#include "../../modules/time/time_functions.h"
+#include "../../modules/time_functions/time_functions.h"
 
 static volatile bool disp_time = true;
 
@@ -27,6 +27,10 @@ void rtc_setup(void)
 	RTC.CNT = 0;
 	RTC.COMP = 0;
 	RTC.CTRL = RTC_PRESCALER_DIV1024_gc;
+}
+
+void rtc_force_update(void) {
+	RTC.CNT = 1920;
 }
 
 void rtc_show_hours(void) 
@@ -76,13 +80,13 @@ void rtc_update_display(uint8_t pos, uint8_t time)
 	}
 	
 	//Write new numbers
-	display_draw_char(1,pos,buffer[0],1,1);
+	display_draw_char(2,pos,buffer[0],1,1);
 	display_draw_char(9,pos,buffer[1],1,1);
 }
 
 ISR(RTC_OVF_vect) 
 {
-	if (++env_var.time.minutes == 60) {
+	if (++env_var.time.minutes >= 60) {
 		
 		env_var.time.minutes = 0;
 		if (disp_time) {
@@ -92,18 +96,16 @@ ISR(RTC_OVF_vect)
 		
 		//Todo: implement DST - Daylight Saving Time
 		
-		if (++env_var.time.hours == 24) {
-			//This might crash...
-			if (env_var.time.weekday++ == Saturday) {
-				env_var.time.weekday = Sunday;
-				if (env_var.time.week++ == 52) {
-					env_var.time.week = 1;
-				}
+		if (++env_var.time.hours >= 24) {
+			if (env_var.time.weekday++ >= Sunday) {
+				env_var.time.weekday = Monday;
+				env_var.time.week++;
 			}
-			if (env_var.time.day++ == time_get_days_in_month(env_var.time.month,env_var.time.year)) {
+			if (env_var.time.day++ >= time_get_days_in_month(env_var.time.month,env_var.time.year)) {
 				env_var.time.day = 1;
-				if (env_var.time.month++ == December) {
+				if (env_var.time.month++ >= December) {
 					env_var.time.month = January;
+					env_var.time.week = 1;
 					env_var.time.year++;
 				}
 			}

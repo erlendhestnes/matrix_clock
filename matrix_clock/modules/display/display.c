@@ -8,6 +8,8 @@
 #include "display.h"
 #include "../../4x6_font.c"
 
+#define swap(a, b) { uint16_t t = a; a = b; b = t; }
+
 void display_setup(void) 
 {
 	ht1632c_setup(HT1632_COMMON_16NMOS);
@@ -346,7 +348,7 @@ void display_print_scrolling_text(char *str, bool big_font)
 	free(buffer);
 }
 
-void display_print_buffer(char *buffer, uint8_t length)
+void display_print_buffer(char *buffer, uint16_t length)
 {
 	ht1632c_print_buffer(buffer,length);
 }
@@ -483,6 +485,76 @@ void display_draw_button_info(void)
 	display_refresh_screen();
 }
 
+void display_draw_wifi_icon(void) {
+	static uint8_t n = 0;
+
+	while(1) {
+		switch(n) {
+			case 0:
+			display_draw_pixel(7,1,1);
+			display_draw_pixel(8,1,1);
+			break;
+			case 1:
+			display_draw_pixel(6,3,1);
+			display_draw_pixel(7,4,1);
+			display_draw_pixel(8,4,1);
+			display_draw_pixel(9,3,1);
+			break;
+			case 2:
+			display_draw_pixel(4,5,1);
+			display_draw_pixel(5,6,1);
+			display_draw_pixel(6,7,1);
+			display_draw_pixel(7,7,1);
+			display_draw_pixel(8,7,1);
+			display_draw_pixel(9,7,1);
+			display_draw_pixel(10,6,1);
+			display_draw_pixel(11,5,1);
+			break;
+			case 3:
+			display_draw_pixel(2,8,1);
+			display_draw_pixel(3,9,1);
+			display_draw_pixel(4,10,1);
+			display_draw_pixel(5,10,1);
+			display_draw_pixel(6,11,1);
+			display_draw_pixel(7,11,1);
+			display_draw_pixel(8,11,1);
+			display_draw_pixel(9,11,1);
+			display_draw_pixel(10,10,1);
+			display_draw_pixel(11,10,1);
+			display_draw_pixel(12,9,1);
+			display_draw_pixel(13,8,1);
+			break;
+			case 4:
+			display_draw_pixel(0,11,1);
+			display_draw_pixel(1,12,1);
+			display_draw_pixel(2,13,1);
+			display_draw_pixel(3,13,1);
+			display_draw_pixel(4,14,1);
+			display_draw_pixel(5,14,1);
+			display_draw_pixel(6,15,1);
+			display_draw_pixel(7,15,1);
+			display_draw_pixel(8,15,1);
+			display_draw_pixel(9,15,1);
+			display_draw_pixel(10,14,1);
+			display_draw_pixel(11,14,1);
+			display_draw_pixel(12,13,1);
+			display_draw_pixel(13,13,1);
+			display_draw_pixel(14,12,1);
+			display_draw_pixel(15,11,1);
+			break;
+		}
+		display_refresh_screen();
+		_delay_ms(600);
+		n++;
+		
+		if (n == 5) {
+			n = 0;
+			display_clear_screen();
+		}
+	}	
+}
+
+
 /*------------------------------SLIDE FUNCTIONS------------------------------*/
 
 void display_slide_in_from_left(void) 
@@ -543,53 +615,53 @@ void display_slide_out_to_bottom(void)
 
 /*------------------------------TIME FUNCTIONS------------------------------*/
 
-void display_alarm_increment_minute(uint8_t min) 
+void display_alarm_increment_minute(void) 
 {
-	if (min < 59) {
-		rtc_update_display(5,min);
+	if (env_var.alarm.minutes < 59) {
+		rtc_update_display(5,++env_var.alarm.minutes);
 	} else {
-		min = 0;
-		rtc_update_display(5,min);
+		env_var.alarm.minutes = 0;
+		rtc_update_display(5,++env_var.alarm.minutes);
 	}
 	display_refresh_screen();
 }
 
-void display_alarm_decrement_minute(uint8_t min) 
+void display_alarm_decrement_minute(void) 
 {
-	if (min > 0) {
-		rtc_update_display(5,min);
+	if (env_var.alarm.minutes > 0) {
+		rtc_update_display(5,--env_var.alarm.minutes);
 	} else {
-		min = 59;
-		rtc_update_display(5,min);
+		env_var.alarm.minutes = 59;
+		rtc_update_display(5,--env_var.alarm.minutes);
 	}
 	display_refresh_screen();
 }
 
-void display_alarm_increment_hour(uint8_t hour) 
+void display_alarm_increment_hour(void) 
 {
-	if (hour < 24) {
-		rtc_update_display(5,hour);
+	if (env_var.alarm.hours < 23) {
+		rtc_update_display(5,++env_var.alarm.hours);
 	} else {
-		hour = 0;
-		rtc_update_display(5,hour);
+		env_var.alarm.hours = 0;
+		rtc_update_display(5,++env_var.alarm.hours);
 	}
 	display_refresh_screen();
 }
 
-void display_alarm_decrement_hour(uint8_t hour) 
+void display_alarm_decrement_hour(void) 
 {
-	if (hour > 0) {
-		rtc_update_display(5,hour);
+	if (env_var.alarm.hours > 0) {
+		rtc_update_display(5,--env_var.alarm.hours);
 	} else {
-		hour = 23;
-		rtc_update_display(5,hour);
+		env_var.alarm.hours = 23;
+		rtc_update_display(5,--env_var.alarm.hours);
 	}
 	display_refresh_screen();
 }
 
 void display_draw_and_increment_hour(void) 
 {
-	if (env_var.time.hours < 59) {
+	if (env_var.time.hours < 23) {
 		rtc_update_display(5,++env_var.time.hours);
 	} else {
 		env_var.time.hours = 0;
@@ -603,7 +675,7 @@ void display_draw_and_decrement_hour(void)
 	if (env_var.time.hours > 0) {
 		rtc_update_display(5,--env_var.time.hours);
 	} else {
-		env_var.time.hours = 59;
+		env_var.time.hours = 23;
 		rtc_update_display(5,env_var.time.hours);
 	}
 	display_refresh_screen();

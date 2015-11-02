@@ -11,7 +11,7 @@
 #include "../../global.h"
 
 typedef enum {
-	NONE,
+	NO_BTN,
 	BTN1,
 	BTN2,
 	BTN3,

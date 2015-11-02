@@ -54,7 +54,7 @@ modules\display\display.c
 
 modules\menu\menu.c
 
-modules\time\time_functions.c
+modules\time_functions\time_functions.c
 
 _StackInstrument.c
 

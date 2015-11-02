@@ -16,5 +16,6 @@ void rtc_show_minutes(void);
 void rtc_enable_time_render(void);
 void rtc_disable_time_render(void);
 void rtc_update_display(uint8_t pos, uint8_t time);
+void rtc_force_update(void);
 
 #endif

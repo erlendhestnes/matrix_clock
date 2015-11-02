@@ -12,7 +12,7 @@
 #include "../global.h"
 #include "jsmn.h"
 
-void json_get_token(jsmntok_t *tokens, char *js, char *buffer, uint8_t i);
+void json_get_token(jsmntok_t *tokens, char *js, char *buffer, uint8_t buffer_size, uint8_t i);
 void json_print_token(jsmntok_t *tokens, char *js, uint8_t i);
 
 #endif /* JSON_FUNCTIONS_H_ */

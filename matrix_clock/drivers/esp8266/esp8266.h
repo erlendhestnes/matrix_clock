@@ -30,6 +30,9 @@
 #define WEATHER_IP "api.thingspeak.com"
 #define WEATHER_ADDR "https://api.thingspeak.com/apps/thinghttp/send_request?api_key=6ZW7E1P3KSIPD8E2"
 
+#define WEATHER_IP2 "api.openweathermap.org"
+#define WEATHER_ADDR2 "http://api.openweathermap.org/data/2.5/weather?zip=7012,no&units=metric&appid=bd82977b86bf27fb59a04b61b657fb6f"
+
 //EDIT:
 
 #define RX_BUFFER	220
@@ -47,6 +50,8 @@ typedef enum {
 	ESP8266_CONNECT,
 	ESP8266_LINKED,
 	ESP8266_CLOSED,
+	ESP8266_GET_REQ,
+	ESP8266_POST_REQ,
 	ESP8266_NONE
 } esp8266_status_t;
 
@@ -55,9 +60,9 @@ void esp8266_off(void);
 void esp8266_reset(void);
 
 esp8266_status_t esp8266_setup(void);
-esp8266_status_t esp8266_setup_webserver(bool telnet, bool ap);
+esp8266_status_t esp8266_setup_webserver(bool sta, bool ap);
 esp8266_status_t esp8266_run_webserver(char *str);
-esp8266_status_t esp8266_run_simple_webserver(void);
+esp8266_status_t esp8266_configure_ssid_and_password(void);
 esp8266_status_t esp8266_telnet_server(void);
 
 void esp8266_list_ap(void);

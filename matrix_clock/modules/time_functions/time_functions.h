@@ -15,11 +15,8 @@ const char* time_get_day_name(weekdays_t day);
 const char* time_get_month_name(months_t month);
 uint8_t time_get_month_number(char *month);
 uint8_t time_get_days_in_month(months_t month, uint16_t year);
-int time_get_day_of_week(int d, int m, int y);
-
-void display_alarm_increment_minute(uint8_t min);
-void display_alarm_decrement_minute(uint8_t min);
-void display_alarm_increment_hour(uint8_t hour);
-void display_alarm_decrement_hour(uint8_t hour);
-
+uint8_t time_get_weekday(uint8_t d, uint8_t m, uint16_t y);
+uint16_t time_get_days_in_year(uint8_t d, uint8_t m, uint16_t y);
+int time_get_weeknumber(uint8_t day, uint8_t month, uint16_t year);
+bool time_is_leap_year(uint16_t y);
 #endif /* TIME_FUNCTIONS_H_ */

@@ -75,25 +75,29 @@ void btn_top_setup(void)
 
 button_t btn_check_press(void) {
 	
+	button_t btn_mask = NO_BTN;
+	
 	if (!(PORTA.IN & BUTTON0)) {
-		uart_write_hex(DACB.CH0OFFSETCAL);
-		DACB.CH0OFFSETCAL += 1;
-		return BTN1;
-	} else if (!(PORTA.IN & BUTTON1)) {
-		uart_write_hex(DACB.CH0OFFSETCAL);
-		DACB.CH0OFFSETCAL -= 1;
-		return BTN2;
-	} else if (!(PORTA.IN & BUTTON2)) {
-		uart_write_hex(DACB.CH0GAINCAL);
-		DACB.CH0GAINCAL += 1;
-		return BTN3;
-	} else if (!(PORTB.IN & BUTTON3)) {
-		uart_write_hex(DACB.CH0GAINCAL);
-		DACB.CH0GAINCAL -= 1;
-		return BTN4;
-	} else {
-		return NONE;
+		//uart_write_hex(DACB.CH0OFFSETCAL);
+		//DACB.CH0OFFSETCAL += 1;
+		btn_mask |= BTN1;
 	}
+	if (!(PORTA.IN & BUTTON1)) {
+		//uart_write_hex(DACB.CH0OFFSETCAL);
+		//DACB.CH0OFFSETCAL -= 1;
+		btn_mask |= BTN2;
+	}
+	if (!(PORTA.IN & BUTTON2)) {
+		//uart_write_hex(DACB.CH0GAINCAL);
+		//DACB.CH0GAINCAL += 1;
+		btn_mask |= BTN3;
+	} 
+	if (!(PORTB.IN & BUTTON3)) {
+		//uart_write_hex(DACB.CH0GAINCAL);
+		//DACB.CH0GAINCAL -= 1;
+		btn_mask |= BTN4;
+	}
+	return btn_mask;
 }
 
 ISR(PORTA_INT0_vect) {
