@@ -8,6 +8,7 @@
 #include "rtc.h"
 #include "../ht1632c/ht1632c.h"
 #include "../../modules/time_functions/time_functions.h"
+#include "../../modules/display/display.h"
 
 static volatile bool disp_time = true;
 
@@ -29,7 +30,8 @@ void rtc_setup(void)
 	RTC.CTRL = RTC_PRESCALER_DIV1024_gc;
 }
 
-void rtc_force_update(void) {
+void rtc_force_update(void) 
+{
 	RTC.CNT = 1920;
 }
 
@@ -86,6 +88,9 @@ void rtc_update_display(uint8_t pos, uint8_t time)
 
 ISR(RTC_OVF_vect) 
 {
+	//Variable to check system-runtime
+	env_var.runtime++;
+	
 	if (++env_var.time.minutes >= 60) {
 		
 		env_var.time.minutes = 0;
@@ -109,23 +114,28 @@ ISR(RTC_OVF_vect)
 					env_var.time.year++;
 				}
 			}
-
 			env_var.time.hours = 0;
 			if (disp_time) {
 				rtc_update_display(TOP_HALF,env_var.time.hours);
 				display_refresh_screen();
 			}
-			} else {
-				if (disp_time) {
-					rtc_update_display(TOP_HALF,env_var.time.hours);
-					display_refresh_screen();
-				}
-		}
-		env_var.time.minutes = 0;
 		} else {
 			if (disp_time) {
-				rtc_update_display(BOTTOM_HALF,env_var.time.minutes);
+				rtc_update_display(TOP_HALF,env_var.time.hours);
 				display_refresh_screen();
 			}
+		}
+		env_var.time.minutes = 0;
+	} else {
+		if (disp_time) {
+			rtc_update_display(BOTTOM_HALF,env_var.time.minutes);
+			display_refresh_screen();
+		}
+	}
+	if (env_var.time.hours == env_var.alarm.hours) {
+		if (env_var.time.minutes == env_var.alarm.minutes)
+		{
+			//Alarm code goes here
+		}	
 	}
 }

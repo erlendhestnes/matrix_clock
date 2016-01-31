@@ -22,10 +22,15 @@ modules/display/display.d modules/display/display.o: \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\math.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdio.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h \
+ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
  ../modules/display/../../drivers/ht1632c/ht1632c.h \
  ../modules/display/../../drivers/ht1632c/../../global.h \
+ ../modules/display/../../drivers/rtc/rtc.h \
+ ../modules/display/../../drivers/rtc/../../global.h \
+ ../modules/display/../time_functions/time_functions.h \
+ ../modules/display/../time_functions/../../global.h \
  ../modules/display/../../4x6_font.c
 
 ../modules/display/display.h:
@@ -74,6 +79,8 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h:
 
+c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h:
+
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
@@ -81,5 +88,13 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 ../modules/display/../../drivers/ht1632c/ht1632c.h:
 
 ../modules/display/../../drivers/ht1632c/../../global.h:
+
+../modules/display/../../drivers/rtc/rtc.h:
+
+../modules/display/../../drivers/rtc/../../global.h:
+
+../modules/display/../time_functions/time_functions.h:
+
+../modules/display/../time_functions/../../global.h:
 
 ../modules/display/../../4x6_font.c:

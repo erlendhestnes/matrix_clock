@@ -1,5 +1,6 @@
 #include "slider_algorithm.h"
-//#include "../ht1632c.h"
+#include <stdio.h>
+
 //-----------------------------------------------------------------------------
 // QS_Counts_to_Distance
 //-----------------------------------------------------------------------------
@@ -17,7 +18,7 @@ s16 QS_Counts_to_Distance (u16 counts, u8 led)
     u16 code   offset_1[9]    = {29, 72, 55, 75, 95, 131, 177, 238, 300};
     u16 code   slope_1[9]     = {29, 173, 102, 237, 429, 1215, 3012, 9990, 26214};	
     u16 code   piecewise_brackets_1[9] = {19805, 16015, 9607, 6838, 3014, 1666, 578, 250, 125};	
-
+	
     u16 code   offset_2[9]    = {27, 39, 51, 75, 96, 132, 177, 236, 299};
     u16 code   slope_2[9]     = {27, 39, 95, 298, 538, 1481, 3637, 11457, 31208};	
     u16 code   piecewise_brackets_2[9]= {17760, 14650, 7745, 5545, 2500, 1394, 493, 207, 102};	
@@ -26,10 +27,12 @@ s16 QS_Counts_to_Distance (u16 counts, u8 led)
 	u16 code   slope_3[9]     = {27, 39, 95, 298, 538, 1481, 3637, 11457, 31208};
 	u16 code   piecewise_brackets_3[9]= {17760, 14650, 7745, 5545, 2500, 1394, 493, 207, 102};
 
+	
     u8 code   maxIndex = 9;
     u8 xdata   indexLinear;
-    uu32 xdata distance;
-
+    
+	uu32 xdata distance;
+	
     if(led==1)      
     {
        // Perform piecewise linear approximation
@@ -39,7 +42,7 @@ s16 QS_Counts_to_Distance (u16 counts, u8 led)
            if (counts > piecewise_brackets_1[indexLinear])
            {
                distance.u32 = (u32)counts * (u32)slope_1[indexLinear];
-               distance.u16[LSB] = offset_1[indexLinear] - distance.u16[MSB];
+			   distance.u16[LSB] = offset_1[indexLinear] - distance.u16[MSB];
                break;
            }
        }
@@ -72,6 +75,7 @@ s16 QS_Counts_to_Distance (u16 counts, u8 led)
 			}
 		}
 	}
+	
     else return -1;  /* Invalid channel number */
 
     // Set to a max value if above a certain level.
@@ -82,9 +86,19 @@ s16 QS_Counts_to_Distance (u16 counts, u8 led)
     return (distance.u16[LSB]);
 }
 
+s16 QS_Counts_to_Distance_2(u16 counts, u8 led) {
+	double distance = 0;
+	
+	if (led == 1) {
+		distance = 139739*pow(counts,-0.88);
+	} else if (led == 2) {
+		distance = 155790*pow(counts,-0.91);
+	}
+	return (s16)distance;
+}
+
 void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale)
 {
-
     // Time stamps for gesture recognition and LED state machine
     static u16 xdata LED_flash_timeout;
     static u16 xdata Pause_gesture_timeout;

@@ -18,6 +18,8 @@
 #include "Si114x_handler.h"
 #include "../../ht1632c/ht1632c.h"
 #include "../../sercom/twi.h"
+#include "../../port/port.h"
+#include "../../../modules/display/display.h"
 #include <avr/io.h>
 #include <util/delay.h>
 
@@ -31,16 +33,16 @@ void si114x_setup(void)
 	TCC1.PERH = 0x0C;
 	TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
 	
-	si114x_reset(SI114X_ADDR);
+	si114x_reset((HANDLE)SI114X_ADDR);
 	_delay_ms(50);
-	si114x_init(SI114X_ADDR);
+	si114x_init((HANDLE)SI114X_ADDR);
 }
 
 void si114x_setup_ps1_only(void)
 {
-	si114x_reset(SI114X_ADDR);
+	si114x_reset((HANDLE)SI114X_ADDR);
 	_delay_ms(50);
-	si114x_init_ps1(SI114X_ADDR);
+	si114x_init_ps1((HANDLE)SI114X_ADDR);
 	btn_si114x_enable_interrupt();
 }
 
@@ -54,11 +56,14 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 	display_print_scrolling_text("CALIBRATING. HANDS AWAY FROM DISPLAY",false);
 #endif
 	do {
-		display_draw_char(5,5,'X',1,1);
+		display_draw_line(10,10,10,5,1);
+		display_draw_line(5,10,10,10,1);
+		display_draw_line(5,5,5,10,1);
+		display_draw_line(5,5,10,5,1);
 		display_refresh_screen();
 		si114x_get_data(sensor_data);
 #ifdef DEBUG_ON
-		printf("%d \n",sensor_data->ps1);
+		printf("DEBUG: PS1 Value: %d \n",sensor_data->ps1);
 #endif
 	} while (sensor_data->ps1 > PROXIMITY_THRESHOLD);
 		
@@ -73,11 +78,6 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 		si114x_get_data(sensor_data);
 		si114x_process_samples(SI114X_ADDR,sensor_data);
 	}
-		
-//#ifdef SHOW_MANUAL
-//	display_print_scrolling_text("CALIBRATION COMPLETE",false);
-//#endif
-
 }
 
 u8 si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data) 
@@ -88,7 +88,7 @@ u8 si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data)
 	//Timestamp
 	sensor_data->timestamp = counter;
 	
-	//This could be simplified as one read!
+	//NOTE: This could be simplified as one read!
 	
 	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_PS1_DATA0,data_8,2);
 	data_16 = ((u16)data_8[1] << 8) | data_8[0];
@@ -121,7 +121,7 @@ s16 si114x_init_ps1(HANDLE si114x_handle)
 
 	u8  tasklist      = 0x01;   // PS1 only
 
-	u8  measrate      = 0x94;   // Samplingsrate
+	u8  measrate      = 0xB9;   // Samplingsrate
 
 	u8  psrate        = 0x08;
 
@@ -134,12 +134,6 @@ s16 si114x_init_ps1(HANDLE si114x_handle)
 	#endif
 
 	u8  code psgain   =  0;     // PS ADC Gain
-
-	u8  code irrange  =  1;     // IR Range
-	u8  code irgain   =  0;     // IR ADC Gain
-
-	u8  code visrange =  1;     // VIS Range
-	u8  code visgain  =  0;     // VIS ADC Gain
 
 	SI114X_CAL_S xdata si114x_cal;
 
@@ -273,7 +267,8 @@ s16 si114x_init(HANDLE si114x_handle)
 
 	u8  tasklist      = 0x77;   // IR, PS1, PS2
 
-	u8  measrate      = 0x94;   // 0xa0 every 30.0 ms
+	u8  measrate      = 0x94;   
+	// 0xa0 every 30.0 ms
 	// 0x94 every 20.0 ms
 	// 0x84 every 10.4 ms
 	// 0x74 every  5.2 ms

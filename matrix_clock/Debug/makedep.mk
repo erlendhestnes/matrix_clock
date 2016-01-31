@@ -8,6 +8,8 @@ drivers\adc\adc.c
 
 drivers\clock\clock.c
 
+drivers\dac\dac.c
+
 drivers\dma\dma.c
 
 drivers\dma\dma_functions.c
@@ -38,19 +40,21 @@ drivers\sercom\twi.c
 
 drivers\sercom\uart.c
 
-fatfs\ff.c
-
-fatfs\mmc_avr.c
-
-fatfs\sound.c
-
-json\jsmn.c
-
-json\json_functions.c
+drivers\timer\timer.c
 
 main.c
 
 modules\display\display.c
+
+modules\fatfs\ff.c
+
+modules\fatfs\mmc_avr.c
+
+modules\fatfs\sound.c
+
+modules\json\jsmn.c
+
+modules\json\json_functions.c
 
 modules\menu\menu.c
 

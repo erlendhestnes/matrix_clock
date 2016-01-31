@@ -16,24 +16,16 @@
 /  to lower sampling frequency, 8-bit.
 */
 
-#include <string.h>
-#include <avr/io.h>
-#include <avr/interrupt.h>
 #include "sound.h"
-#include "../global.h"
+#include "../../drivers/dac/dac.h"
+#include "../../drivers/port/port.h"
 
 #define NBSIZE 32
 #define FCC(c1,c2,c3,c4)	(((DWORD)c4<<24)+((DWORD)c3<<16)+(c2<<8)+c1)	/* FourCC */
 
-static inline uint8_t read_signature_byte(uint16_t Address) {
-	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
-	uint8_t Result;
-	__asm__ ("lpm %0, Z\n" : "=r" (Result) : "z" (Address));
-	NVM_CMD = NVM_CMD_NO_OPERATION_gc;
-	return Result;
-}
+static WAVFIFO *WavFifo;	/* Pointer to sound FIFO control block */
 
-uint16_t ConvertInt16toUint12(uint16_t integer)
+uint16_t convert_16bit_to_12bit(uint16_t integer)
 {
 	uint16_t result;
 	//if (integer == 0x8000)
@@ -60,55 +52,38 @@ ISR(TCC0_OVF_vect)
 {
 	WAVFIFO *fcb = WavFifo;	/* Pointer to FIFO controls */
 	UINT ri, ct;
-	BYTE *buff, l1, l2, r1, r2;
-	
-	static uint16_t prev = 0;
-		
+	BYTE *buff, l, r;
+
 	if (!fcb) return;
 	ct = fcb->ct; ri = fcb->ri;
 	buff = fcb->buff + ri;
 
 	switch (fcb->mode) {
 		case 0:		/* Mono, 8bit */
-		if (ct < 1) return;
-		l1 = r2 = buff[0];
-		ct -= 1; ri += 1;
-		break;
+			if (ct < 1) return;
+			l = r = buff[0];
+			ct -= 1; ri += 1;
+			break;
 		case 1:		/* Stereo, 8bit */
-		if (ct < 2) return;
-		l1 = buff[0]; r2 = buff[1];
-		ct -= 2; ri += 2;
-		break;
+			if (ct < 2) return;
+			l = buff[0]; r = buff[1];
+			ct -= 2; ri += 2;
+			break;
 		case 2:		/* Mono, 16bit */
-		if (ct < 2) return;
-		l1 = r2 = buff[1] + 128;
-		ct -= 2; ri += 2;
-		break;
+			if (ct < 2) return;
+			l = r = buff[1] + 128;
+			ct -= 2; ri += 2;
+			break;
 		default:	/* Stereo, 16bit */
-		if (ct < 4) return;
-		l2 = buff[0]; 
-		l1 = buff[1];
-		r2 = buff[2];
-		r1 = buff[3];
-		ct -= 4; 
-		ri += 4;
+			if (ct < 4) return;
+			l = buff[1]; r = buff[3];
+			ct -= 4; ri += 4;
 	}
 	fcb->ct = ct;
 	fcb->ri = ri & (fcb->sz_buff - 1);
 	
-	DACB.CH0DATA = (1<<11)+(l1>>1);
-	DACB.CH1DATA = (1<<11)-(l1>>1);
-	
-	//prev = data;
-}
-
-static inline void speaker_on(void) {
-	PORTD.DIRSET |= PIN1_bm;
-	PORTD.OUTSET |= PIN1_bm;
-}
-
-static inline void speaker_off(void) {
-	PORTD.OUTCLR |= PIN1_bm;
+	dac_ch0_write((1<<1)+(l<<3));
+	dac_ch1_write((1<<1)-(l<<3));
 }
 
 /*-----------------------------------------------------*/
@@ -124,30 +99,7 @@ int sound_start (
 	fcb->ri = 0; fcb->wi = 0; fcb->ct = 0;	/* Flush FIFO */
 	WavFifo = fcb;			/* Register FIFO control structure */
 	
-	PORTB.DIRSET |= PIN2_bm;
-	PORTB.DIRSET |= PIN3_bm;
-	DACB.CTRLA |= DAC_CH0EN_bm | DAC_CH1EN_bm;
-	DACB.CTRLC |= DAC_REFSEL_INT1V_gc;
-	DACB.CTRLB |= DAC_CHSEL_DUAL_gc;
-	
-	//From calibration rows
-	DACB.CH0OFFSETCAL = 0x07;
-	DACB.CH0GAINCAL = 0x1B;
-	DACB.CH1GAINCAL = 0x0C;
-	DACB.CH1OFFSETCAL = 0x13;
-
-	/*
-	DACB.CH0OFFSETCAL = 0xE8;
-	DACB.CH0GAINCAL = 0xB6;
-	DACB.CH1GAINCAL = 0x0C;
-	DACB.CH1OFFSETCAL = 0x13;
-	*/
-	
-	//DACB.CH1DATA = 255;
-	
-	DACB.CTRLA |= DAC_ENABLE_bm;
-	
-	speaker_on();
+	dac_setup(true);
 	
 	TCC0.CNT = 0;
 	TCC0.PER = (F_CPU / 44100 - 1);
@@ -163,22 +115,19 @@ int sound_start (
 void sound_stop (void)
 {
 	TCC0.INTCTRLA = TC_OVFINTLVL_OFF_gc;
-	DACB.CTRLA &= ~(DAC_ENABLE_bm);
-	speaker_off();
+	dac_off();
 
 	WavFifo = 0;		/* Unregister FIFO control structure */
 }
-
-
 
 /*-----------------------------------------------------*/
 /* WAV file loader                                     */
 
 int load_wav (
-	FIL *fp,			/* Pointer to the open file object to play */
-	const char *title,	/* Title (file name, etc...) */
-	void *work,			/* Pointer to working buffer (must be-4 byte aligned) */
-	UINT sz_work		/* Size of working buffer (must be power of 2) */
+FIL *fp,			/* Pointer to the open file object to play */
+const char *title,	/* Title (file name, etc...) */
+void *work,			/* Pointer to working buffer (must be-4 byte aligned) */
+UINT sz_work		/* Size of working buffer (must be power of 2) */
 )
 {
 	UINT md, wi, br, tc, t, btr;
@@ -203,12 +152,12 @@ int load_wav (
 		if (f_read(fp, buff, 8, &br) || br != 8) return -1;
 		sz = (LD_DWORD(&buff[4]) + 1) & ~1;
 		switch (LD_DWORD(&buff[0])) {
-		case FCC('f','m','t',' ') :
+			case FCC('f','m','t',' ') :
 			if (sz > 1000 || sz < 16 || f_read(fp, buff, sz, &br) || sz != br) return -1;
 			if (LD_WORD(&buff[0]) != 0x1) return -1;	/* Check if LPCM */
 			if (LD_WORD(&buff[2]) == 2) {	/* Channels (1 or 2) */
 				md = 1; wsmp = 2;
-			} else {
+				} else {
 				md = 0; wsmp = 1;
 			}
 			if (LD_WORD(&buff[14]) == 16) {	/* Resolution (8 or 16) */
@@ -217,17 +166,17 @@ int load_wav (
 			fsmp = LD_DWORD(&buff[4]);		/* Sampling rate */
 			break;
 
-		case FCC('f','a','c','t') :
+			case FCC('f','a','c','t') :
 			f_lseek(fp, f_tell(fp) + sz);
 			break;
 
-		case FCC('d','a','t','a') :
+			case FCC('d','a','t','a') :
 			offw = f_tell(fp);	/* Wave data start offset */
 			szwav = sz;			/* Wave data length [byte] */
 			f_lseek(fp, f_tell(fp) + sz);
 			break;
 
-		case FCC('L','I','S','T'):
+			case FCC('L','I','S','T'):
 			sz += f_tell(fp);
 			if (f_read(fp, buff, 4, &br) || br != 4) return -1;
 			if (LD_DWORD(buff) == FCC('I','N','F','O')) {	/* LIST/INFO chunk */
@@ -236,23 +185,23 @@ int load_wav (
 					ssz = (LD_DWORD(&buff[4]) + 1) & ~1;
 					p = 0;
 					switch (LD_DWORD(buff)) {
-					case FCC('I','N','A','M'):		/* INAM sub-chunk */
+						case FCC('I','N','A','M'):		/* INAM sub-chunk */
 						p = nam; break;
-					case FCC('I','A','R','T'):		/* IART sub-cnunk */
+						case FCC('I','A','R','T'):		/* IART sub-cnunk */
 						p = art; break;
 					}
 					if (p && ssz <= NBSIZE) {
 						if (f_read(fp, p, ssz, &br) || br != ssz) return -1;
-					} else {
+						} else {
 						if (f_lseek(fp, f_tell(fp) + ssz)) return -1;
 					}
 				}
-			} else {
+				} else {
 				if (f_lseek(fp, sz)) return -1;	/* Skip unknown sub-chunk type */
 			}
 			break;
 
-		default :	/* Unknown chunk */
+			default :	/* Unknown chunk */
 			return -1;
 		}
 	}
@@ -285,11 +234,17 @@ int load_wav (
 		//	k = uart_getc();
 		//	break;
 		//}
-		//t = (f_tell(fp) - offw - fcb.ct) / fsmp / wsmp;	/* Refresh time display every 1 sec */
-		//if (t != tc) {
-		//	tc = t;
-		//xprintf(PSTR("\rTime=%u:%02u"), tc / 60, tc % 60);
-		//}
+		
+		if (btn_check_press() == BTN2)
+		{
+			break;
+		}
+		
+		t = (f_tell(fp) - offw - fcb.ct) / fsmp / wsmp;	/* Refresh time display every 1 sec */
+		if (t != tc) {
+			tc = t;
+			//xprintf(PSTR("\rTime=%u:%02u"), tc / 60, tc % 60);
+		}
 	}
 
 	sound_stop();	/* Stop sound output */

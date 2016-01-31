@@ -11,3 +11,4 @@ void calcBaseline( u8 proxChannel, SI114X_IRQ_SAMPLE *samples, u16 noise_margin)
 
 void SliderAlgorithm( HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale);
 
+void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples);

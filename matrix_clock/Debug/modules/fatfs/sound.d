@@ -1,4 +1,5 @@
-fatfs/mmc_avr.d fatfs/mmc_avr.o: ../fatfs/mmc_avr.c \
+modules/fatfs/sound.d modules/fatfs/sound.o: ../modules/fatfs/sound.c \
+ ../modules/fatfs/sound.h ../modules/fatfs/../../global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\sfr_defs.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\inttypes.h \
@@ -11,8 +12,6 @@ fatfs/mmc_avr.d fatfs/mmc_avr.o: ../fatfs/mmc_avr.c \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\xmega.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\fuse.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\lock.h \
- ../fatfs/diskio.h ../fatfs/integer.h ../fatfs/../drivers/sercom/spi.h \
- ../fatfs/../drivers/sercom/../../global.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\pgmspace.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stddef.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\interrupt.h \
@@ -22,9 +21,18 @@ fatfs/mmc_avr.d fatfs/mmc_avr.o: ../fatfs/mmc_avr.c \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\math.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdio.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h \
+ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
- ../fatfs/../global.h
+ ../modules/fatfs/ff.h ../modules/fatfs/integer.h \
+ ../modules/fatfs/ffconf.h ../modules/fatfs/../../drivers/dac/dac.h \
+ ../modules/fatfs/../../drivers/dac/../../global.h \
+ ../modules/fatfs/../../drivers/port/port.h \
+ ../modules/fatfs/../../drivers/port/../../global.h
+
+../modules/fatfs/sound.h:
+
+../modules/fatfs/../../global.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\io.h:
 
@@ -50,14 +58,6 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\lock.h:
 
-../fatfs/diskio.h:
-
-../fatfs/integer.h:
-
-../fatfs/../drivers/sercom/spi.h:
-
-../fatfs/../drivers/sercom/../../global.h:
-
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\pgmspace.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stddef.h:
@@ -76,8 +76,22 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h:
 
+c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h:
+
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
 
-../fatfs/../global.h:
+../modules/fatfs/ff.h:
+
+../modules/fatfs/integer.h:
+
+../modules/fatfs/ffconf.h:
+
+../modules/fatfs/../../drivers/dac/dac.h:
+
+../modules/fatfs/../../drivers/dac/../../global.h:
+
+../modules/fatfs/../../drivers/port/port.h:
+
+../modules/fatfs/../../drivers/port/../../global.h:

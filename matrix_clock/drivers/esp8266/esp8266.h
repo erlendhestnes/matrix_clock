@@ -9,7 +9,7 @@
 #define _ESP8266_H_
 
 #include "../../global.h"
-#include "../../json/jsmn.h"
+#include "../../modules/json/jsmn.h"
 
 //Arkitekt Christies Gt 11
 #define SSID        "Inteno_68"
@@ -35,7 +35,7 @@
 
 //EDIT:
 
-#define RX_BUFFER	220
+#define RX_BUFFER	250
 
 #define ESP_RST		PIN4_bm
 #define CH_EN		PIN5_bm

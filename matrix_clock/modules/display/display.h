@@ -16,10 +16,10 @@ void display_setup(void);
 void display_fill_screen(void);
 void display_clear_screen(void);
 void display_refresh_screen(void);
+void display_on(void);
+void display_off(void);
 
 //FADE FUNCTIONS
-static inline void display_fade_up(uint8_t pwm, uint8_t prev_pwm);
-static inline void display_fade_down(uint8_t pwm, uint8_t prev_pwm);
 void display_fade(uint8_t pwm);
 void display_fade_blink(void);
 
@@ -37,14 +37,14 @@ void display_draw_filled_circle(uint8_t x0, uint8_t y0, uint8_t r, uint8_t color
 void display_draw_bitmap(uint8_t x, uint8_t y,const uint8_t *bitmap, uint8_t w, uint8_t h,uint8_t color);
 
 //PRINT FUNCTIONS
-void display_print_scrolling_text(char *str, bool big_font);
+void display_print_scrolling_text(const char *str, bool big_font);
 void display_print_buffer(char *buffer, uint16_t length);
 void display_draw_char_to_buffer(int16_t x, char c, char *buffer);
 void display_draw_char(int16_t x, int16_t y, char c,uint16_t color, uint8_t size);
 void display_draw_small_char_to_buffer(int16_t x, char c, char *buffer);
 void display_draw_small_char(int16_t x, int16_t y, char c,uint16_t color, uint8_t size);
-void display_draw_four_letter_word(char *name);
-void display_draw_three_letter_word(char *name);
+void display_draw_four_letter_word(const char *name);
+void display_draw_three_letter_word(const char *name);
 
 //MISC FUNCTIONS
 void display_traverse_screen(bool color);

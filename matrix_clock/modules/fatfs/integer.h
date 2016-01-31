@@ -4,6 +4,7 @@
 
 #ifndef _FF_INTEGER
 #define _FF_INTEGER
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
 #ifdef _WIN32	/* FatFs development platform */
 

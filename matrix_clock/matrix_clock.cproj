@@ -24,7 +24,7 @@
     <UncachedRange />
     <OverrideVtorValue>exception_table</OverrideVtorValue>
     <BootSegment>2</BootSegment>
-    <eraseonlaunchrule>1</eraseonlaunchrule>
+    <eraseonlaunchrule>0</eraseonlaunchrule>
     <AsfFrameworkConfig>
       <framework-data xmlns="">
         <options />
@@ -136,6 +136,12 @@
     <Compile Include="drivers\clock\clock.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="drivers\dac\dac.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="drivers\dac\dac.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="drivers\dma\dma.c">
       <SubType>compile</SubType>
     </Compile>
@@ -229,43 +235,13 @@
     <Compile Include="drivers\sercom\uart.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="fatfs\diskio.h">
+    <Compile Include="drivers\timer\timer.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="fatfs\ff.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="fatfs\ff.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="fatfs\ffconf.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="fatfs\integer.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="fatfs\mmc_avr.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="fatfs\sound.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="fatfs\sound.h">
+    <Compile Include="drivers\timer\timer.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="global.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="json\jsmn.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="json\jsmn.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="json\json_functions.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="json\json_functions.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.c">
@@ -275,6 +251,42 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="modules\display\display.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\fatfs\diskio.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\fatfs\ff.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\fatfs\ff.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\fatfs\ffconf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\fatfs\integer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\fatfs\mmc_avr.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\fatfs\sound.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\fatfs\sound.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\json\jsmn.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\json\jsmn.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\json\json_functions.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="modules\json\json_functions.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="modules\menu\menu.c">
@@ -297,20 +309,22 @@
     <Folder Include="drivers\adc" />
     <Folder Include="drivers\clock" />
     <Folder Include="drivers\dma" />
-    <Folder Include="drivers\esp8266" />
+    <Folder Include="drivers\esp8266\" />
     <Folder Include="drivers\ht1632c" />
     <Folder Include="drivers\eeprom" />
+    <Folder Include="drivers\dac" />
+    <Folder Include="drivers\timer" />
     <Folder Include="drivers\port\" />
     <Folder Include="drivers\rtc" />
     <Folder Include="drivers\sercom" />
     <Folder Include="drivers\power" />
     <Folder Include="drivers\sensors" />
     <Folder Include="drivers\sensors\si114x\" />
-    <Folder Include="fatfs" />
-    <Folder Include="json" />
     <Folder Include="drivers" />
     <Folder Include="modules" />
     <Folder Include="modules\display" />
+    <Folder Include="modules\fatfs\" />
+    <Folder Include="modules\json\" />
     <Folder Include="modules\menu" />
     <Folder Include="modules\time_functions" />
   </ItemGroup>

@@ -23,11 +23,11 @@ void btn_setup(bool enable_interrupt)
 	
 	if (enable_interrupt)
 	{
-		PORTA.PIN5CTRL |= PORT_ISC_FALLING_gc;
-		PORTA.PIN6CTRL |= PORT_ISC_FALLING_gc;
-		PORTA.PIN7CTRL |= PORT_ISC_FALLING_gc;
+		PORTA.PIN5CTRL |= PORT_ISC_FALLING_gc | PORT_OPC_PULLUP_gc;
+		PORTA.PIN6CTRL |= PORT_ISC_FALLING_gc | PORT_OPC_PULLUP_gc;
+		PORTA.PIN7CTRL |= PORT_ISC_FALLING_gc | PORT_OPC_PULLUP_gc;
 		
-		PORTB.PIN0CTRL |= PORT_ISC_FALLING_gc;
+		PORTB.PIN0CTRL |= PORT_ISC_FALLING_gc | PORT_OPC_PULLUP_gc;
 		
 		PORTA.INT0MASK |= BUTTON0 | BUTTON1 | BUTTON2;
 		PORTB.INT0MASK |= BUTTON3;
@@ -73,45 +73,39 @@ void btn_top_setup(void)
 	PORTC.INTCTRL |= PORT_INT0LVL_HI_gc;
 }
 
-button_t btn_check_press(void) {
-	
+button_t btn_check_press(void) 
+{	
 	button_t btn_mask = NO_BTN;
 	
 	if (!(PORTA.IN & BUTTON0)) {
-		//uart_write_hex(DACB.CH0OFFSETCAL);
-		//DACB.CH0OFFSETCAL += 1;
 		btn_mask |= BTN1;
 	}
 	if (!(PORTA.IN & BUTTON1)) {
-		//uart_write_hex(DACB.CH0OFFSETCAL);
-		//DACB.CH0OFFSETCAL -= 1;
 		btn_mask |= BTN2;
 	}
 	if (!(PORTA.IN & BUTTON2)) {
-		//uart_write_hex(DACB.CH0GAINCAL);
-		//DACB.CH0GAINCAL += 1;
 		btn_mask |= BTN3;
 	} 
 	if (!(PORTB.IN & BUTTON3)) {
-		//uart_write_hex(DACB.CH0GAINCAL);
-		//DACB.CH0GAINCAL -= 1;
 		btn_mask |= BTN4;
 	}
 	return btn_mask;
 }
 
-ISR(PORTA_INT0_vect) {
-	btn_status = btn_check_press();
-	//printf("%d",btn_status);
-}
-
-ISR(PORTB_INT0_vect) {
+ISR(PORTA_INT0_vect) 
+{
 	btn_status = btn_check_press();
 	printf("%d",btn_status);
 }
 
-ISR(PORTA_INT1_vect) {
-	
+ISR(PORTB_INT0_vect) 
+{
+	btn_status = btn_check_press();
+	printf("%d",btn_status);
+}
+
+ISR(PORTA_INT1_vect) 
+{	
 	uint8_t data[2];
 	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_IRQ_STATUS,data,1);
 	si114x_status = data[0];

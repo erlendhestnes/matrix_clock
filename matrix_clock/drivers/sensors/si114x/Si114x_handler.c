@@ -1,5 +1,6 @@
 #include "Si114x_handler.h"
 #include "User_defs.h"
+#include "../../../global.h"
 
 #include <stdio.h>
 
@@ -23,8 +24,9 @@ void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
 {
     if ((maxLeakage[0]==0)&&(maxLeakage[1]==0)&&(maxLeakage[2]==0)&&(initial_baseline_counter==128))
     {
-        printf("Computing Baseline. Make sure nothing is in the vicinity of the EVB\n");
-        PortSet(1,0); // Turn on all lights to indicate baseline is being computed
+#ifdef DEBUG_ON
+        puts("DEBUG: Computing Baseline. Make sure nothing is in the vicinity of the EVB");
+#endif
     }
 
     if (initial_baseline_counter != 0)
@@ -40,8 +42,10 @@ void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
         }
         else
         {
-            printf("Initial Baseline Calculated, PS1 = %d, PS2 = %d, PS3 = %d \n", maxLeakage[0], maxLeakage[1],maxLeakage[2]);
-            PortSet(1,0xff); // Turn off all leds to indicate baseline computation is completed
+#ifdef DEBUG_ON
+            printf("DEBUG: Initial Baseline Calculated, PS1 = %d, PS2 = %d, PS3 = %d \n", maxLeakage[0], maxLeakage[1],maxLeakage[2]);
+#endif
+			
             // Set Max Leakage 
             maxLeakage[0] = maxLeakage[0] + noise_margin*2;
             maxLeakage[1] = maxLeakage[1] + noise_margin*2;
@@ -50,6 +54,10 @@ void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
             baseline[0] = maxLeakage[0];
             baseline[1] = maxLeakage[1];
 			baseline[2] = maxLeakage[2];
+			
+			env_var.baseline[0] = baseline[0];
+			env_var.baseline[1] = baseline[1];
+			env_var.baseline[2] = baseline[2];
         }
         
         // Decrement counter
@@ -70,8 +78,10 @@ void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
             // For readability of this code, no changes to 
             // the settings are done.
             //
-            printf("Samples are Saturated\n");
-        }
+#ifdef DEBUG_ON
+            puts("DEBUG: Samples are Saturated");
+#endif
+		}
         else
         { 
             if( isIRStable( samples ) )
@@ -85,7 +95,6 @@ void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
 				calcBaseline( 2 , samples, noise_margin); // Calculate PS3 Baseline
 
                 SliderAlgorithm(si114x_handle, samples, scale);
-
             }
         }
     }

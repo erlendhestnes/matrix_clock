@@ -1,6 +1,7 @@
 #ifndef SOUND_DEFINED
 #define SOUND_DEFINED
 
+#include "../../global.h"
 #include "ff.h"
 
 typedef struct {		/* Sound FIFO control block */
@@ -9,11 +10,6 @@ typedef struct {		/* Sound FIFO control block */
 	BYTE *buff;			/* Pointer to FIFO buffer (must be 4-byte aligned) */
 	UINT sz_buff;		/* Size of FIFO buffer (must be power of 2) */
 } WAVFIFO;
-
-int16_t fht_array[32];
-uint8_t full;
-
-WAVFIFO *WavFifo;	/* Pointer to sound FIFO control block */
 
 int sound_start (WAVFIFO* fcb, DWORD fs);
 void sound_stop (void);

@@ -12,7 +12,7 @@
 
 #define RAND_MAX 255
 
-#define PROXIMITY_THRESHOLD 3200
+#define PROXIMITY_THRESHOLD 1600
 #define MENU_TIMEOUT 15000
 
 #include <avr/io.h>
@@ -22,9 +22,11 @@
 #include <avr/sfr_defs.h>
 #include <util/delay.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 typedef enum {
 	Monday = 1,
@@ -63,7 +65,7 @@ typedef struct {
 	months_t month;
 	uint16_t year;
 	int8_t timezone;
-	uint8_t DST
+	uint8_t DST;
 } time_env_t;
 
 typedef struct {
@@ -74,17 +76,19 @@ typedef struct {
 
 typedef struct {
 	uint16_t id;
-	char name[20];
+	uint32_t runtime;
+	char name[25];
 	time_env_t time;
 	char temperature[3];
-	char weather_info[30];
-	char location[20];
+	char weather_info[40];
+	char location[25];
 	int8_t brightness;
 	uint16_t ps1;
-	char wifi_pswd[20];
-	char wifi_ssid[20];
+	char wifi_pswd[25];
+	char wifi_ssid[25];
 	uint8_t menu_id;
 	alarm_t alarm;
+	uint16_t baseline[3];
 } env_variables_t;
 
 env_variables_t env_var;
@@ -104,9 +108,6 @@ static inline void delay_ms( int ms )
 	}
 }
 
-/**
- * reverse_byte:  reverse byteorder
- */
 static inline char reverse_byte(char b)
 {
 	b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
@@ -115,9 +116,6 @@ static inline char reverse_byte(char b)
 	return b;
 }
 
-/**
- * reverse_string:  reverse first l chars of string s in place
- */
 static inline void reverse_string( char *s, int l )
 {
 	int i, j;
@@ -130,14 +128,7 @@ static inline void reverse_string( char *s, int l )
 	}
 }
 
-/**
- * convert n to characters in s
- * s will NOT be zero terminated, return strlen of s
- * this is a simple implementation that works for complete long int range
- * architecture independent
- * about 2 times faster than sprintf (in range [INT_MIN/10 - INT_MAX/10])
- */
-static inline void itoa_simple( char *s, long num ) {
+static inline char* itoa_simple( char *s, long num ) {
 	char *begin = s;
 	char *rev = s;
 	unsigned long n = num;
@@ -155,16 +146,7 @@ static inline void itoa_simple( char *s, long num ) {
 
 	reverse_string( rev, s - rev);
 
-	return s - begin;
-}
-
-static inline int isNumeric (const char * s)
-{
-	if (s == NULL || *s == '\0' || isspace(*s))
-	return 0;
-	char * p;
-	strtod (s, &p);
-	return *p == '\0';
+	return (char*)(s - begin);
 }
 
 #endif

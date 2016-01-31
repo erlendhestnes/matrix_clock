@@ -7,15 +7,15 @@
 
 #include "spi.h"
 
-void spi_setup(void) {
-	
+void spi_setup(void) 
+{	
 	SD_PORT.DIRSET = SD_CS | SD_MOSI | SD_SCK;
 	SD_PORT.OUTSET = SD_CS;
 	SD_SPI.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV4_gc;
 }
 
-void spi_off(void) {
-	
+void spi_off(void) 
+{	
 	SD_SPI.CTRL &= ~(SPI_ENABLE_bm);
 	SD_PORT.DIRCLR = SD_CS | SD_MOSI | SD_SCK;
 	SD_PORT.PIN4CTRL = PORT_OPC_PULLUP_gc;
@@ -24,9 +24,10 @@ void spi_off(void) {
 	SD_PORT.PIN7CTRL = PORT_OPC_PULLUP_gc;
 }
 
-uint8_t spi_wr_rd(uint8_t spi_data) {
-	
-	SD_SPI.DATA = spi_data;
+uint8_t spi_wr_rd(uint8_t data) 
+{	
+	SD_SPI.DATA = data;
+	//Warning: this may hang
 	while(!(SPIC.STATUS & SPI_IF_bm));
 	return SD_SPI.DATA;
 }

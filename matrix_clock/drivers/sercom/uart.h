@@ -10,6 +10,10 @@
 
 #include "../../global.h"
 
+#define UART_PORT	PORTD
+#define UART_TX		PIN3_bm
+#define UART_RX		PIN2_bm
+
 void uart_setup(void);
 void uart_put_char(char c);
 char uart_get_char(void);

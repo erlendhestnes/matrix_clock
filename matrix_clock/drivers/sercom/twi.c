@@ -7,23 +7,26 @@
 
 #include "twi.h"
 
-void twi_setup(TWI_t* const TWI) {
-	//TWIC.CTRL = TWI_SDAHOLD_50NS_gc;
+void twi_setup(TWI_t* const TWI) 
+{
 	TWIC.MASTER.CTRLB = 0;//TWI_MASTER_SMEN_bm; //| TWI_MASTER_TIMEOUT1_bm;
 	TWIC.MASTER.BAUD = 9;
 	TWIC.MASTER.CTRLA = TWI_MASTER_ENABLE_bm;
 	TWIC.MASTER.STATUS = TWI_MASTER_BUSSTATE_IDLE_gc;
 }
 
-void twi_off(void) {
+void twi_off(void) 
+{
 	TWIC.MASTER.CTRLA &= ~(TWI_MASTER_ENABLE_bm);
 }
 
-void twi_on(void) {
+void twi_on(void) 
+{
 	TWIC.MASTER.CTRLA = TWI_MASTER_ENABLE_bm;
 }
 
-void twi_stop_transmission(TWI_t* const TWI) {
+void twi_stop_transmission(TWI_t* const TWI) 
+{
 	TWI->MASTER.CTRLC = TWI_MASTER_ACKACT_bm | TWI_MASTER_CMD_STOP_gc;
 }
 

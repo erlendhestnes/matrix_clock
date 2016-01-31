@@ -13,7 +13,7 @@
 //#include "Si114x_debug.h"
 #include "Si114x_types.h"
 
-extern u16 xdata baseline[2];
+extern u16 xdata baseline[3];
 
 //-----------------------------------------------------------------------------
 // Gesture Definitions
@@ -27,7 +27,7 @@ extern u16 xdata baseline[2];
 // Maximum radius and timeout defs
 //-----------------------------------------------------------------------------
 // Limit for the radius measurements
-#define MAX_RADIUS      240
+#define MAX_RADIUS      240 //initial value 240
 
 // Adjustable timing parameters. 1 = ~12.8ms
 #define LED_STATE_TIME  (3*13)

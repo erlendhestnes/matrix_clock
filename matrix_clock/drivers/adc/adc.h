@@ -10,8 +10,14 @@
 
 #include "../../global.h"
 
-void adc_setup(void);
-int16_t adc_get_temp(void);
-uint16_t adc_read(uint8_t ch, uint8_t mode);
+void adc_init(void);
+void adc_disable(void);
+
+void adc_enable_current_measurement(void);
+void adc_disable_current_measurement(void);
+
+uint16_t adc_read_voltage(void);
+uint8_t adc_get_battery_percentage(void);
+uint8_t read_calibration_byte(uint8_t index);
 
 #endif

@@ -29,10 +29,16 @@ drivers/sensors/si114x/Si114x_functions.d \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\math.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdio.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h \
+ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
  ../drivers/sensors/si114x/../../sercom/twi.h \
- ../drivers/sensors/si114x/../../sercom/../../global.h
+ ../drivers/sensors/si114x/../../sercom/../../global.h \
+ ../drivers/sensors/si114x/../../port/port.h \
+ ../drivers/sensors/si114x/../../port/../../global.h \
+ ../drivers/sensors/si114x/../../../modules/display/display.h \
+ ../drivers/sensors/si114x/../../../modules/display/../../global.h \
+ ../drivers/sensors/si114x/../../../modules/display/../../drivers/ht1632c/ht1632c.h
 
 ../drivers/sensors/si114x/si114x_functions.h:
 
@@ -90,6 +96,8 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h:
 
+c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h:
+
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
@@ -97,3 +105,13 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 ../drivers/sensors/si114x/../../sercom/twi.h:
 
 ../drivers/sensors/si114x/../../sercom/../../global.h:
+
+../drivers/sensors/si114x/../../port/port.h:
+
+../drivers/sensors/si114x/../../port/../../global.h:
+
+../drivers/sensors/si114x/../../../modules/display/display.h:
+
+../drivers/sensors/si114x/../../../modules/display/../../global.h:
+
+../drivers/sensors/si114x/../../../modules/display/../../drivers/ht1632c/ht1632c.h:

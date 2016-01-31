@@ -21,33 +21,37 @@ main.d main.o: .././main.c .././drivers/ht1632c/ht1632c.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\math.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdio.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h \
+ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
  .././drivers/rtc/rtc.h .././drivers/rtc/../../global.h \
  .././drivers/sercom/twi.h .././drivers/sercom/../../global.h \
  .././drivers/sercom/spi.h .././drivers/sercom/uart.h \
  .././drivers/power/power.h .././drivers/power/../../global.h \
+ .././drivers/port/port.h .././drivers/port/../../global.h \
+ .././drivers/adc/adc.h .././drivers/adc/../../global.h \
+ .././drivers/clock/clock.h .././drivers/clock/../../global.h \
+ .././drivers/eeprom/eeprom.h .././drivers/eeprom/../../global.h \
  .././drivers/esp8266/esp8266.h .././drivers/esp8266/../../global.h \
- .././drivers/esp8266/../../json/jsmn.h .././drivers/port/port.h \
- .././drivers/port/../../global.h .././drivers/adc/adc.h \
- .././drivers/adc/../../global.h .././drivers/clock/clock.h \
- .././drivers/clock/../../global.h .././fatfs/ff.h .././fatfs/integer.h \
- .././fatfs/ffconf.h .././fatfs/sound.h .././fatfs/ff.h \
+ .././drivers/esp8266/../../modules/json/jsmn.h \
+ .././drivers/timer/timer.h .././drivers/timer/../../global.h \
  .././drivers/sensors/si114x/User_defs.h \
  .././drivers/sensors/si114x/Si114x_functions.h \
  .././drivers/sensors/si114x/Si114x_types.h \
  .././drivers/sensors/si114x/User_defs.h \
  .././drivers/sensors/si114x/Si114x_handler.h \
  .././drivers/sensors/si114x/Si114x_functions.h \
- .././drivers/eeprom/eeprom.h .././drivers/eeprom/../../global.h \
  .././modules/display/display.h .././modules/display/../../global.h \
  .././modules/display/../../drivers/ht1632c/ht1632c.h \
  .././modules/time_functions/time_functions.h \
  .././modules/time_functions/../../global.h .././modules/menu/menu.h \
  .././modules/menu/../../global.h \
  .././modules/menu/../../drivers/sensors/si114x/Si114x_types.h \
- .././json/jsmn.h .././json/json_functions.h .././json/../global.h \
- .././json/jsmn.h
+ .././modules/json/jsmn.h .././modules/json/json_functions.h \
+ .././modules/json/../../global.h .././modules/json/jsmn.h \
+ .././modules/fatfs/ff.h .././modules/fatfs/integer.h \
+ .././modules/fatfs/ffconf.h .././modules/fatfs/sound.h \
+ .././modules/fatfs/../../global.h .././modules/fatfs/ff.h
 
 .././drivers/ht1632c/ht1632c.h:
 
@@ -95,6 +99,8 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdarg.h:
 
+c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h:
+
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h:
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
@@ -115,12 +121,6 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 .././drivers/power/../../global.h:
 
-.././drivers/esp8266/esp8266.h:
-
-.././drivers/esp8266/../../global.h:
-
-.././drivers/esp8266/../../json/jsmn.h:
-
 .././drivers/port/port.h:
 
 .././drivers/port/../../global.h:
@@ -133,15 +133,19 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 .././drivers/clock/../../global.h:
 
-.././fatfs/ff.h:
+.././drivers/eeprom/eeprom.h:
 
-.././fatfs/integer.h:
+.././drivers/eeprom/../../global.h:
 
-.././fatfs/ffconf.h:
+.././drivers/esp8266/esp8266.h:
 
-.././fatfs/sound.h:
+.././drivers/esp8266/../../global.h:
 
-.././fatfs/ff.h:
+.././drivers/esp8266/../../modules/json/jsmn.h:
+
+.././drivers/timer/timer.h:
+
+.././drivers/timer/../../global.h:
 
 .././drivers/sensors/si114x/User_defs.h:
 
@@ -154,10 +158,6 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 .././drivers/sensors/si114x/Si114x_handler.h:
 
 .././drivers/sensors/si114x/Si114x_functions.h:
-
-.././drivers/eeprom/eeprom.h:
-
-.././drivers/eeprom/../../global.h:
 
 .././modules/display/display.h:
 
@@ -175,10 +175,22 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 .././modules/menu/../../drivers/sensors/si114x/Si114x_types.h:
 
-.././json/jsmn.h:
+.././modules/json/jsmn.h:
 
-.././json/json_functions.h:
+.././modules/json/json_functions.h:
 
-.././json/../global.h:
+.././modules/json/../../global.h:
 
-.././json/jsmn.h:
+.././modules/json/jsmn.h:
+
+.././modules/fatfs/ff.h:
+
+.././modules/fatfs/integer.h:
+
+.././modules/fatfs/ffconf.h:
+
+.././modules/fatfs/sound.h:
+
+.././modules/fatfs/../../global.h:
+
+.././modules/fatfs/ff.h:

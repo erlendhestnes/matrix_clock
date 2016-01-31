@@ -1,94 +1,102 @@
-/*
- * adc.c
- *
- * Created: 1/18/2015 4:16:21 PM
- *  Author: Administrator
- */ 
-
 #include "adc.h"
-#include "../../global.h"
 
-void adc_setup(void) {
+void adc_init(void) 
+{	
+	PR.PRPA &= ~0x02; // Clear ADC bit in Power Reduction Port B Register
 	
-	ADCA.CTRLA = ADC_FLUSH_bm;
+	ADCA.CALL = 0x36;
+	ADCA.CALH = 0x03;
+	//ADCA.CALL = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL0) );
+	//ADCA.CALH = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL1) );
+	//ADCA.CALL = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL0) );
+	//ADCA.CALH = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL1) );	
+
+	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
 	ADCA.CTRLB = ADC_RESOLUTION_12BIT_gc;
-	ADCA.REFCTRL = ADC_REFSEL_INT1V_gc | ADC_TEMPREF_bm;
-	ADCA.PRESCALER = ADC_PRESCALER_DIV512_gc;
-	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_INTERNAL_gc | ADC_CH_GAIN_1X_gc;
-	ADCA.CH0.MUXCTRL = ADC_CH_MUXINT_TEMP_gc;
-	ADCA.CTRLA |= ADC_ENABLE_bm;
+	ADCA.PRESCALER = ADC_PRESCALER_DIV256_gc;
+	ADCA.REFCTRL = ADC_REFSEL_INTVCC_gc;
+	ADCA.EVCTRL = ADC_EVACT_NONE_gc;
+	ADCA.INTFLAGS = ADC_CH0IF_bm;
+	ADCA.CH0.INTCTRL = ADC_CH_INTLVL_OFF_gc;
+	ADCA.CTRLA = ADC_ENABLE_bm;
 }
 
-uint8_t read_signature_byte(uint16_t Address) {
+void adc_disable(void) 
+{	
+	PR.PRPA |= 0x02;
+	ADCA.CTRLA &= ~(ADC_ENABLE_bm);
+}
+
+uint16_t adc_read_voltage(void) 
+{	
+	adc_enable_current_measurement();
+	uint16_t val = 0;
+	for (uint8_t i = 0; i < 10; i++) {
+		ADCA.CH0.CTRL |= (1 << ADC_CH_START_bp);
+		while(!(ADCA.CH0.INTFLAGS & ADC_CH_CHIF_bm));
+		ADCA.CH0.INTFLAGS = ADC_CH_CHIF_bm;
+		val += ADCA.CH0.RES;
+	}
+	adc_disable_current_measurement();
+
+	return val/10;
+}
+
+uint8_t adc_get_battery_percentage(void) 
+{	
+	adc_init();
+
+	float voltage;
+	voltage = (float)adc_read_voltage();
+	voltage /= 6.6f;
+	
+	adc_disable();
+	
+	if (voltage > 600) {
+		return 99;
+	} else if (voltage > 575) {
+		return 95;
+	} else if (voltage > 550) {
+		return 90;
+	} else if (voltage > 525) {
+		return 80;
+	} else if (voltage > 500) {
+		return 70;
+	} else if (voltage > 475) {
+		return 60;
+	} else if (voltage > 450) {
+		return 50;
+	} else if (voltage > 425) {
+		return 40;
+	} else if (voltage > 415) {
+		return 30;
+	} else if (voltage > 400) {
+		return 20;
+	}
+	
+	return 0;
+}
+
+void adc_enable_current_measurement(void) 
+{	
+	PORTA.DIRSET |= PIN1_bm;
+	PORTA.OUTCLR |= PIN1_bm;
+}
+
+void adc_disable_current_measurement(void) 
+{	
+	PORTA.DIRSET |= PIN1_bm;
+	PORTA.OUTSET |= PIN1_bm;
+}
+
+uint8_t read_calibration_byte(uint8_t index) 
+{	
+	uint8_t result;
 	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
-	uint8_t Result;
-	__asm__ ("lpm %0, Z\n" : "=r" (Result) : "z" (Address));
+	result = pgm_read_byte(index);
+	
 	NVM_CMD = NVM_CMD_NO_OPERATION_gc;
-	return Result;
-}
-
-uint16_t adc_read(uint8_t ch, uint8_t mode) // Mode = 1 for single ended, 0 for internal
-{
-	float kelvin_per_adc_x10;
-	int16_t ref;
-	int16_t degrees_x10;
 	
-	if ((ADCA.CTRLA & ADC_ENABLE_bm) == 0)
-	{
-		ADCA.CTRLA = ADC_ENABLE_bm ; // Enable the ADC
-		ADCA.CTRLB = (1<<4); // Signed Mode
-		ADCA.REFCTRL = 0; // Internal 1v ref
-		ADCA.EVCTRL = 0 ; // no events
-		ADCA.PRESCALER = ADC_PRESCALER_DIV512_gc ;
-		ADCA.CALL = read_signature_byte(0x20) ; //ADC Calibration Byte 0
-		ADCA.CALH = read_signature_byte(0x21) ; //ADC Calibration Byte 1
-		//ADCA.SAMPCTRL = This register does not exist
-		_delay_ms(1); // Wait at least 25 clocks
-	}
-	ADCA.CH0.CTRL = ADC_CH_GAIN_1X_gc | mode ; // Gain = 1, Single Ended
-	ADCA.CH0.MUXCTRL = (ch<<3);
-	ADCA.CH0.INTCTRL = 0 ; // No interrupt
-	//ADCA.CH0.SCAN Another bogus register
-	for(uint8_t i = 0; i < 2; i++)
-	{
-		ADCA.CH0.CTRL |= ADC_CH_START_bm; // Start conversion
-		while (ADCA.INTFLAGS==0) ; // Wait for complete
-		ADCA.INTFLAGS = ADCA.INTFLAGS ;
-	}
-	ref = (0x09 << 8) | 0x5C;
-	kelvin_per_adc_x10 = ((273 + 85)*10) / (float)ref;
-	degrees_x10 = ADCA.CH0RES;
-	degrees_x10 *= kelvin_per_adc_x10;
-	degrees_x10 -= 2730;
-	
-	return degrees_x10/10 ;
-}
-
-int16_t adc_get_temp(void) {
-	
-	int16_t ref; 
-	int16_t degrees_x10;
-	float kelvin_per_adc_x10;
-	
-	ADCA.CTRLA = ADC_FLUSH_bm; // cancel any pending conversions, disable ADC
-	// set up exactly how Atmel did when they measured the calibration value
-	ADCA.CTRLB = ADC_RESOLUTION_12BIT_gc; // unsigned conversion, produces result in range 0-2048
-	ADCA.REFCTRL = ADC_REFSEL_INT1V_gc | ADC_TEMPREF_bm;
-	ADCA.PRESCALER = ADC_PRESCALER_DIV512_gc;
-	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_INTERNAL_gc | ADC_CH_GAIN_1X_gc;
-	ADCA.CH0.MUXCTRL = ADC_CH_MUXINT_TEMP_gc;
-	ADCA.CTRLA |= ADC_ENABLE_bm;
-	// adc_wait_8mhz();
-	_delay_ms(1); // Wait at least 25 clocks
-	// get 358 K factory calibrated value
-	ref = (0x09 << 8) | 0x5C;
-	
-	kelvin_per_adc_x10 = ((273 + 85)*10) / (float)ref; // reference is ADC reading at 85C, scaled by 10 to get units of 0.1C
-	degrees_x10 = ADCA.CH0RES; //ADC_sample(&ADCA.CH0);
-	ADCA.CTRLA = 0; // turn ADC off
-	ADCA.REFCTRL = 0; // turn temperature sensor off
-	degrees_x10 *= kelvin_per_adc_x10;
-	degrees_x10 -= 2730;
-	
-	return (degrees_x10);
+	return(result);
 }

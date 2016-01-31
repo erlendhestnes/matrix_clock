@@ -6,6 +6,8 @@
  */ 
 
 #include "display.h"
+#include "../../drivers/rtc/rtc.h"
+#include "../time_functions/time_functions.h"
 #include "../../4x6_font.c"
 
 #define swap(a, b) { uint16_t t = a; a = b; b = t; }
@@ -13,9 +15,22 @@
 void display_setup(void) 
 {
 	ht1632c_setup(HT1632_COMMON_16NMOS);
-	ht1632c_set_brightness(1);
+	ht1632c_set_brightness(0);
 	display_clear_screen();
 	ht1632c_write_command(HT1632_LED_ON);
+}
+
+void display_on(void) 
+{
+	ht1632c_write_command(HT1632_LED_ON);
+	rtc_enable_time_render();
+	display_slide_in_from_top();
+}
+
+void display_off(void) 
+{
+	display_slide_out_to_top();
+	ht1632c_write_command(HT1632_LED_OFF);
 }
 
 void display_fill_screen(void) 
@@ -55,7 +70,7 @@ static inline void display_fade_down(uint8_t pwm, uint8_t prev_pwm)
 
 void display_fade(uint8_t pwm) 
 {
-	static uint8_t prev_pwm = 1;
+	static uint8_t prev_pwm = 0;
 	
 	if (pwm > prev_pwm) {
 		display_fade_up(pwm, prev_pwm);
@@ -316,7 +331,7 @@ void display_draw_bitmap(uint8_t x, uint8_t y,const uint8_t *bitmap, uint8_t w, 
 
 /*------------------------------PRINT FUNCTIONS------------------------------*/
 
-void display_print_scrolling_text(char *str, bool big_font) 
+void display_print_scrolling_text(const char *str, bool big_font) 
 {
 	uint16_t i = 0;
 	uint16_t length;
@@ -427,7 +442,7 @@ void display_draw_small_char(int16_t x, int16_t y, char c,uint16_t color, uint8_
 	}
 }
 
-void display_draw_four_letter_word(char *name)
+void display_draw_four_letter_word(const char *name)
 {
 	display_draw_small_char(1,7,*name++,1,1);
 	display_draw_small_char(5,7,*name++,1,1);
@@ -435,7 +450,7 @@ void display_draw_four_letter_word(char *name)
 	display_draw_small_char(13,7,*name++,1,1);
 }
 
-void display_draw_three_letter_word(char *name)
+void display_draw_three_letter_word(const char *name)
 {
 	display_draw_small_char(3,7,*name++,1,1);
 	display_draw_small_char(7,7,*name++,1,1);
@@ -771,7 +786,7 @@ void display_draw_and_decrement_month(void)
 
 void display_draw_and_increment_year(void) 
 {
-	char *year;
+	char *year = NULL;
 	itoa_simple(year,env_var.time.year++);
 	display_draw_four_letter_word(year);
 	display_refresh_screen();
@@ -779,7 +794,7 @@ void display_draw_and_increment_year(void)
 
 void display_draw_and_decrement_year(void) 
 {
-	char *year;
+	char *year = NULL;
 	itoa_simple(year,env_var.time.year--);
 	display_draw_four_letter_word(year);
 	display_refresh_screen();

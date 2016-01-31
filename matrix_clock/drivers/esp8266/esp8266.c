@@ -9,7 +9,12 @@
 #include "../eeprom/eeprom.h"
 #include "../rtc/rtc.h"
 #include "../port/port.h"
-#include "../../fatfs/ff.h"
+#include "../sercom/uart.h"
+
+#include "../../modules/fatfs/ff.h"
+#include "../../modules/display/display.h"
+
+#include <stdlib.h>
 
 volatile bool json_found = false;
 volatile bool wdt_triggered = false;
@@ -19,76 +24,90 @@ volatile static uint16_t rx_ptr = 0;
 static char rx_buffer[RX_BUFFER];
 
 char ip_address[19];
-char telnet_cmd[50];
-
-char ssid[20];
-char password[20];
 
 esp8266_status_t status;
 
-static inline void esp8266_send_cmd(char *str, uint16_t timeout_ms) {
+static inline void esp8266_send_cmd(char *str, uint16_t timeout_ms) 
+{
 	status = ESP8266_NONE;
 	uart_write_str(str);
 	_delay_ms(timeout_ms);
 }
 
-void esp8266_on(void) {
+void esp8266_on(void) 
+{
 	PORTD.DIRSET = CH_EN;
 	PORTD.OUTSET = CH_EN;
-	_delay_ms(100);
+	_delay_ms(500);
 }
 
-void esp8266_off(void) {
+void esp8266_off(void) 
+{
 	PORTD.OUTCLR = CH_EN;
 }
 
-void esp8266_reset(void) {
+void esp8266_reset(void) 
+{
 	PORTD.OUTSET = ESP_RST;
-	_delay_ms(100);
+	_delay_ms(500);
 	PORTD.OUTCLR = ESP_RST;
-	_delay_ms(100);
+	_delay_ms(500);
 }
 
-esp8266_status_t esp8266_setup(void) {
-    
+esp8266_status_t esp8266_setup(void) 
+{	
 	//Reset module
-	esp8266_send_cmd("AT+RST",2000);
+	esp8266_send_cmd("AT+RST",5000);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
+	/*
+	esp8266_send_cmd("AT+IPR=115200",5000);
+	if (status != ESP8266_SUCCESS) {
+		return status;
+	}
+	*/
 	
-	//Show firmware version
-	//esp8266_send_cmd("AT+GMR",50);
+	//Show firmware info
+	//esp8266_send_cmd("AT+GMR",1000);
+	//if (status != ESP8266_SUCCESS) {
+	//	return status;
+	//}
 	
 	//Set Data Mode
-	esp8266_send_cmd("AT+CIPMODE=0",50);
+	esp8266_send_cmd("AT+CIPMODE=0",1000);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Single connection mode
-	esp8266_send_cmd("AT+CIPMUX=0",50);
+	esp8266_send_cmd("AT+CIPMUX=0",250);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Select STA mode
-	esp8266_send_cmd("AT+CWMODE=1",50);
+	esp8266_send_cmd("AT+CWMODE=1",250);
+	if (status != ESP8266_SUCCESS) {
+		return status;
+	}
 	
 	return ESP8266_SUCCESS;
 }
 
-void esp8266_list_ap(void) {
+void esp8266_list_ap(void) 
+{
 	esp8266_send_cmd("AT+CWLAP",4000);
 }
 
-void esp8266_update(void) {
+void esp8266_update(void) 
+{
 	esp8266_send_cmd("AT+CIPUPDATE",10000);
 }
 
-esp8266_status_t esp8266_join_ap(char *ssid, char *pass) {
-	
-	uint8_t timeout = 150;
+esp8266_status_t esp8266_join_ap(char *ssid, char *pass) 
+{	
+	uint16_t timeout = 300;
 	uint16_t cnt = 0;
 	char cmd[100];
 	
@@ -97,11 +116,11 @@ esp8266_status_t esp8266_join_ap(char *ssid, char *pass) {
 	strcat(cmd,"\",\"");
 	strcat(cmd,pass);
 	strcat(cmd,"\"");
-	esp8266_send_cmd(cmd,100);
+	esp8266_send_cmd(cmd,250);
 	
 	while (status != ESP8266_SUCCESS)
 	{
-		_delay_ms(200);
+		_delay_ms(100);
 		
 		if (cnt++ > timeout) {
 			return ESP8266_TIMEOUT;
@@ -109,20 +128,13 @@ esp8266_status_t esp8266_join_ap(char *ssid, char *pass) {
 			return status;
 		}
 	}
-	/*
-	esp8266_send_cmd("AT+CWJAP?",100);
-	
-	if (status != ESP8266_SUCCESS) {
-		return status;
-	}
-	*/
 
 	return ESP8266_SUCCESS;
 }
 
-esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t json_length) {
-	
-	uint16_t timeout = 240;
+esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t json_length) 
+{	
+	uint16_t timeout = 300;
 	uint16_t cnt = 0;
 	//Try to make this dynamic?
 	char cmd[150];
@@ -131,9 +143,9 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 	strcpy(cmd,"AT+CIPSTART=\"TCP\",\"");
 	strcat(cmd,host);
 	strcat(cmd,"\",80");
-	esp8266_send_cmd(cmd,500);
+	esp8266_send_cmd(cmd,250);
 	
-	if (status != ESP8266_SUCCESS) {
+	if ((status != ESP8266_SUCCESS) || (status != ESP8266_CONNECT)) {
 		return status;
 	}
 	
@@ -153,7 +165,7 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 	
 	while (status != ESP8266_SUCCESS)
 	{
-		esp8266_send_cmd("",250);
+		esp8266_send_cmd("",100);
 		
 		if (cnt++ > timeout) {
 			return ESP8266_TIMEOUT;
@@ -165,7 +177,7 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 	//Waiting for all the data
 	while (status != ESP8266_CLOSED)
 	{
-		_delay_ms(250);
+		_delay_ms(100);
 		
 		if (cnt++ > timeout) {
 			return ESP8266_TIMEOUT;
@@ -175,10 +187,17 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 	}
 	
 	if (json_found) {
-		strncpy(json,rx_buffer,json_length);
+		uint16_t start_addr = (uint16_t)rx_buffer;
+		uint16_t end_addr = (uint16_t)strrchr(rx_buffer,'}');
+		uint16_t len = (end_addr-start_addr)+1;
+		if (len > json_length) {
+			return ESP8266_ERROR;
+		}
+		memset(json,0,json_length);
+		strncpy(json,rx_buffer,len);
 		memset(rx_buffer,0,RX_BUFFER);
 		json_found = false;
-		rx_ptr = 0;
+		rx_ptr = 0;	
 	}
 	
 	esp8266_send_cmd("AT+CIPCLOSE",50);
@@ -186,27 +205,24 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 	return ESP8266_SUCCESS;
 }
 
-esp8266_status_t esp8266_setup_webserver(bool sta, bool ap) {
-	
+esp8266_status_t esp8266_setup_webserver(bool sta, bool ap) 
+{	
 	//Reset module
-	esp8266_send_cmd("AT+RST\r",1000);
-	if (status != ESP8266_SUCCESS) {
-		return status;
-	}
+	esp8266_reset();
 	
 	//Set Data Mode
-	esp8266_send_cmd("AT+CIPMODE=0",100);
+	esp8266_send_cmd("AT+CIPMODE=0",250);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Select mode
 	if (sta) {
-		esp8266_send_cmd("AT+CWMODE=1",200);
+		esp8266_send_cmd("AT+CWMODE=1",250);
 	} else if (ap) {
-		esp8266_send_cmd("AT+CWMODE=2",200);
+		esp8266_send_cmd("AT+CWMODE=2",250);
 	} else if (ap && sta) {
-		esp8266_send_cmd("AT+CWMODE=3",200);
+		esp8266_send_cmd("AT+CWMODE=3",250);
 	} else {
 		return ESP8266_ERROR;
 	}
@@ -220,23 +236,23 @@ esp8266_status_t esp8266_setup_webserver(bool sta, bool ap) {
 	}
 	
 	//List ip addresses
-	esp8266_send_cmd("AT+CIFSR", 100);
+	esp8266_send_cmd("AT+CIFSR", 250);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
-	//Show ip address to user
+	//Show IP address to user
 #ifdef SHOW_MANUAL
 	display_print_scrolling_text(ip_address,false);
 #endif
 	//Configure multiple connections
-	esp8266_send_cmd("AT+CIPMUX=1",100);
+	esp8266_send_cmd("AT+CIPMUX=1",250);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Start server
-	esp8266_send_cmd("AT+CIPSERVER=1,80",100);	
+	esp8266_send_cmd("AT+CIPSERVER=1,80",250);	
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
@@ -244,7 +260,8 @@ esp8266_status_t esp8266_setup_webserver(bool sta, bool ap) {
 	return ESP8266_SUCCESS;
 }
 
-static inline void at_cipsend(char channel, char *str) {
+static inline void at_cipsend(char channel, char *str) 
+{
 	char number_of_bytes[5];
 	char cmd[50];
 	uint16_t timeout = 0;
@@ -266,8 +283,8 @@ static inline void at_cipsend(char channel, char *str) {
 	_delay_ms(100);
 }
 
-static inline void at_cipsend_from_sd_card(void) {
-	char number_of_bytes[5];
+static inline void at_cipsend_from_sd_card(void) 
+{
 	char cmd[50];
 	
 	FATFS FatFs;		// FatFs work area needed for each volume
@@ -405,9 +422,11 @@ esp8266_status_t esp8266_configure_ssid_and_password(void)
 			}	
 		}
 	}
+	return ESP8266_SUCCESS;
 }
 
-ISR(USARTD0_RXC_vect) {
+ISR(USARTD0_RXC_vect) 
+{
 	
 	char rx_temp = USARTD0.DATA;
 	
@@ -428,12 +447,6 @@ ISR(USARTD0_RXC_vect) {
 		} else if (strstr(rx_buffer,"192")) {
 			strncpy(ip_address,strchr(rx_buffer,'\"'),19);
 		} 
-		/*
-		else if (strstr(rx_buffer,"wdt reset")) {
-			wdt_triggered = true;
-		}*/
-		 
-		//if (rx_buffer[0] == '{') {
 		if (strstr(rx_buffer,"{")) {
 			json_found = true;	
 		} else {

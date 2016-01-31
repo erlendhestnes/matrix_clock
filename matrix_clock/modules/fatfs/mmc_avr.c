@@ -13,14 +13,14 @@
 
 #include <avr/io.h>
 #include "diskio.h"
-#include "../drivers/sercom/spi.h"
-#include "../global.h"
+#include "../../drivers/sercom/spi.h"
+#include "../../global.h"
 
 /* Port controls  (Platform dependent) */
-#define CS_LOW()	SD_PORT.OUTCLR = SD_CS			/* CS=low */
-#define	CS_HIGH()	SD_PORT.OUTSET = SD_CS			/* CS=high */
-#define MMC_CD		(!(SD_PORT.IN & SD_CD))	/* Card detected.   yes:true, no:false, default:true */
-#define MMC_WP		0							/* Write protected. yes:true, no:false, default:false */
+#define CS_LOW()	SD_PORT.OUTCLR |= SD_CS			/* CS=low */
+#define	CS_HIGH()	SD_PORT.OUTSET |= SD_CS			/* CS=high */
+#define MMC_CD		(!(SD_PORT.IN & SD_CD))			/* Card detected.   yes:true, no:false, default:true */
+#define MMC_WP		0								/* Write protected. yes:true, no:false, default:false */
 #define	FCLK_SLOW()	SD_SPI.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV64_gc		/* Set slow clock (F_CPU / 64) */
 #define	FCLK_FAST()	SD_SPI.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV4_gc		/* Set fast clock (F_CPU / 2) */
 
@@ -73,10 +73,19 @@ BYTE CardType;			/* Card type flags */
 static
 void power_on (void)
 {
-	//Used to check for a timeout, not needed
-	//TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
-	//TCC1.PER = F_CPU/DIVIDER;
-	//TCC1.INTCTRLA = TC_OVFINTLVL_LO_gc;
+	TCC0.CNT = 0;
+	TCC0.PER = 1250;
+	TCC0.CTRLA = TC_CLKSEL_DIV256_gc;
+	
+	TCC0.CCB = 1250;
+	TCC0.INTCTRLB |= TC_CCBINTLVL_LO_gc;
+	TCC0.CTRLB |= TC0_CCBEN_bm;
+	
+	{	/* Remove this block if no socket power control */
+		PORTB.DIRSET |= PIN1_bm;
+		PORTB.OUTCLR |= PIN1_bm;
+		for (Timer1 = 2; Timer1; );	/* Wait for 20ms */
+	}	
 	
 	spi_setup();
 }
@@ -84,8 +93,10 @@ void power_on (void)
 static
 void power_off (void)
 {
-	//TCC1.CTRLA = TC_CLKSEL_OFF_gc;
+	TCC0.CTRLA = TC_CLKSEL_OFF_gc;
 	spi_off();
+	PORTB.OUTSET |= PIN1_bm;
+	_delay_ms(20);
 }
 
 
@@ -144,6 +155,7 @@ int wait_ready (	/* 1:Ready, 0:Timeout */
 {
 	BYTE d;
 
+
 	Timer2 = wt / 10;
 	do
 		d = xchg_spi(0xFF);
@@ -161,7 +173,7 @@ int wait_ready (	/* 1:Ready, 0:Timeout */
 static
 void deselect (void)
 {
-	CS_HIGH();
+	CS_HIGH();		/* Set CS# high */
 	xchg_spi(0xFF);	/* Dummy clock (force DO hi-z for multiple slave SPI) */
 }
 
@@ -174,10 +186,10 @@ void deselect (void)
 static
 int select (void)	/* 1:Successful, 0:Timeout */
 {
-	CS_LOW();
+	CS_LOW();		/* Set CS# low */
 	xchg_spi(0xFF);	/* Dummy clock (force DO enabled) */
+	if (wait_ready(500)) return 1;	/* Wait for card ready */
 
-	if (wait_ready(500)) return 1;	/* OK */
 	deselect();
 	return 0;	/* Timeout */
 }
@@ -588,6 +600,6 @@ void disk_timerproc (void)
 	Stat = s;				/* Update MMC status */
 }
 
-//ISR( TCC1_OVF_vect ){
-//	disk_timerproc();
-//}
+ISR(TCC0_CCB_vect) {
+	disk_timerproc();
+}

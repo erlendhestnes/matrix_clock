@@ -37,6 +37,8 @@
 #define DISPLAY_WIDTH 16
 #define DISPLAY_HEIGHT 16
 
+/*static*/ uint8_t ledmatrix[32]; // 16 * 24 / 8
+
 //HT1632C FUNCTIONS
 void ht1632c_setup(uint8_t type);
 void ht1632c_power_down(void);

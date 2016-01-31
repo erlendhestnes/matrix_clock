@@ -9,7 +9,7 @@
 #ifndef JSON_FUNCTIONS_H_
 #define JSON_FUNCTIONS_H_
 
-#include "../global.h"
+#include "../../global.h"
 #include "jsmn.h"
 
 void json_get_token(jsmntok_t *tokens, char *js, char *buffer, uint8_t buffer_size, uint8_t i);

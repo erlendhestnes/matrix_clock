@@ -35,20 +35,22 @@ SUBDIRS :=  \
 ../drivers/adc \
 ../drivers/clock \
 ../drivers/dma \
-../drivers/esp8266 \
+../drivers/esp8266/ \
 ../drivers/ht1632c \
 ../drivers/eeprom \
+../drivers/dac \
+../drivers/timer \
 ../drivers/port/ \
 ../drivers/rtc \
 ../drivers/sercom \
 ../drivers/power \
 ../drivers/sensors \
 ../drivers/sensors/si114x/ \
-../fatfs \
-../json \
 ../drivers \
 ../modules \
 ../modules/display \
+../modules/fatfs/ \
+../modules/json/ \
 ../modules/menu \
 ../modules/time_functions
 
@@ -58,6 +60,7 @@ C_SRCS +=  \
 ../4x6_font.c \
 ../drivers/adc/adc.c \
 ../drivers/clock/clock.c \
+../drivers/dac/dac.c \
 ../drivers/dma/dma.c \
 ../drivers/dma/dma_functions.c \
 ../drivers/eeprom/eeprom.c \
@@ -73,13 +76,14 @@ C_SRCS +=  \
 ../drivers/sercom/spi.c \
 ../drivers/sercom/twi.c \
 ../drivers/sercom/uart.c \
-../fatfs/ff.c \
-../fatfs/mmc_avr.c \
-../fatfs/sound.c \
-../json/jsmn.c \
-../json/json_functions.c \
+../drivers/timer/timer.c \
 ../main.c \
 ../modules/display/display.c \
+../modules/fatfs/ff.c \
+../modules/fatfs/mmc_avr.c \
+../modules/fatfs/sound.c \
+../modules/json/jsmn.c \
+../modules/json/json_functions.c \
 ../modules/menu/menu.c \
 ../modules/time_functions/time_functions.c \
 ../_StackInstrument.c
@@ -95,6 +99,7 @@ OBJS +=  \
 4x6_font.o \
 drivers/adc/adc.o \
 drivers/clock/clock.o \
+drivers/dac/dac.o \
 drivers/dma/dma.o \
 drivers/dma/dma_functions.o \
 drivers/eeprom/eeprom.o \
@@ -110,13 +115,14 @@ drivers/sensors/si114x/slider_algorithm.o \
 drivers/sercom/spi.o \
 drivers/sercom/twi.o \
 drivers/sercom/uart.o \
-fatfs/ff.o \
-fatfs/mmc_avr.o \
-fatfs/sound.o \
-json/jsmn.o \
-json/json_functions.o \
+drivers/timer/timer.o \
 main.o \
 modules/display/display.o \
+modules/fatfs/ff.o \
+modules/fatfs/mmc_avr.o \
+modules/fatfs/sound.o \
+modules/json/jsmn.o \
+modules/json/json_functions.o \
 modules/menu/menu.o \
 modules/time_functions/time_functions.o \
 _StackInstrument.o
@@ -125,6 +131,7 @@ OBJS_AS_ARGS +=  \
 4x6_font.o \
 drivers/adc/adc.o \
 drivers/clock/clock.o \
+drivers/dac/dac.o \
 drivers/dma/dma.o \
 drivers/dma/dma_functions.o \
 drivers/eeprom/eeprom.o \
@@ -140,13 +147,14 @@ drivers/sensors/si114x/slider_algorithm.o \
 drivers/sercom/spi.o \
 drivers/sercom/twi.o \
 drivers/sercom/uart.o \
-fatfs/ff.o \
-fatfs/mmc_avr.o \
-fatfs/sound.o \
-json/jsmn.o \
-json/json_functions.o \
+drivers/timer/timer.o \
 main.o \
 modules/display/display.o \
+modules/fatfs/ff.o \
+modules/fatfs/mmc_avr.o \
+modules/fatfs/sound.o \
+modules/json/jsmn.o \
+modules/json/json_functions.o \
 modules/menu/menu.o \
 modules/time_functions/time_functions.o \
 _StackInstrument.o
@@ -155,6 +163,7 @@ C_DEPS +=  \
 4x6_font.d \
 drivers/adc/adc.d \
 drivers/clock/clock.d \
+drivers/dac/dac.d \
 drivers/dma/dma.d \
 drivers/dma/dma_functions.d \
 drivers/eeprom/eeprom.d \
@@ -170,13 +179,14 @@ drivers/sensors/si114x/slider_algorithm.d \
 drivers/sercom/spi.d \
 drivers/sercom/twi.d \
 drivers/sercom/uart.d \
-fatfs/ff.d \
-fatfs/mmc_avr.d \
-fatfs/sound.d \
-json/jsmn.d \
-json/json_functions.d \
+drivers/timer/timer.d \
 main.d \
 modules/display/display.d \
+modules/fatfs/ff.d \
+modules/fatfs/mmc_avr.d \
+modules/fatfs/sound.d \
+modules/json/jsmn.d \
+modules/json/json_functions.d \
 modules/menu/menu.d \
 modules/time_functions/time_functions.d \
 _StackInstrument.d
@@ -185,6 +195,7 @@ C_DEPS_AS_ARGS +=  \
 4x6_font.d \
 drivers/adc/adc.d \
 drivers/clock/clock.d \
+drivers/dac/dac.d \
 drivers/dma/dma.d \
 drivers/dma/dma_functions.d \
 drivers/eeprom/eeprom.d \
@@ -200,13 +211,14 @@ drivers/sensors/si114x/slider_algorithm.d \
 drivers/sercom/spi.d \
 drivers/sercom/twi.d \
 drivers/sercom/uart.d \
-fatfs/ff.d \
-fatfs/mmc_avr.d \
-fatfs/sound.d \
-json/jsmn.d \
-json/json_functions.d \
+drivers/timer/timer.d \
 main.d \
 modules/display/display.d \
+modules/fatfs/ff.d \
+modules/fatfs/mmc_avr.d \
+modules/fatfs/sound.d \
+modules/json/jsmn.d \
+modules/json/json_functions.d \
 modules/menu/menu.d \
 modules/time_functions/time_functions.d \
 _StackInstrument.d
@@ -222,6 +234,10 @@ OUTPUT_FILE_DEP:= ./makedep.mk
 LIB_DEP+= 
 
 # AVR32/GNU C Compiler
+
+
+
+
 
 
 
@@ -300,6 +316,13 @@ drivers/clock/%.o: ../drivers/clock/%.c
 	@echo Finished building: $<
 	
 
+drivers/dac/%.o: ../drivers/dac/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
 drivers/dma/%.o: ../drivers/dma/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
@@ -363,14 +386,7 @@ drivers/sercom/%.o: ../drivers/sercom/%.c
 	@echo Finished building: $<
 	
 
-fatfs/%.o: ../fatfs/%.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 4.8.1
-	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-json/%.o: ../json/%.c
+drivers/timer/%.o: ../drivers/timer/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
 	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
@@ -378,6 +394,20 @@ json/%.o: ../json/%.c
 	
 
 modules/display/%.o: ../modules/display/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+modules/fatfs/%.o: ../modules/fatfs/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+modules/json/%.o: ../modules/json/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
 	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -O1 -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega64a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
