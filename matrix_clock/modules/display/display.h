@@ -15,6 +15,7 @@
 void display_setup(void);
 void display_fill_screen(void);
 void display_clear_screen(void);
+void display_clear_buffer(void);
 void display_refresh_screen(void);
 void display_on(void);
 void display_off(void);
@@ -75,6 +76,8 @@ void display_draw_and_increment_second(void);
 void display_draw_and_decrement_second(void);
 void display_draw_and_increment_day(void);
 void display_draw_and_decrement_day(void);
+void display_draw_and_increment_weekday(void);
+void display_draw_and_decrement_weekday(void);
 void display_draw_and_increment_month(void);
 void display_draw_and_decrement_month(void);
 void display_draw_and_increment_year(void);

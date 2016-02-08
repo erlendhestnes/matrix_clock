@@ -412,4 +412,3 @@ void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale
 	    //printf("no touch \r\n");
    }
 }
-

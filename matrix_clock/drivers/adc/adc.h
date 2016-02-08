@@ -10,7 +10,9 @@
 
 #include "../../global.h"
 
-void adc_init(void);
+#define CURRENT_MEASUREMENT_ENABLE PIN1_bm
+
+void adc_setup(void);
 void adc_disable(void);
 
 void adc_enable_current_measurement(void);

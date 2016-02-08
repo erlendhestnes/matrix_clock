@@ -31,7 +31,7 @@
 #define HT1632_COMMON_8PMOS  0x28
 #define HT1632_COMMON_16PMOS  0x2C
 
-#define MIN_BRIGHTNESS 1
+#define MIN_BRIGHTNESS 0
 #define MAX_BRIGHTNESS 15
 
 #define DISPLAY_WIDTH 16
@@ -51,6 +51,7 @@ void ht1632c_clr_pixel(uint16_t i);
 void ht1632c_refresh_screen(void);
 void ht1632c_fill_screen(void);
 void ht1632c_clear_screen(void);
+void ht1632c_clear_buffer(void);
 void ht1632c_write_data(uint16_t data, uint8_t bits);
 void ht1632c_write_ram(uint8_t addr, uint8_t data);
 void ht1632c_write_command(uint8_t cmd);

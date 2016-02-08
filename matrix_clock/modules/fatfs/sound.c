@@ -101,6 +101,9 @@ int sound_start (
 	
 	dac_setup(true);
 	
+	//Disable power reduction for TCC0 
+	PR.PRPC &= ~0x01;
+	
 	TCC0.CNT = 0;
 	TCC0.PER = (F_CPU / 44100 - 1);
 	TCC0.CTRLA = TC_CLKSEL_DIV1_gc;
@@ -115,7 +118,10 @@ int sound_start (
 void sound_stop (void)
 {
 	TCC0.INTCTRLA = TC_OVFINTLVL_OFF_gc;
-	dac_off();
+	dac_disable();
+	
+	//Enable power reduction for TCC0 
+	PR.PRPC |= 0x01;
 
 	WavFifo = 0;		/* Unregister FIFO control structure */
 }

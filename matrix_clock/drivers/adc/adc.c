@@ -1,8 +1,9 @@
 #include "adc.h"
 
-void adc_init(void) 
+void adc_setup(void) 
 {	
-	PR.PRPA &= ~0x02; // Clear ADC bit in Power Reduction Port B Register
+	//Disable power reduction for ADCA 
+	PR.PRPA &= ~0x02;
 	
 	ADCA.CALL = 0x36;
 	ADCA.CALH = 0x03;
@@ -11,21 +12,23 @@ void adc_init(void)
 	//ADCA.CALL = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL0) );
 	//ADCA.CALH = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL1) );	
 
-	ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	ADCA.CH0.CTRL	 = ADC_CH_INPUTMODE_SINGLEENDED_gc;
 	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
-	ADCA.CTRLB = ADC_RESOLUTION_12BIT_gc;
-	ADCA.PRESCALER = ADC_PRESCALER_DIV256_gc;
-	ADCA.REFCTRL = ADC_REFSEL_INTVCC_gc;
-	ADCA.EVCTRL = ADC_EVACT_NONE_gc;
-	ADCA.INTFLAGS = ADC_CH0IF_bm;
+	ADCA.CTRLB		 = ADC_RESOLUTION_12BIT_gc;
+	ADCA.PRESCALER	 = ADC_PRESCALER_DIV256_gc;
+	ADCA.REFCTRL	 = ADC_REFSEL_INTVCC_gc;
+	ADCA.EVCTRL		 = ADC_EVACT_NONE_gc;
+	ADCA.INTFLAGS	 = ADC_CH0IF_bm;
 	ADCA.CH0.INTCTRL = ADC_CH_INTLVL_OFF_gc;
-	ADCA.CTRLA = ADC_ENABLE_bm;
+	ADCA.CTRLA		 = ADC_ENABLE_bm;
 }
 
 void adc_disable(void) 
 {	
-	PR.PRPA |= 0x02;
 	ADCA.CTRLA &= ~(ADC_ENABLE_bm);
+	
+	//Enable power reduction for ADCA
+	PR.PRPA |= 0x02;
 }
 
 uint16_t adc_read_voltage(void) 
@@ -45,7 +48,7 @@ uint16_t adc_read_voltage(void)
 
 uint8_t adc_get_battery_percentage(void) 
 {	
-	adc_init();
+	adc_setup();
 
 	float voltage;
 	voltage = (float)adc_read_voltage();
@@ -73,6 +76,11 @@ uint8_t adc_get_battery_percentage(void)
 		return 30;
 	} else if (voltage > 400) {
 		return 20;
+	} else if (voltage > 375) {
+		return 10;
+	//This is critical level, should display somekind of warning
+	} else if (voltage > 350) {
+		return 10;
 	}
 	
 	return 0;
@@ -80,23 +88,29 @@ uint8_t adc_get_battery_percentage(void)
 
 void adc_enable_current_measurement(void) 
 {	
-	PORTA.DIRSET |= PIN1_bm;
-	PORTA.OUTCLR |= PIN1_bm;
+	PORTA.DIRSET = CURRENT_MEASUREMENT_ENABLE;
+	PORTA.OUTCLR = CURRENT_MEASUREMENT_ENABLE;
+	
+	//Test
+	//PORTA.DIRCLR = PIN1_bm;
+	//PORTA.PIN1CTRL = PORT_OPC_PULLUP_gc
 }
 
 void adc_disable_current_measurement(void) 
 {	
-	PORTA.DIRSET |= PIN1_bm;
-	PORTA.OUTSET |= PIN1_bm;
+	PORTA.DIRSET = CURRENT_MEASUREMENT_ENABLE;
+	PORTA.OUTSET = CURRENT_MEASUREMENT_ENABLE;
+	
+	//Test
+	//PORTA.DIRCLR = PIN1_bm;
+	//PORTA.PIN1CTRL = PORT_OPC_PULLUP_gc;
 }
 
 uint8_t read_calibration_byte(uint8_t index) 
 {	
 	uint8_t result;
 	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
-	result = pgm_read_byte(index);
-	
+	result	= pgm_read_byte(index);
 	NVM_CMD = NVM_CMD_NO_OPERATION_gc;
-	
 	return(result);
 }

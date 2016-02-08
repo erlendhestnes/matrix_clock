@@ -12,8 +12,9 @@
 
 #define RAND_MAX 255
 
-#define PROXIMITY_THRESHOLD 1600
-#define MENU_TIMEOUT 15000
+#define PROXIMITY_THRESHOLD2 1600
+#define PROXIMITY_THRESHOLD 280
+#define MENU_TIMEOUT 7000
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
@@ -27,6 +28,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <avr/eeprom.h>
 
 typedef enum {
 	Monday = 1,
@@ -81,7 +83,7 @@ typedef struct {
 	time_env_t time;
 	char temperature[3];
 	char weather_info[40];
-	char location[25];
+	char city[25];
 	int8_t brightness;
 	uint16_t ps1;
 	char wifi_pswd[25];
@@ -91,7 +93,7 @@ typedef struct {
 	uint16_t baseline[3];
 } env_variables_t;
 
-env_variables_t env_var;
+env_variables_t env;
 
 #define SHOW_MANUAL
 #define DEBUG_ON
@@ -100,7 +102,7 @@ env_variables_t env_var;
 #define CLOCK_ID   1
 
 //Delay implementation that accepts dynamic parameters
-static inline void delay_ms( int ms )
+static inline void delay_ms(int ms)
 {
 	for (int i = 0; i < ms; i++)
 	{
@@ -134,15 +136,14 @@ static inline char* itoa_simple( char *s, long num ) {
 	unsigned long n = num;
 
 	if( num < 0 ) {
-		 // forget about the sign, don't reverse it later
 		n = -num;
 		*s++ = '-';
 		rev++;
 	}
 
-	do {       /* generate digits in reverse order */
-		*s++ = (n % 10) + '0';   /* get next digit */
-	} while ((n /= 10) > 0);     /* delete it */
+	do {       
+		*s++ = (n % 10) + '0';   
+	} while ((n /= 10) > 0); 
 
 	reverse_string( rev, s - rev);
 

@@ -328,45 +328,48 @@ void EEPROM_EraseAll( void )
 	NVM_EXEC();
 }
 
-uint8_t EEPROM_WriteEnv(void) {
-	
-	uint8_t b[sizeof(env_var)];
+uint8_t EEPROM_WriteEnv(void) 
+{	
+	uint8_t temp[sizeof(env)];
 	uint16_t page_addr;
-	uint8_t page;
+	uint8_t byte_addr;
 	
 	EEPROM_FlushBuffer();
 	EEPROM_DisableMapping();
-	memcpy(b, &env_var, sizeof(env_var));
+	memcpy(temp, &env, sizeof(env));
 	
-	for(page_addr = 0; page_addr < (sizeof(env_var)/EEPROM_PAGE_SIZE) + 1; page_addr += 1) {
-		for(page = 0; page < EEPROM_PAGE_SIZE; page++) {
-			EEPROM_WriteByte(page_addr,page,b[page+(page_addr*EEPROM_PAGE_SIZE)]);
-			if (page+(page_addr*EEPROM_PAGE_SIZE) >= sizeof(env_var)) {
+	for(page_addr = 0; page_addr < (sizeof(env)/EEPROM_PAGE_SIZE) + 1; page_addr++) {
+		for(byte_addr = 0; byte_addr < EEPROM_PAGE_SIZE; byte_addr++) {
+			EEPROM_WriteByte(page_addr,byte_addr,temp[byte_addr+(page_addr*EEPROM_PAGE_SIZE)]);
+			if (byte_addr+(page_addr*EEPROM_PAGE_SIZE) >= sizeof(env)) {
 				break;
 			}
 		}
 	}
+	
+	//eeprom_update_block(&env_var,MAPPED_EEPROM_START,sizeof(env_var));
 	
 	return 1;
 }
 
-uint8_t EEPROM_ReadEnv(void) {
-	
-	uint8_t temp[sizeof(env_var)];
+uint8_t EEPROM_ReadEnv(void) 
+{
+	//eeprom_read_block(&env_var,MAPPED_EEPROM_START,sizeof(env_var));		
+	uint8_t temp[sizeof(env)];
 	uint16_t page_addr;
-	uint8_t page;
+	uint8_t byte_addr;
 	
-	for(page_addr = 0; page_addr < (sizeof(env_var)/EEPROM_PAGE_SIZE) + 1; page_addr += 1) {
-		for(page = 0; page < EEPROM_PAGE_SIZE; page++) {
-			temp[page+(page_addr*EEPROM_PAGE_SIZE)] = EEPROM_ReadByte(page_addr,page);
-			if (page+(page_addr*EEPROM_PAGE_SIZE) >= sizeof(env_var)) {
+	for(page_addr = 0; page_addr < (sizeof(env)/EEPROM_PAGE_SIZE) + 1; page_addr++) {
+		for(byte_addr = 0; byte_addr < EEPROM_PAGE_SIZE; byte_addr++) {
+			temp[byte_addr+(page_addr*EEPROM_PAGE_SIZE)] = EEPROM_ReadByte(page_addr,byte_addr);
+			if (byte_addr+(page_addr*EEPROM_PAGE_SIZE) >= sizeof(env)) {
 				break;
 			}
 		}
 	}
-	memcpy(&env_var, temp, sizeof(env_var));
-	
-	if (env_var.id != 0) {
+	memcpy(&env, temp, sizeof(temp));
+
+	if (env.id != 0) {
 		return 1;
 	}
 	

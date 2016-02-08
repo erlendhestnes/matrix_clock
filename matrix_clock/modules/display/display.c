@@ -15,7 +15,7 @@
 void display_setup(void) 
 {
 	ht1632c_setup(HT1632_COMMON_16NMOS);
-	ht1632c_set_brightness(0);
+	ht1632c_set_brightness(15);
 	display_clear_screen();
 	ht1632c_write_command(HT1632_LED_ON);
 }
@@ -41,6 +41,10 @@ void display_fill_screen(void)
 void display_clear_screen(void) 
 {
 	ht1632c_clear_screen();
+}
+
+void display_clear_buffer(void) {
+	ht1632c_clear_buffer();
 }
 
 void display_refresh_screen(void) 
@@ -70,7 +74,7 @@ static inline void display_fade_down(uint8_t pwm, uint8_t prev_pwm)
 
 void display_fade(uint8_t pwm) 
 {
-	static uint8_t prev_pwm = 0;
+	static uint8_t prev_pwm = 15;
 	
 	if (pwm > prev_pwm) {
 		display_fade_up(pwm, prev_pwm);
@@ -525,6 +529,7 @@ void display_draw_wifi_icon(void) {
 			display_draw_pixel(10,6,1);
 			display_draw_pixel(11,5,1);
 			break;
+			
 			case 3:
 			display_draw_pixel(2,8,1);
 			display_draw_pixel(3,9,1);
@@ -539,6 +544,7 @@ void display_draw_wifi_icon(void) {
 			display_draw_pixel(12,9,1);
 			display_draw_pixel(13,8,1);
 			break;
+/*
 			case 4:
 			display_draw_pixel(0,11,1);
 			display_draw_pixel(1,12,1);
@@ -557,12 +563,12 @@ void display_draw_wifi_icon(void) {
 			display_draw_pixel(14,12,1);
 			display_draw_pixel(15,11,1);
 			break;
+*/
 		}
 		display_refresh_screen();
-		_delay_ms(600);
 		n++;
 		
-		if (n == 5) {
+		if (n == 4) {
 			n = 0;
 			display_clear_screen();
 		}
@@ -632,142 +638,164 @@ void display_slide_out_to_bottom(void)
 
 void display_alarm_increment_minute(void) 
 {
-	if (env_var.alarm.minutes < 59) {
-		rtc_update_display(5,++env_var.alarm.minutes);
+	if (env.alarm.minutes < 59) {
+		rtc_update_display(5,++env.alarm.minutes);
 	} else {
-		env_var.alarm.minutes = 0;
-		rtc_update_display(5,++env_var.alarm.minutes);
+		env.alarm.minutes = 0;
+		rtc_update_display(5,++env.alarm.minutes);
 	}
 	display_refresh_screen();
 }
 
 void display_alarm_decrement_minute(void) 
 {
-	if (env_var.alarm.minutes > 0) {
-		rtc_update_display(5,--env_var.alarm.minutes);
+	if (env.alarm.minutes > 0) {
+		rtc_update_display(5,--env.alarm.minutes);
 	} else {
-		env_var.alarm.minutes = 59;
-		rtc_update_display(5,--env_var.alarm.minutes);
+		env.alarm.minutes = 59;
+		rtc_update_display(5,--env.alarm.minutes);
 	}
 	display_refresh_screen();
 }
 
 void display_alarm_increment_hour(void) 
 {
-	if (env_var.alarm.hours < 23) {
-		rtc_update_display(5,++env_var.alarm.hours);
+	if (env.alarm.hours < 23) {
+		rtc_update_display(5,++env.alarm.hours);
 	} else {
-		env_var.alarm.hours = 0;
-		rtc_update_display(5,++env_var.alarm.hours);
+		env.alarm.hours = 0;
+		rtc_update_display(5,++env.alarm.hours);
 	}
 	display_refresh_screen();
 }
 
 void display_alarm_decrement_hour(void) 
 {
-	if (env_var.alarm.hours > 0) {
-		rtc_update_display(5,--env_var.alarm.hours);
+	if (env.alarm.hours > 0) {
+		rtc_update_display(5,--env.alarm.hours);
 	} else {
-		env_var.alarm.hours = 23;
-		rtc_update_display(5,--env_var.alarm.hours);
+		env.alarm.hours = 23;
+		rtc_update_display(5,--env.alarm.hours);
 	}
 	display_refresh_screen();
 }
 
 void display_draw_and_increment_hour(void) 
 {
-	if (env_var.time.hours < 23) {
-		rtc_update_display(5,++env_var.time.hours);
+	if (env.time.hours < 23) {
+		rtc_update_display(5,++env.time.hours);
 	} else {
-		env_var.time.hours = 0;
-		rtc_update_display(5,env_var.time.hours);
+		env.time.hours = 0;
+		rtc_update_display(5,env.time.hours);
 	}
 	display_refresh_screen();
 }
 
 void display_draw_and_decrement_hour(void) 
 {
-	if (env_var.time.hours > 0) {
-		rtc_update_display(5,--env_var.time.hours);
+	if (env.time.hours > 0) {
+		rtc_update_display(5,--env.time.hours);
 	} else {
-		env_var.time.hours = 23;
-		rtc_update_display(5,env_var.time.hours);
+		env.time.hours = 23;
+		rtc_update_display(5,env.time.hours);
 	}
 	display_refresh_screen();
 }
 
 void display_draw_and_increment_minute(void) 
 {
-	if (env_var.time.minutes < 59) {
-		rtc_update_display(5,++env_var.time.minutes);
+	if (env.time.minutes < 59) {
+		rtc_update_display(5,++env.time.minutes);
 	} else {
-		env_var.time.minutes = 0;
-		rtc_update_display(5,env_var.time.minutes);
+		env.time.minutes = 0;
+		rtc_update_display(5,env.time.minutes);
 	}
 	display_refresh_screen();
 }
 
 void display_draw_and_decrement_minute(void) 
 {
-	if (env_var.time.minutes > 0) {
-		rtc_update_display(5,--env_var.time.minutes);
+	if (env.time.minutes > 0) {
+		rtc_update_display(5,--env.time.minutes);
 	} else {
-		env_var.time.minutes = 59;
-		rtc_update_display(5,env_var.time.minutes);
+		env.time.minutes = 59;
+		rtc_update_display(5,env.time.minutes);
 	}
 	display_refresh_screen();
 }
 
 void display_draw_and_increment_second(void) 
 {
-	if (env_var.time.seconds < 59) {
-		rtc_update_display(5,++env_var.time.seconds);
+	if (env.time.seconds < 59) {
+		rtc_update_display(5,++env.time.seconds);
 	} else {
-		env_var.time.seconds = 0;
-		rtc_update_display(5,env_var.time.seconds);
+		env.time.seconds = 0;
+		rtc_update_display(5,env.time.seconds);
 	}
 	display_refresh_screen();
 }
 
 void display_draw_and_decrement_second(void) 
 {
-	if (env_var.time.seconds > 0) {
-		rtc_update_display(5,--env_var.time.seconds);
+	if (env.time.seconds > 0) {
+		rtc_update_display(5,--env.time.seconds);
 	} else {
-		env_var.time.seconds = 59;
-		rtc_update_display(5,env_var.time.seconds);
+		env.time.seconds = 59;
+		rtc_update_display(5,env.time.seconds);
 	}
 	display_refresh_screen();
 }
 
-void display_draw_and_increment_day(void) 
+void display_draw_and_increment_weekday(void) 
 {
-	if (env_var.time.weekday <= Sunday) {
-		display_draw_three_letter_word(time_get_day_name(env_var.time.weekday++));
+	if (env.time.weekday <= Sunday) {
+		display_draw_three_letter_word(time_get_day_name(env.time.weekday++));
 	} else {
-		env_var.time.weekday = Monday;
+		env.time.weekday = Monday;
 		display_draw_three_letter_word(time_get_day_name(Monday));
 	}
 	display_refresh_screen();
 }
 
-void display_draw_and_decrement_day(void) 
+void display_draw_and_decrement_weekday(void) 
 {
-	if (env_var.time.weekday > Monday) {
-		display_draw_three_letter_word(time_get_day_name(env_var.time.weekday--));
+	if (env.time.weekday > Monday) {
+		display_draw_three_letter_word(time_get_day_name(env.time.weekday--));
 	} else {
-		env_var.time.weekday = Sunday;
+		env.time.weekday = Sunday;
 		display_draw_three_letter_word(time_get_day_name(Sunday));
+	}
+	display_refresh_screen();
+}
+
+void display_draw_and_increment_day(void)
+{
+	if (env.time.day < time_get_days_in_month(env.time.month,env.time.year)) {
+		rtc_update_display(5,++env.time.day);
+	} else {
+		env.time.day = 1;
+		rtc_update_display(5,env.time.day);
+	}
+	display_refresh_screen();
+}
+
+void display_draw_and_decrement_day(void)
+{
+	if (env.time.day > 1) {
+		rtc_update_display(5,--env.time.day);
+	} else {
+		env.time.day = time_get_days_in_month(env.time.month,env.time.year);
+		rtc_update_display(5,env.time.day);
 	}
 	display_refresh_screen();
 }
 
 void display_draw_and_increment_month(void) 
 {
-	if (env_var.time.month <= December) {
-		display_draw_three_letter_word(time_get_month_name(env_var.time.month++));
+	if (env.time.month < December) {
+		display_draw_three_letter_word(time_get_month_name(++env.time.month));
 	} else {
-		env_var.time.month = January;
+		env.time.month = January;
 		display_draw_three_letter_word(time_get_month_name(January));
 	}
 	display_refresh_screen();
@@ -775,10 +803,10 @@ void display_draw_and_increment_month(void)
 
 void display_draw_and_decrement_month(void) 
 {
-	if (env_var.time.month > January) {
-		display_draw_three_letter_word(time_get_month_name(env_var.time.month--));
+	if (env.time.month > January) {
+		display_draw_three_letter_word(time_get_month_name(--env.time.month));
 	} else {
-		env_var.time.month = December;
+		env.time.month = December;
 		display_draw_three_letter_word(time_get_month_name(December));
 	}
 	display_refresh_screen();
@@ -787,7 +815,7 @@ void display_draw_and_decrement_month(void)
 void display_draw_and_increment_year(void) 
 {
 	char *year = NULL;
-	itoa_simple(year,env_var.time.year++);
+	itoa_simple(year,++env.time.year);
 	display_draw_four_letter_word(year);
 	display_refresh_screen();
 }
@@ -795,7 +823,7 @@ void display_draw_and_increment_year(void)
 void display_draw_and_decrement_year(void) 
 {
 	char *year = NULL;
-	itoa_simple(year,env_var.time.year--);
+	itoa_simple(year,--env.time.year);
 	display_draw_four_letter_word(year);
 	display_refresh_screen();
 }

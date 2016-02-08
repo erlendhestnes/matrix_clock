@@ -4,9 +4,7 @@
 
 #include <stdio.h>
 
-//u8 xdata initial_baseline_counter=128;
 u16 xdata maxLeakage[3] = { 0, 0, 0};
-u16 xdata baseline[3];    // Array to store calcBaseline return values
 
 #ifdef GENERAL
 u16 code noise_margin    = 10;
@@ -55,9 +53,9 @@ void si114x_process_samples(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples)
             baseline[1] = maxLeakage[1];
 			baseline[2] = maxLeakage[2];
 			
-			env_var.baseline[0] = baseline[0];
-			env_var.baseline[1] = baseline[1];
-			env_var.baseline[2] = baseline[2];
+			env.baseline[0] = baseline[0];
+			env.baseline[1] = baseline[1];
+			env.baseline[2] = baseline[2];
         }
         
         // Decrement counter

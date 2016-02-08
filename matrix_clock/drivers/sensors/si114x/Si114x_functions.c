@@ -27,7 +27,10 @@ static volatile uint16_t counter = 0;
 
 void si114x_setup(void)
 {
-	//Start timer
+	//Disable power reduction for TCC1 
+	PR.PRPC &= ~0x02;
+	
+	//TODO: Create function for this?
 	TCC1.CTRLA = TC_CLKSEL_DIV1_gc;
 	TCC1.PERL = 0x80;
 	TCC1.PERH = 0x0C;
@@ -38,7 +41,7 @@ void si114x_setup(void)
 	si114x_init((HANDLE)SI114X_ADDR);
 }
 
-void si114x_setup_ps1_only(void)
+void si114x_setup_ps1(void)
 {
 	si114x_reset((HANDLE)SI114X_ADDR);
 	_delay_ms(50);
@@ -56,6 +59,7 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 	display_print_scrolling_text("CALIBRATING. HANDS AWAY FROM DISPLAY",false);
 #endif
 	do {
+		//Draw square
 		display_draw_line(10,10,10,5,1);
 		display_draw_line(5,10,10,10,1);
 		display_draw_line(5,5,5,10,1);
@@ -65,10 +69,10 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 #ifdef DEBUG_ON
 		printf("DEBUG: PS1 Value: %d \n",sensor_data->ps1);
 #endif
-	} while (sensor_data->ps1 > PROXIMITY_THRESHOLD);
+	} while (sensor_data->ps1 > PROXIMITY_THRESHOLD2);
 		
 	//Store for calibration usage
-	env_var.ps1 = sensor_data->ps1;
+	env.ps1 = sensor_data->ps1;
 		
 	_delay_ms(1000);
 		
@@ -76,8 +80,28 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 	while (cnt--) {
 		sensor_data->timestamp = counter;
 		si114x_get_data(sensor_data);
-		si114x_process_samples(SI114X_ADDR,sensor_data);
+		si114x_process_samples((HANDLE)SI114X_ADDR,sensor_data);
 	}
+}
+
+void si114x_test_function(SI114X_IRQ_SAMPLE *sensor_data) 
+{
+	while(1) {
+		si114x_get_data(sensor_data);
+		//uint16_t distance_1 = QS_Counts_to_Distance_2(sensor_data.ps1,1);
+		//uint16_t distance_2 = QS_Counts_to_Distance_2(sensor_data.ps2,2);
+		//printf("Counts 1: %d , Counts 2: %d , Dist 1: %d, Dist 2: %d \r\n",sensor_data.ps1, sensor_data.ps2, distance_1, distance_2);
+		
+		printf("ALS: %d, IR: %d \r\n",sensor_data->vis, sensor_data->ir);
+		if (sensor_data->ir > 800)
+		{
+			display_fade(15);
+		} else {
+			display_fade(0);
+		}
+		
+		_delay_ms(500);
+	}	
 }
 
 u8 si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data) 
@@ -117,11 +141,11 @@ s16 si114x_init_ps1(HANDLE si114x_handle)
 {
 	s16 retval   = 0;
 
-	u8  code current_LED1  = 0x0f;   // 0-359 mA
+	u8  code current_LED1  = 0x02;   // 0-359 mA
 
 	u8  tasklist      = 0x01;   // PS1 only
 
-	u8  measrate      = 0xB9;   // Samplingsrate
+	u8  measrate      = 0xDF;   // Samplingsrate
 
 	u8  psrate        = 0x08;
 
@@ -135,7 +159,7 @@ s16 si114x_init_ps1(HANDLE si114x_handle)
 
 	u8  code psgain   =  0;     // PS ADC Gain
 
-	SI114X_CAL_S xdata si114x_cal;
+	//SI114X_CAL_S xdata si114x_cal;
 
 	// Choose IR PD Size
 	u8  code ps1pdsize     = 1;      // PD Choice for PS1
@@ -192,17 +216,17 @@ s16 si114x_init_als(HANDLE si114x_handle)
 	u8  tasklist      = 0x30;   // ALS, IR
 
 	u8  measrate      = 0x94;   // 0xa0 every 30.0 ms
-	u8  psrate        = 0x08;
+	//u8  psrate        = 0x08;
 	u8  alsrate       = 0x08;
 	#ifdef GENERAL
 	u8  code psrange  =  1;     // PS Range
 	#endif
 
 	#ifdef INDOORS
-	u8  code psrange  =  0;     // PS Range
+	//u8  code psrange  =  0;     // PS Range
 	#endif
 
-	u8  code psgain   =  0;     // PS ADC Gain
+	//u8  code psgain   =  0;     // PS ADC Gain
 
 	u8  code irrange  =  1;     // IR Range
 	u8  code irgain   =  0;     // IR ADC Gain
@@ -210,7 +234,7 @@ s16 si114x_init_als(HANDLE si114x_handle)
 	u8  code visrange =  1;     // VIS Range
 	u8  code visgain  =  0;     // VIS ADC Gain
 
-	SI114X_CAL_S xdata si114x_cal;
+	//SI114X_CAL_S xdata si114x_cal;
 
 	u8  code irpd          = 1;      // PD Choice for IR Ambient
 	// 0 = Small, 1= Large
@@ -292,7 +316,7 @@ s16 si114x_init(HANDLE si114x_handle)
 	u8  code visrange =  1;     // VIS Range
 	u8  code visgain  =  0;     // VIS ADC Gain
 
-	SI114X_CAL_S xdata si114x_cal;
+	//SI114X_CAL_S xdata si114x_cal;
 
 	// Choose IR PD Size
 	u8  code ps1pdsize     = 1;      // PD Choice for PS1

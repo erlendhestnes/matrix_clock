@@ -31,7 +31,7 @@ volatile si114x_int_t si114x_status;
 void btn_setup(bool enable_interrupt);
 void btn_top_setup(void);
 void btn_si114x_enable_interrupt(void);
-void btn_si114x_disable_interrupt(void);
+void btn_disable_si114x_interrupt(void);
 
 button_t btn_check_press(void);
 

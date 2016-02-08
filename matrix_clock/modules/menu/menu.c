@@ -14,6 +14,7 @@
 #include "../../drivers/sensors/si114x/slider_algorithm.h"
 #include "../../drivers/eeprom/eeprom.h"
 #include "../../drivers/esp8266/esp8266.h"
+#include "../../4x6_font.c"
 
 #include "../json/jsmn.h"
 #include "../json/json_functions.h"
@@ -54,9 +55,33 @@ void play_sound(void)
 	}
 }
 
+void start_wifi_indication(void)
+{
+	display_clear_screen();
+	
+	PR.PRPC &= ~0x01;
+	
+	TCC0.CNT = 0;
+	TCC0.PER = 0xffff;
+	TCC0.CTRLA = TC_CLKSEL_DIV1024_gc;
+	
+	TCC0.CCD = 0xffff;
+	TCC0.INTCTRLB |= TC_CCDINTLVL_LO_gc;
+	TCC0.CTRLB |= TC0_CCDEN_bm;
+}
+
+void stop_wifi_indication(void)
+{
+	TCC0.CTRLA = TC_CLKSEL_OFF_gc;
+	display_clear_screen();
+	PR.PRPC |= 0x01;
+}
+
 void start_loading(void) 
 {
 	display_clear_screen();
+	
+	PR.PRPC &= ~0x01;
 	
 	TCC0.CNT = 0;
 	TCC0.PER = 3125;
@@ -71,117 +96,115 @@ void stop_loading(void)
 {
 	TCC0.CTRLA = TC_CLKSEL_OFF_gc;
 	display_clear_screen();
+	PR.PRPC |= 0x01;
 }
 
 esp8266_status_t get_internet_variables(bool get_time, bool get_temperature) 
 {	
-	char json[250];
+	char json_string[100];
+	char token_buffer[30];
+	jsmntok_t tokens[10];
 	jsmn_parser p;
 	jsmnerr_t r;
-	jsmntok_t tokens[25];
 	
 	esp8266_status_t status;
 	
-	esp8266_on();
-	
 	status = esp8266_setup();
 	if (status != ESP8266_SUCCESS) {
-		stop_loading();
-#ifdef SHOW_MANUAL
-		display_print_scrolling_text("SETUP ERROR",false);
-#endif
 		return status;
 	}
-	
-	status = esp8266_join_ap(env_var.wifi_ssid,env_var.wifi_pswd);
+	status = esp8266_join_ap(env.wifi_ssid,env.wifi_pswd);
 	if (status != ESP8266_SUCCESS) {
-		stop_loading();
-#ifdef SHOW_MANUAL
-		display_print_scrolling_text("COULD NOT JOIN AP",false);
-#endif
 		return status;
 	}
-	status = esp8266_get_json(WEATHER_IP,WEATHER_ADDR,json, sizeof(json));
+	if (get_time) {
+		status = esp8266_get_json(TIME_IP,TIME_ADDR,json_string, sizeof(json_string));
+	} else if (get_temperature) {
+		status = esp8266_get_json(WEATHER_IP,WEATHER_ADDR,json_string, sizeof(json_string));
+	} else {
+		return ESP8266_ERROR;
+	}
 	if (status != ESP8266_SUCCESS) {
-		stop_loading();
-#ifdef SHOW_MANUAL
-		display_print_scrolling_text("COULD NOT CONTACT SERVER",false);
-#endif
 		return status;
 	}
 	
 	esp8266_off();
+	
 #ifdef DEBUG_ON
-	puts(json);
+	puts(json_string);
 #endif
 
 	//Parse JSON
 	jsmn_init(&p);
-	r = jsmn_parse(&p,json,strlen(json),tokens,sizeof(tokens));
+	r = jsmn_parse(&p,json_string,strlen(json_string),tokens,sizeof(tokens));
 	if (r < 0) {
-		stop_loading();
-#ifdef SHOW_MANUAL
-		display_print_scrolling_text("ERROR IN PARSING JSON",false);
 		return ESP8266_ERROR;
-#endif
 	}
-
-	char token_buffer[TOKEN_BUFFER_SIZE];
-	if (get_time)
-	{
-		int year, month, day, hour, minute, second;
 	
-		json_get_token(tokens,json,token_buffer,TOKEN_BUFFER_SIZE,6);
-		if (sscanf(token_buffer,"%d-%d-%dT%d:%d:%dZ",&year, &month, &day, &hour, &minute, &second) != 6) {
-			stop_loading();
-#ifdef SHOW_MANUAL
-			display_print_scrolling_text("COULD NOT GET TIME",false);
-#endif
-			return ESP8266_ERROR;
-		} else {
-			env_var.time.year = year;
-			env_var.time.month = month;
-			env_var.time.day = day;
-			env_var.time.hours = hour + env_var.time.timezone + env_var.time.DST;
-			env_var.time.minutes = minute;
-			env_var.time.seconds = second;
-			env_var.time.weekday = time_get_weekday(day,month,year);
-			
-			if (env_var.time.hours >= 24) {
-				env_var.time.hours -= 24;
-				if (env_var.time.weekday++ >= Sunday) {
-					env_var.time.weekday = Monday;
-				}
-				if (env_var.time.day++ >= time_get_days_in_month(env_var.time.month,env_var.time.year)) {
-					env_var.time.day = 1;
-					if (env_var.time.month++ >= December) {
-						env_var.time.month = January;
-						env_var.time.year++;
-					}
-				}
-			}
-			env_var.time.week = time_get_weeknumber(env_var.time.day,env_var.time.month,env_var.time.year);
-		}
-	}
-	if (get_temperature)
-	{
-		json_get_token(tokens,json,token_buffer,TOKEN_BUFFER_SIZE,22);
+	if (get_time) {
+		int year, month, day, hour, minute, second;
+		char weekday[10];
+		json_get_token(tokens,json_string,token_buffer,sizeof(token_buffer),2);
 #ifdef DEBUG_ON
 		puts(token_buffer);
 #endif
-		if (strlen(token_buffer) <= 3) {
-			strncpy(env_var.temperature,token_buffer,strlen(token_buffer));	
-			json_get_token(tokens,json,token_buffer,TOKEN_BUFFER_SIZE,24);
-#ifdef DEBUG_ON
-			puts(token_buffer);
-#endif
-			strncpy(env_var.weather_info,token_buffer,strlen(token_buffer));
-		} else {
-			env_var.temperature[0] = '-';
+		if (sscanf(token_buffer,"%d-%d-%d %s %d:%d:%d",&year, &month, &day, weekday, &hour, &minute, &second) != 7) {
 			return ESP8266_ERROR;
+		} else {
+			env.time.year = year;
+			env.time.month = month;
+			env.time.day = day;
+			env.time.hours = hour + env.time.timezone + env.time.DST;
+			env.time.minutes = minute;
+			env.time.seconds = second;
+			env.time.weekday = time_get_weekday(day,month,year);
+			
+			if (env.time.hours >= 24) {
+				env.time.hours -= 24;
+				if (env.time.weekday++ >= Sunday) {
+					env.time.weekday = Monday;
+				}
+				if (env.time.day++ >= time_get_days_in_month(env.time.month,env.time.year)) {
+					env.time.day = 1;
+					if (env.time.month++ >= December) {
+						env.time.month = January;
+						env.time.year++;
+					}
+				}
+			}
+			env.time.week = time_get_weeknumber(env.time.day,env.time.month,env.time.year);
 		}
 	}
+	if (get_temperature) {
+		json_get_token(tokens,json_string,token_buffer,sizeof(token_buffer),6);
+#ifdef DEBUG_ON
+		puts(token_buffer);
+#endif
+		if (strlen(token_buffer) <= sizeof(env.temperature)) {
+			strncpy(env.temperature,token_buffer,strlen(token_buffer));
+		} else {
+			return ESP8266_ERROR;
+		}
+		json_get_token(tokens,json_string,token_buffer,sizeof(token_buffer),8);
+#ifdef DEBUG_ON
+		puts(token_buffer);
+#endif
+		if (strlen(token_buffer) < sizeof(env.weather_info)) {
+			strncpy(env.weather_info,token_buffer,strlen(token_buffer));
+		} else {
+			return ESP8266_ERROR;
+		}
+		json_get_token(tokens,json_string,token_buffer,sizeof(token_buffer),2);
+#ifdef DEBUG_ON
+		puts(token_buffer);
+#endif
+		if (strlen(token_buffer) < sizeof(env.city)) {
+			strncpy(env.city,token_buffer,strlen(token_buffer));
+		} else {
+			return ESP8266_ERROR;
+		}
 
+	}
 	return ESP8266_SUCCESS;
 }
 
@@ -192,12 +215,12 @@ void menu_draw_temperature_frame(void)
 	display_draw_small_char(9,10,'M',1,1);
 	display_draw_small_char(13,10,'P',1,1);
 	
-	if (strlen(env_var.temperature) < 2) {
-		display_draw_small_char(5,3,env_var.temperature[0],1,1);
+	if (strlen(env.temperature) < 2) {
+		display_draw_small_char(5,3,env.temperature[0],1,1);
 		display_draw_small_char(9,3,'C',1,1);	
 	} else {
-		display_draw_small_char(3,3,env_var.temperature[0],1,1);
-		display_draw_small_char(7,3,env_var.temperature[1],1,1);
+		display_draw_small_char(3,3,env.temperature[0],1,1);
+		display_draw_small_char(7,3,env.temperature[1],1,1);
 		display_draw_small_char(11,3,'C',1,1);	
 	}
 }
@@ -212,10 +235,10 @@ void menu_draw_date_frame(void)
 	char buffer[2];
 	char temp;
 	
-	itoa_simple(buffer,env_var.time.day);
+	itoa_simple(buffer,env.time.day);
 	
 	//append zero
-	if (env_var.time.day < 10) {
+	if (env.time.day < 10) {
 		temp = buffer[0];
 		buffer[0] = '0';
 		buffer[1] = temp;
@@ -225,10 +248,10 @@ void menu_draw_date_frame(void)
 	display_draw_small_char(4,3,buffer[1],1,1);
 	display_draw_small_char(7,3,'.',1,1);
 	
-	itoa_simple(buffer,env_var.time.month);
+	itoa_simple(buffer,env.time.month);
 	
 	//append zero
-	if (env_var.time.month < 10) {
+	if (env.time.month < 10) {
 		temp = buffer[0];
 		buffer[0] = '0';
 		buffer[1] = temp;
@@ -248,10 +271,10 @@ void menu_draw_week_frame(void)
 	char buffer[2];
 	char temp;
 	
-	itoa_simple(buffer,env_var.time.week);
+	itoa_simple(buffer,env.time.week);
 	
 	//append zero
-	if (env_var.time.week < 10) {
+	if (env.time.week < 10) {
 		temp = buffer[0];
 		buffer[0] = '0';
 		buffer[1] = temp;
@@ -269,7 +292,7 @@ void menu_draw_weekday_frame(void)
 	display_draw_small_char(13,10,'Y',1,1);
 	
 	char buffer[3];
-	strncpy(buffer,time_get_day_name(env_var.time.weekday),3);
+	strncpy(buffer,time_get_day_name(env.time.weekday),3);
 	
 	display_draw_small_char(3,3,buffer[0],1,1);
 	display_draw_small_char(7,3,buffer[1],1,1);
@@ -286,7 +309,7 @@ void menu_draw_battery_frame(void)
 	uint8_t battery = adc_get_battery_percentage();
 	
 	char buffer[5];
-	itoa(battery,buffer,10);
+	itoa_simple(buffer,battery);
 	
 	display_draw_small_char(3,3,buffer[0],1,1);
 	display_draw_small_char(7,3,buffer[1],1,1);
@@ -301,31 +324,29 @@ void menu_draw_config_frame(void)
 
 void menu_set_env_variables(void) 
 {
-	EEPROM_EraseAll();
+	strncpy(env.name,CLOCK_NAME,sizeof(env.name));
+	env.id = CLOCK_ID;
+	env.menu_id = 0;
+	env.temperature[0] = '0';
+	env.brightness = 0;
+	strncpy(env.wifi_pswd,PASS, strlen(PASS));
+	strncpy(env.wifi_ssid,SSID, strlen(SSID));
 	
-	strncpy(env_var.name,CLOCK_NAME,sizeof(env_var.name));
-	env_var.id = CLOCK_ID;
-	env_var.temperature[0] = '0';
-	env_var.brightness = 0;
-	env_var.menu_id = 0;
-	strncpy(env_var.wifi_pswd,PASS, strlen(PASS));
-	strncpy(env_var.wifi_ssid,SSID, strlen(SSID));
+	env.time.timezone = 1;
+	env.time.DST = 0;
+	env.time.seconds = 0;
+	env.time.minutes = 0;
+	env.time.hours = 0;
+	env.time.day = 3;
+	env.time.month = Februrary;
+	env.time.year = 2016;
+	env.time.weekday = time_get_weekday(env.time.day, env.time.month, env.time.year);
+	env.time.week = time_get_weeknumber(env.time.day, env.time.month, env.time.year);;
 	
-	env_var.time.timezone = 1;
-	env_var.time.DST = 0;
-	env_var.time.seconds = 0;
-	env_var.time.minutes = 0;
-	env_var.time.hours = 0;
-	env_var.time.day = 0;
-	env_var.time.month = January;
-	env_var.time.year = 2016;
-	env_var.time.weekday = time_get_weekday(env_var.time.day, env_var.time.month, env_var.time.year);
-	env_var.time.week = time_get_weeknumber(env_var.time.day, env_var.time.month, env_var.time.year);;
+	env.alarm.hours = 0;
+	env.alarm.minutes = 0;
 	
-	env_var.alarm.hours = 0;
-	env_var.alarm.minutes = 0;
-	
-	env_var.runtime = 0;
+	env.runtime = 0;
 }
 
 menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples) 
@@ -333,16 +354,16 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 	//Menu ID select
 	if (samples->gesture != NO_GESTURE) {
 		if (samples->gesture == LEFT_SWIPE) {
-			if (env_var.menu_id != NUMBER_OF_MENUS) {
-				env_var.menu_id++;
+			if (env.menu_id != NUMBER_OF_MENUS) {
+				env.menu_id++;
 			} else {
-				env_var.menu_id = 0;
+				env.menu_id = 0;
 			}
 		} else if (samples->gesture == RIGHT_SWIPE) {
-			if (env_var.menu_id != 0) {
-				env_var.menu_id--;
+			if (env.menu_id != 0) {
+				env.menu_id--;
 			} else {
-				env_var.menu_id = NUMBER_OF_MENUS;
+				env.menu_id = NUMBER_OF_MENUS;
 			}
 		}
 	}
@@ -357,7 +378,7 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 	
 	//Switch between menus
 	if (samples->gesture != NO_GESTURE) {
-		switch(env_var.menu_id) {
+		switch(env.menu_id) {
 			case MENU_TIME:
 				rtc_enable_time_render();
 				break;
@@ -391,53 +412,66 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 	}
 
 	if (samples->gesture == PAUSE) {
-		if (env_var.menu_id == MENU_CONFIG) {
+		if (env.menu_id == MENU_CONFIG) {
+			Si114xPauseAll((HANDLE)SI114X_ADDR);
 			display_fade_blink();
 			display_slide_out_to_top();
 #ifdef SHOW_MANUAL
-			display_print_scrolling_text("CONFIG MENU. USE BUTTONS",false);
+			display_print_scrolling_text("USE BACK BUTTONS",false);
 #endif
 			display_draw_four_letter_word("<  >");
 			display_slide_in_from_bottom();
-			env_var.menu_id = 0;
+			env.menu_id = 0;
 			while(menu_configuration(samples) == MENU_SUCCESS);
-			env_var.menu_id = 0;
+			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
+			env.menu_id = 0;
 			rtc_enable_time_render();
 			display_slide_in_from_top();
+			//A little time to remove fingers from back buttons
 			_delay_ms(1000);
-		} else if (env_var.menu_id == MENU_TEMP) {
+		} else if (env.menu_id == MENU_TEMP) {
+			esp8266_status_t status;
+			Si114xPauseAll((HANDLE)SI114X_ADDR);
 			display_fade_blink();			
 			display_slide_out_to_top();
-			esp8266_status_t status;
 			start_loading();
-			status = get_internet_variables(true,true);
-			esp8266_off(); //guard
+			esp8266_on();
+			status = get_internet_variables(false,true);
+			esp8266_off();
 			stop_loading();
 			
 			if (status == ESP8266_SUCCESS) {
-				char weather_info[50];
-				strcpy(weather_info, "WEATHER FOR TRONDHEIM NORWAY: ");
-				strcat(weather_info,env_var.temperature);
-				strcat(weather_info,"C ");
 				uint8_t i = 0;
-				while(env_var.weather_info[i]) {
-					env_var.weather_info[i] = toupper(env_var.weather_info[i]);
+				char weather_info[60];
+				strcpy(weather_info, "WEATHER FOR ");
+				while(env.city[i]) {
+					env.city[i] = toupper(env.city[i]);
 					i++;
 				}
-				strcat(weather_info,env_var.weather_info);
+				strcat(weather_info,env.city);
+				strcat(weather_info,": ");
+				strcat(weather_info,env.temperature);
+				strcat(weather_info,"C ");
+				i = 0;
+				while(env.weather_info[i]) {
+					env.weather_info[i] = toupper(env.weather_info[i]);
+					i++;
+				}
+				strcat(weather_info,env.weather_info);
 #ifdef SHOW_MANUAL
 				display_print_scrolling_text(weather_info, false);
 #endif
 			} else {
 #ifdef SHOW_MANUAL
-				display_print_scrolling_text("COULD NOT GET TEMPERATURE.", false);
+				display_print_scrolling_text("COULD NOT GET TEMPERATURE", false);
 #endif
 			}
 			menu_draw_temperature_frame();
 			display_slide_in_from_top();
+			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
 		} 
 	}
-	return ESP8266_SUCCESS;
+	return MENU_SUCCESS;
 }
 
 menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples) 
@@ -447,16 +481,16 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 	//Menu ID select
 	if (btn_status != NO_BTN) {
 		if (btn_status == BTN1) {
-			if (env_var.menu_id != NUMBER_OF_CONFIG_MENUS) {
-				env_var.menu_id++;
+			if (env.menu_id != NUMBER_OF_CONFIG_MENUS) {
+				env.menu_id++;
 			} else {
-				env_var.menu_id = 0;
+				env.menu_id = 0;
 			}
 		} else if (btn_status == BTN4) {
-			if (env_var.menu_id != 0) {
-				env_var.menu_id--;
+			if (env.menu_id != 0) {
+				env.menu_id--;
 			} else {
-				env_var.menu_id = NUMBER_OF_CONFIG_MENUS;
+				env.menu_id = NUMBER_OF_CONFIG_MENUS;
 			}
 		}
 	}
@@ -473,7 +507,7 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 	
 	//Switch between menus
 	if (btn_status != NO_BTN) {
-		switch(env_var.menu_id) {
+		switch(env.menu_id) {
 			case CONFIG_BRIGHTNESS:
 				display_draw_four_letter_word("LGHT");
 				break;
@@ -511,7 +545,7 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 	
 	//Menu actions
 	if (btn_status == BTN3) {
-		switch(env_var.menu_id) {
+		switch(env.menu_id) {
 			case CONFIG_BRIGHTNESS:
 				display_slide_out_to_top();
 				menu_configure_brightnesss();
@@ -527,13 +561,20 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 				//Feature: Should draw wifi lines on display here.
 				esp8266_on();
 				if (esp8266_setup_webserver(false,true) == ESP8266_SUCCESS) {
+					//start_wifi_indication();
 					while(esp8266_configure_ssid_and_password() != ESP8266_TIMEOUT) {
 						btn_status = btn_check_press();
-						if (btn_status == BTN4)
-						{
+						if (btn_status == BTN4) {
 							break;
 						}
+						if (wdt_triggered) {
+							//stop_wifi_indication();
+#ifdef SHOW_MANUAL
+							display_print_scrolling_text("SOMETHING WENT WRONG",false);
+#endif
+						}
 					}
+					//stop_wifi_indication();
 				} else {
 #ifdef SHOW_MANUAL
 					display_print_scrolling_text("SOMETHING WENT WRONG",false);
@@ -554,6 +595,9 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 				display_print_scrolling_text("MADE BY: ERLEND HESTNES",false);
 				break;
 			case CONFIG_MUSIC:
+				display_slide_out_to_bottom();
+				display_draw_bitmap(5,4,IMG_SPEAKER_A,IMG_SPEAKER_WIDTH,IMG_SPEAKER_HEIGHT,1);
+				display_slide_in_from_bottom();
 				play_sound();
 				break;
 			case CONFIG_EXIT:
@@ -562,7 +606,7 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 			default:
 				break;
 		}
-		env_var.menu_id = 0;
+		env.menu_id = 0;
 		display_slide_out_to_bottom();
 		display_draw_four_letter_word("<  >");
 		display_slide_in_from_top();
@@ -574,8 +618,8 @@ void menu_configure_brightnesss(void)
 {	
 	bool quit = false;
 	
-	ht1632c_set_brightness(env_var.brightness);
-	display_draw_filled_rect(0,7,env_var.brightness+1,2,1);
+	ht1632c_set_brightness(env.brightness);
+	display_draw_filled_rect(0,7,env.brightness+1,2,1);
 	display_refresh_screen();
 	
 	while(!quit) {
@@ -583,19 +627,19 @@ void menu_configure_brightnesss(void)
 
 		switch(btn_status) {
 			case BTN4:
-				if (env_var.brightness < 15) {
-					display_draw_filled_rect(0,7,env_var.brightness+1,2,0);
-					ht1632c_set_brightness(++env_var.brightness);
-					display_draw_filled_rect(0,7,env_var.brightness+1,2,1);
+				if (env.brightness < 15) {
+					display_draw_filled_rect(0,7,env.brightness+1,2,0);
+					ht1632c_set_brightness(++env.brightness);
+					display_draw_filled_rect(0,7,env.brightness+1,2,1);
 					display_refresh_screen();
 				}
 				_delay_ms(100);
 				break;
 			case BTN1:
-				if (env_var.brightness >= 0) {
-					display_draw_filled_rect(0,7,env_var.brightness+1,2,0);
-					ht1632c_set_brightness(--env_var.brightness);
-					display_draw_filled_rect(0,7,env_var.brightness+1,2,1);
+				if (env.brightness > 0) {
+					display_draw_filled_rect(0,7,env.brightness+1,2,0);
+					ht1632c_set_brightness(--env.brightness);
+					display_draw_filled_rect(0,7,env.brightness+1,2,1);
 					display_refresh_screen();
 				}
 				_delay_ms(100);
@@ -603,7 +647,7 @@ void menu_configure_brightnesss(void)
 			case BTN3:
 				display_slide_out_to_bottom();
 #ifdef SHOW_MANUAL
-				display_print_scrolling_text("BRIGHTNESS IS SET",false);
+				display_print_scrolling_text("BRIGHTNESS SET",false);
 #endif
 				quit = true;
 				EEPROM_WriteEnv();
@@ -630,13 +674,13 @@ uint8_t menu_set_time(void)
 	display_slide_in_from_right();
 	_delay_ms(1000);
 	display_slide_out_to_left();
-	itoa_simple(buffer,env_var.time.timezone);
+	itoa_simple(buffer,env.time.timezone);
 	display_draw_small_char(3,10,'G',1,1);
 	display_draw_small_char(7,10,'M',1,1);
 	display_draw_small_char(11,10,'T',1,1);
-	if (env_var.time.timezone > 0) {
+	if (env.time.timezone > 0) {
 		display_draw_small_char(5,3,'+',1,1);
-		} else if (env_var.time.timezone < 0) {
+		} else if (env.time.timezone < 0) {
 		display_draw_small_char(5,3,'-',1,1);
 	}
 	display_draw_small_char(9,3,buffer[0],1,1);
@@ -647,17 +691,17 @@ uint8_t menu_set_time(void)
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN4:
-				if (env_var.time.timezone < 9) {
-					display_clear_screen();
-					env_var.time.timezone++;
-					itoa_simple(buffer,env_var.time.timezone);
+				if (env.time.timezone < 9) {
+					display_clear_buffer();
+					env.time.timezone++;
+					itoa_simple(buffer,env.time.timezone);
 					display_draw_small_char(3,10,'G',1,1);
 					display_draw_small_char(7,10,'M',1,1);
 					display_draw_small_char(11,10,'T',1,1);
-					if (env_var.time.timezone > 0) {
+					if (env.time.timezone > 0) {
 						display_draw_small_char(5,3,'+',1,1);
 						display_draw_small_char(9,3,buffer[0],1,1);
-					} else if (env_var.time.timezone < 0) {
+					} else if (env.time.timezone < 0) {
 						display_draw_small_char(5,3,'-',1,1);
 						display_draw_small_char(9,3,buffer[1],1,1);
 					} else {
@@ -668,17 +712,17 @@ uint8_t menu_set_time(void)
 				_delay_ms(250);
 				break;
 			case BTN1:
-				if (env_var.time.timezone > -9) {
-					display_clear_screen();
-					env_var.time.timezone--;
-					itoa_simple(buffer,env_var.time.timezone);
+				if (env.time.timezone > -9) {
+					display_clear_buffer();
+					env.time.timezone--;
+					itoa_simple(buffer,env.time.timezone);
 					display_draw_small_char(3,10,'G',1,1);
 					display_draw_small_char(7,10,'M',1,1);
 					display_draw_small_char(11,10,'T',1,1);
-					if (env_var.time.timezone > 0) {
+					if (env.time.timezone > 0) {
 						display_draw_small_char(5,3,'+',1,1);
 						display_draw_small_char(9,3,buffer[0],1,1);
-					} else if (env_var.time.timezone < 0) {
+					} else if (env.time.timezone < 0) {
 						display_draw_small_char(5,3,'-',1,1);
 						display_draw_small_char(9,3,buffer[1],1,1);
 					} else {
@@ -711,7 +755,7 @@ uint8_t menu_set_time(void)
 	display_slide_in_from_right();
 	_delay_ms(1000);
 	display_slide_out_to_left();
-	if (env_var.time.DST) {
+	if (env.time.DST) {
 		display_draw_four_letter_word(" ON ");
 	} else {
 		display_draw_three_letter_word("OFF");
@@ -724,15 +768,15 @@ uint8_t menu_set_time(void)
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN4:
-				display_clear_screen();
-				env_var.time.DST = 1;
+				display_clear_buffer();
+				env.time.DST = 1;
 				display_draw_four_letter_word(" ON ");
 				display_refresh_screen();
 				_delay_ms(250);
 				break;
 			case BTN1:
-				display_clear_screen();
-				env_var.time.DST = 0;
+				display_clear_buffer();
+				env.time.DST = 0;
 				display_draw_three_letter_word("OFF");
 				display_refresh_screen();
 				_delay_ms(250);
@@ -760,7 +804,7 @@ uint8_t menu_set_time(void)
 	display_slide_in_from_right();
 	_delay_ms(1000);
 	display_slide_out_to_left();
-	rtc_update_display(5,env_var.time.hours);
+	rtc_update_display(5,env.time.hours);
 	display_slide_in_from_right();
 	//ht1632c_blink(true);
 	
@@ -769,12 +813,12 @@ uint8_t menu_set_time(void)
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN4:
-				display_clear_screen();
+				display_clear_buffer();
 				display_draw_and_increment_hour();
 				_delay_ms(250);
 				break;
 			case BTN1:
-				display_clear_screen();
+				display_clear_buffer();
 				display_draw_and_decrement_hour();
 				_delay_ms(250);
 				break;
@@ -802,7 +846,7 @@ uint8_t menu_set_time(void)
 	display_slide_in_from_right();
 	_delay_ms(1000);
 	display_slide_out_to_left();
-	rtc_update_display(5,env_var.time.minutes);
+	rtc_update_display(5,env.time.minutes);
 	display_slide_in_from_right();
 	//ht1632c_blink(true);
 	
@@ -811,139 +855,13 @@ uint8_t menu_set_time(void)
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN4:
-				display_clear_screen();
+				display_clear_buffer();
 				display_draw_and_increment_minute();
 				_delay_ms(250);
 				break;
 			case BTN1:
-				display_clear_screen();
+				display_clear_buffer();
 				display_draw_and_decrement_minute();
-				_delay_ms(250);
-				break;
-			case BTN3:
-				next = true;
-				_delay_ms(250);
-				break;
-			case BTN2:
-				//ht1632c_blink(false);
-				display_slide_out_to_bottom();
-#ifdef SHOW_MANUAL
-				display_print_scrolling_text("CANCELLED",false);
-#endif
-				return 0;
-			default:
-				btn_status = NO_BTN;
-				break;
-		}
-	}
-	next = false;
-	
-	//ht1632c_blink(false);
-	display_slide_out_to_left();
-	display_draw_three_letter_word("SEC");
-	display_slide_in_from_right();
-	_delay_ms(1000);
-	display_slide_out_to_left();
-	rtc_update_display(5,env_var.time.seconds);
-	display_slide_in_from_right();
-	//ht1632c_blink(true);
-	
-	//Set seconds
-	while(!next) {
-		btn_status = btn_check_press();
-		switch(btn_status) {
-			case BTN4:
-				display_clear_screen();
-				display_draw_and_increment_second();
-				_delay_ms(250);
-				break;
-			case BTN1:
-				display_clear_screen();
-				display_draw_and_decrement_second();
-				_delay_ms(250);
-				break;
-			case BTN3:
-				next = true;
-				_delay_ms(250);
-				break;
-			case BTN2:
-				//ht1632c_blink(false);
-				display_slide_out_to_bottom();
-#ifdef SHOW_MANUAL
-				display_print_scrolling_text("CANCELLED",false);
-#endif
-				return 0;
-			default:
-				btn_status = NO_BTN;
-				break;
-		}
-	}
-	next = false;
-	
-	//ht1632c_blink(false);
-	display_slide_out_to_left();
-	display_draw_four_letter_word("WDAY");
-	display_slide_in_from_right();
-	_delay_ms(1000);
-	display_slide_out_to_left();
-	display_draw_three_letter_word(time_get_day_name(env_var.time.weekday));
-	display_slide_in_from_right();
-	//ht1632c_blink(true);
-	
-	//Set day
-	while(!next) {
-		btn_status = btn_check_press();
-		switch(btn_status) {
-			case BTN4:
-				display_clear_screen();
-				display_draw_and_increment_day();
-				_delay_ms(250);
-				break;
-			case BTN1:
-				display_clear_screen();
-				display_draw_and_decrement_day();
-				_delay_ms(250);
-				break;
-			case BTN3:
-				next = true;
-				_delay_ms(250);
-				break;
-			case BTN2:
-				//ht1632c_blink(false);
-				display_slide_out_to_bottom();
-#ifdef SHOW_MANUAL
-				display_print_scrolling_text("CANCELLED",false);
-#endif
-				return 0;
-			default:
-				btn_status = NO_BTN;
-				break;
-		}
-	}
-	next = false;
-	
-	//ht1632c_blink(false);
-	display_slide_out_to_left();
-	display_draw_four_letter_word("MNTH");
-	display_slide_in_from_right();
-	_delay_ms(1000);
-	display_slide_out_to_left();
-	display_draw_three_letter_word(time_get_month_name(env_var.time.month));
-	display_slide_in_from_right();
-	//ht1632c_blink(true);
-	
-	//Set month
-	while(!next) {
-		btn_status = btn_check_press();
-		switch(btn_status) {
-			case BTN4:
-				display_clear_screen();
-				display_draw_and_increment_month();
-				_delay_ms(250);
-				break;
-			case BTN1:
-				display_clear_screen();
-				display_draw_and_decrement_month();
 				_delay_ms(250);
 				break;
 			case BTN3:
@@ -971,22 +889,22 @@ uint8_t menu_set_time(void)
 	_delay_ms(1000);
 	display_slide_out_to_left();
 	char *year = NULL;
-	itoa_simple(year,env_var.time.year);
+	itoa_simple(year,env.time.year);
 	display_draw_four_letter_word(year);
 	display_slide_in_from_right();
 	//ht1632c_blink(true);
-	
+		
 	//Set year
 	while(!next) {
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN4:
-				display_clear_screen();
+				display_clear_buffer();
 				display_draw_and_increment_year();
 				_delay_ms(250);
 				break;
 			case BTN1:
-				display_clear_screen();
+				display_clear_buffer();
 				display_draw_and_decrement_year();
 				_delay_ms(250);
 				break;
@@ -1009,11 +927,99 @@ uint8_t menu_set_time(void)
 	next = false;
 	
 	//ht1632c_blink(false);
+	display_slide_out_to_left();
+	display_draw_four_letter_word("MNTH");
+	display_slide_in_from_right();
+	_delay_ms(1000);
+	display_slide_out_to_left();
+	display_draw_three_letter_word(time_get_month_name(env.time.month));
+	display_slide_in_from_right();
+	//ht1632c_blink(true);
+	
+	//Set month
+	while(!next) {
+		btn_status = btn_check_press();
+		switch(btn_status) {
+			case BTN4:
+				display_clear_buffer();
+				display_draw_and_increment_month();
+				_delay_ms(250);
+				break;
+			case BTN1:
+				display_clear_buffer();
+				display_draw_and_decrement_month();
+				_delay_ms(250);
+				break;
+			case BTN3:
+				next = true;
+				_delay_ms(250);
+				break;
+			case BTN2:
+				//ht1632c_blink(false);
+				display_slide_out_to_bottom();
+#ifdef SHOW_MANUAL
+				display_print_scrolling_text("CANCELLED",false);
+#endif
+				return 0;
+			default:
+				btn_status = NO_BTN;
+				break;
+		}
+	}
+	next = false;
+	
+	//ht1632c_blink(false);
+	display_slide_out_to_left();
+	display_draw_three_letter_word("DAY");
+	display_slide_in_from_right();
+	_delay_ms(1000);
+	display_slide_out_to_left();
+	rtc_update_display(5,env.time.day);
+	display_slide_in_from_right();
+	//ht1632c_blink(true);
+	
+	//Set days
+	while(!next) {
+		btn_status = btn_check_press();
+		switch(btn_status) {
+			case BTN4:
+				display_clear_buffer();
+				display_draw_and_increment_day();
+				_delay_ms(250);
+				break;
+			case BTN1:
+				display_clear_buffer();
+				display_draw_and_decrement_day();
+				_delay_ms(250);
+				break;
+			case BTN3:
+				next = true;
+				_delay_ms(250);
+				break;
+			case BTN2:
+				//ht1632c_blink(false);
+				display_slide_out_to_bottom();
+#ifdef SHOW_MANUAL
+				display_print_scrolling_text("CANCELLED",false);
+#endif
+				return 0;
+			default:
+				btn_status = NO_BTN;
+				break;
+		}
+	}
+	next = false;
+	
+	//Calculate the rest
+	env.time.weekday = time_get_weekday(env.time.day,env.time.month,env.time.year);
+	env.time.week = time_get_weeknumber(env.time.day,env.time.month,env.time.year);
+	
+	//ht1632c_blink(false);
 	EEPROM_WriteEnv();
 	display_slide_out_to_bottom();
 	
 #ifdef SHOW_MANUAL
-	display_print_scrolling_text("TIME AND DATE IS SET",false);
+	display_print_scrolling_text("TIME AND DATE SET",false);
 #endif
 	
 	return 1;
@@ -1027,7 +1033,7 @@ uint8_t menu_set_alarm(void)
 	display_slide_in_from_right();
 	_delay_ms(1000);
 	display_slide_out_to_left();
-	rtc_update_display(5,env_var.alarm.hours);
+	rtc_update_display(5,env.alarm.hours);
 	display_slide_in_from_right();
 	//ht1632c_blink(true);
 	
@@ -1036,12 +1042,12 @@ uint8_t menu_set_alarm(void)
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN4:
-				display_clear_screen();
+				display_clear_buffer();
 				display_alarm_increment_hour();
 				_delay_ms(150);
 				break;
 			case BTN1:
-				display_clear_screen();
+				display_clear_buffer();
 				display_alarm_decrement_hour();
 				_delay_ms(150);
 				break;
@@ -1069,7 +1075,7 @@ uint8_t menu_set_alarm(void)
 	display_slide_in_from_right();
 	_delay_ms(1000);
 	display_slide_out_to_left();
-	rtc_update_display(5,env_var.alarm.minutes);
+	rtc_update_display(5,env.alarm.minutes);
 	display_slide_in_from_right();
 	//ht1632c_blink(true);
 	
@@ -1078,12 +1084,12 @@ uint8_t menu_set_alarm(void)
 		btn_status = btn_check_press();
 		switch(btn_status) {
 			case BTN4:
-				display_clear_screen();
+				display_clear_buffer();
 				display_alarm_increment_minute();
 				_delay_ms(150);
 				break;
 			case BTN1:
-				display_clear_screen();
+				display_clear_buffer();
 				display_alarm_decrement_minute();
 				_delay_ms(150);
 				break;
@@ -1110,7 +1116,7 @@ uint8_t menu_set_alarm(void)
 	display_slide_out_to_bottom();
 	
 #ifdef SHOW_MANUAL
-	display_print_scrolling_text("ALARM IS SET",false);
+	display_print_scrolling_text("ALARM SET",false);
 #endif
 
 	return 1;
@@ -1119,4 +1125,9 @@ uint8_t menu_set_alarm(void)
 ISR(TCC0_CCA_vect) 
 {
 	display_show_loading_square();
+}
+
+ISR(TCC0_CCD_vect)
+{
+	display_draw_wifi_icon();
 }

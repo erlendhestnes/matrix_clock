@@ -10,6 +10,9 @@
 
 #include "../../global.h"
 
+#define TOP_HALF		9
+#define BOTTOM_HALF		0
+
 void rtc_setup(void);
 void rtc_show_hours(void);
 void rtc_show_minutes(void);

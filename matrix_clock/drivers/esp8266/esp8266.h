@@ -11,6 +11,8 @@
 #include "../../global.h"
 #include "../../modules/json/jsmn.h"
 
+static volatile bool wdt_triggered = false;
+
 //Arkitekt Christies Gt 11
 #define SSID        "Inteno_68"
 #define PASS        "A26A411568"
@@ -19,21 +21,11 @@
 //#define SSID        "Loqal_43"
 //#define PASS        "892B9A1758"
 
-//#define DST_IP	"184.106.153.149"
-//#define DST_IP      "api.thingspeak.com"
-//#define ADDRESS		"http://api.thingspeak.com/channels/23643/feed.json?key=B48BEBINSXKRJRIN"
-//#define ADDRESS "/channels/23643/feed.json?key=B48BEBINSXKRJRIN"
+#define WEATHER_IP "www.grenaderen.no"
+#define WEATHER_ADDR "http://grenaderen.no/test/weather.php"
 
-#define TIME_IP "ukenummer.no"
-#define TIME_ADDR "http://ukenummer.no/json"
-
-#define WEATHER_IP "api.thingspeak.com"
-#define WEATHER_ADDR "https://api.thingspeak.com/apps/thinghttp/send_request?api_key=6ZW7E1P3KSIPD8E2"
-
-#define WEATHER_IP2 "api.openweathermap.org"
-#define WEATHER_ADDR2 "http://api.openweathermap.org/data/2.5/weather?zip=7012,no&units=metric&appid=bd82977b86bf27fb59a04b61b657fb6f"
-
-//EDIT:
+#define TIME_IP "www.grenaderen.no"
+#define TIME_ADDR "http://grenaderen.no/test/ntp.php"
 
 #define RX_BUFFER	250
 
@@ -58,19 +50,16 @@ typedef enum {
 void esp8266_on(void);
 void esp8266_off(void);
 void esp8266_reset(void);
+void esp8266_deep_sleep(void);
+void esp8266_update(void);
 
 esp8266_status_t esp8266_setup(void);
 esp8266_status_t esp8266_setup_webserver(bool sta, bool ap);
-esp8266_status_t esp8266_run_webserver(char *str);
 esp8266_status_t esp8266_configure_ssid_and_password(void);
-esp8266_status_t esp8266_telnet_server(void);
 
 void esp8266_list_ap(void);
-void esp8266_update(void);
+
 esp8266_status_t esp8266_join_ap(char *ssid, char *pass);
 esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t json_length);
-esp8266_status_t connectWiFi(void);
 
-void esp8266_get_rx_buffer(char *str);
-void esp8266_extract_json(char *str);
 #endif

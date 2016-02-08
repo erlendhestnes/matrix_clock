@@ -9,19 +9,28 @@
 
 void twi_setup(TWI_t* const TWI) 
 {
-	TWIC.MASTER.CTRLB = 0;//TWI_MASTER_SMEN_bm; //| TWI_MASTER_TIMEOUT1_bm;
-	TWIC.MASTER.BAUD = 9;
-	TWIC.MASTER.CTRLA = TWI_MASTER_ENABLE_bm;
+	//Disable power reduction for TWIC 
+	PR.PRPC &= ~0x40;
+	
+	TWIC.MASTER.CTRLB  = 0;//TWI_MASTER_SMEN_bm; //| TWI_MASTER_TIMEOUT1_bm;
+	TWIC.MASTER.BAUD   = 9;
+	TWIC.MASTER.CTRLA  = TWI_MASTER_ENABLE_bm;
 	TWIC.MASTER.STATUS = TWI_MASTER_BUSSTATE_IDLE_gc;
 }
 
 void twi_off(void) 
 {
-	TWIC.MASTER.CTRLA &= ~(TWI_MASTER_ENABLE_bm);
+	TWIC.MASTER.CTRLA = 0;
+	
+	//Enable power reduction for TWIC 
+	PR.PRPC |= 0x40;
 }
 
 void twi_on(void) 
 {
+	//Disable power reduction for TWIC 
+	PR.PRPC &= ~0x40;
+	
 	TWIC.MASTER.CTRLA = TWI_MASTER_ENABLE_bm;
 }
 
@@ -32,7 +41,7 @@ void twi_stop_transmission(TWI_t* const TWI)
 
 uint8_t twi_start_transmission(TWI_t* const TWI,
 const uint8_t slave_address,
-const uint8_t timeout_ms)
+const uint16_t timeout_ms)
 {
 	uint16_t timeout_remaining;
 
@@ -71,7 +80,7 @@ const uint8_t timeout_ms)
 }
 
 uint8_t twi_send_byte(TWI_t* const TWI,
-const uint8_t timeout_ms,
+const uint16_t timeout_ms,
 const uint8_t data)
 {
 	uint16_t timeout_remaining;
@@ -88,7 +97,7 @@ const uint8_t data)
 }
 
 uint8_t twi_receive_byte(TWI_t* const TWI,
-const uint8_t timeout_ms,
+const uint16_t timeout_ms,
 uint8_t* const data,
 const uint8_t end_of_data)
 {
@@ -115,7 +124,7 @@ const uint8_t end_of_data)
 
 uint8_t twi_read_packet(TWI_t* const TWI,
 const uint8_t slave_address,
-const uint8_t timeout_ms,
+const uint16_t timeout_ms,
 const uint8_t reg,
 uint8_t* data,
 uint8_t length)
@@ -153,7 +162,7 @@ uint8_t length)
 
 uint8_t twi_write_packet(TWI_t* const TWI,
 const uint8_t slave_address,
-const uint8_t timeout_ms,
+const uint16_t timeout_ms,
 const uint8_t reg,
 const uint8_t* data,
 uint8_t length)

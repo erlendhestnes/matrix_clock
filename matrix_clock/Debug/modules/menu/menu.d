@@ -24,6 +24,7 @@ modules/menu/menu.d modules/menu/menu.o: ../modules/menu/menu.c \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\stdlib.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\string.h \
  c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h \
+ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\eeprom.h \
  ../modules/menu/../../drivers/sensors/si114x/Si114x_types.h \
  ../modules/menu/../../drivers/adc/adc.h \
  ../modules/menu/../../drivers/adc/../../global.h \
@@ -42,7 +43,8 @@ modules/menu/menu.d modules/menu/menu.o: ../modules/menu/menu.c \
  ../modules/menu/../../drivers/esp8266/esp8266.h \
  ../modules/menu/../../drivers/esp8266/../../global.h \
  ../modules/menu/../../drivers/esp8266/../../modules/json/jsmn.h \
- ../modules/menu/../json/jsmn.h ../modules/menu/../json/json_functions.h \
+ ../modules/menu/../../4x6_font.c ../modules/menu/../json/jsmn.h \
+ ../modules/menu/../json/json_functions.h \
  ../modules/menu/../json/../../global.h ../modules/menu/../json/jsmn.h \
  ../modules/menu/../display/display.h \
  ../modules/menu/../display/../../global.h \
@@ -106,6 +108,8 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\lib\gcc\avr\4.8.1\include\stdbool.h:
 
+c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-toolchain\avr\include\avr\eeprom.h:
+
 ../modules/menu/../../drivers/sensors/si114x/Si114x_types.h:
 
 ../modules/menu/../../drivers/adc/adc.h:
@@ -141,6 +145,8 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 ../modules/menu/../../drivers/esp8266/../../global.h:
 
 ../modules/menu/../../drivers/esp8266/../../modules/json/jsmn.h:
+
+../modules/menu/../../4x6_font.c:
 
 ../modules/menu/../json/jsmn.h:
 

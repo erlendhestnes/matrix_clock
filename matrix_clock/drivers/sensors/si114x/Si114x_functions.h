@@ -25,7 +25,7 @@
 //
 
 void si114x_setup(void);
-void si114x_setup_ps1_only(void);
+void si114x_setup_ps1(void);
 
 void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data);
 

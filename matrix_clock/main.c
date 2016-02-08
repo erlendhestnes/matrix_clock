@@ -17,6 +17,7 @@
 #include "drivers/eeprom/eeprom.h"
 #include "drivers/esp8266/esp8266.h"
 #include "drivers/timer/timer.h"
+#include "drivers/power/power.h"
 
 #include "drivers/sensors/si114x/User_defs.h"
 #include "drivers/sensors/si114x/Si114x_functions.h"
@@ -37,23 +38,43 @@ void pmic_setup(void)
 	PMIC.CTRL = PMIC_LOLVLEN_bm | PMIC_MEDLVLEN_bm | PMIC_HILVLEN_bm;
 }
 
+void ultra_power_saving_mode_test(void) 
+{	
+	//maybe add pullups
+	si114x_reset((HANDLE)SI114X_ADDR);
+	//si114x_setup_ps1();
+	twi_off();
+	uart_disable();
+	rtc_enable_time_render();
+	display_refresh_screen();
+	display_fade(3);
+	display_fade(0);
+	ht1632c_power_down();
+	SLEEP.CTRL |= SLEEP_MODE_PWR_SAVE;
+	SLEEP.CTRL |= SLEEP_SEN_bm;
+	asm("sleep");
+	while(1);
+}
+
 int main(void) 
 {	
+	lowpower_init();
+	
 	//Structures
 	SI114X_IRQ_SAMPLE sensor_data;
 	
 	//System
-	clock_setup_32_mhz();
+	clock_setup_32_mhz_pll();
 	display_setup();
-	adc_disable_current_measurement();
 	esp8266_off();
+	spi_disable();
 	
 	//Init env variables
 	if(1)
 	//if (!EEPROM_ReadEnv())
 	{
 		menu_set_env_variables();
-	}
+	} 
 	
 	//Debug interface
 	uart_setup();
@@ -73,32 +94,28 @@ int main(void)
 	
 	sei();
 	
-	//Calculate baseline for Si114x
+	/*
+	//Ultra low power test
+	ultra_power_saving_mode_test();
+	while(1);
+	*/
+	
 	si114x_baseline_calibration(&sensor_data);
 	
+	//Turn on proximity channel 1 with ISR and threshold
+	si114x_setup_ps1();
+	
 	/*
+	//Si114x test
 	while(1) {
 		si114x_get_data(&sensor_data);
-		//uint16_t distance_1 = QS_Counts_to_Distance_2(sensor_data.ps1,1);
-		//uint16_t distance_2 = QS_Counts_to_Distance_2(sensor_data.ps2,2);
-		//printf("Counts 1: %d , Counts 2: %d , Dist 1: %d, Dist 2: %d \r\n",sensor_data.ps1, sensor_data.ps2, distance_1, distance_2);
-		
-		printf("ALS: %d, IR: %d \r\n",sensor_data.vis, sensor_data.ir);
-		if (sensor_data.ir > 800)
-		{
-			display_fade(15);
-		} else {
-			display_fade(0);
-		}
-		
-		_delay_ms(500);	
+		printf("PS1: %d \r\n",sensor_data.ps1);
+		//_delay_ms(500);
 	}
 	*/
 	
-	//Turn on proximity channel 1 with ISR and threshold
-	si114x_setup_ps1_only();
-	
 	//Turn on RTC
+	display_fade(0);
 	rtc_enable_time_render();
 	display_refresh_screen();
 	rtc_setup();
@@ -114,27 +131,25 @@ int main(void)
 		if (si114x_status == PS1_INT) {
 			uint16_t timeout_ms = 0;
 			bool timeout = false;
+			env.menu_id = 0;
 			
 			btn_setup(false);
-			btn_si114x_disable_interrupt();
+			btn_disable_si114x_interrupt();
 			
 			display_fade(MAX_BRIGHTNESS);
 #ifdef DEBUG_ON
 			puts("DEBUG: Entered gesture mode.");
 #endif
-			//Guard
-			env_var.menu_id = 0;
-
 			si114x_setup();
-			
 			_delay_ms(500);
 			
 			while(!timeout) {
 				si114x_get_data(&sensor_data);
 				si114x_process_samples((HANDLE)SI114X_ADDR,&sensor_data);
+				
 				menu_state_machine(&sensor_data);
 				
-				if (sensor_data.ps1 < PROXIMITY_THRESHOLD) {
+				if (sensor_data.ps1 < PROXIMITY_THRESHOLD2) {
 					if (timeout_ms++ > MENU_TIMEOUT) {
 						timeout = true;
 					}
@@ -143,22 +158,20 @@ int main(void)
 				}
 			}
 			//Should not write too often to EEPROM
-		    //EEPROM_WriteEnv();
-			
+		    EEPROM_WriteEnv();
 			timeout_ms = 0;
 #ifdef DEBUG_ON
 			puts("DEBUG: Timeout! Leaving gesture mode.");
 #endif
-			if (env_var.menu_id != 0) {
+			if (env.menu_id != 0) {
 				display_slide_out_to_bottom();
 				rtc_enable_time_render();
 				display_slide_in_from_top();
 			}
-			display_fade(env_var.brightness);
+			display_fade(env.brightness);
 			btn_setup(true);
 			btn_si114x_enable_interrupt();
-			si114x_setup_ps1_only();
-			si114x_status = 0;
+			si114x_setup_ps1();
 		} else if (si114x_status == ALS_INT_2) {
 			//Dim light by using the light sensor
 #ifdef DEBUG_ON
@@ -181,6 +194,7 @@ int main(void)
 			btn_status = NO_BTN;
 			display ^= true;
 		}
+		si114x_status = 0;
 		
 		SLEEP.CTRL |= SLEEP_SEN_bm;
 		asm("sleep");

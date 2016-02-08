@@ -8,21 +8,36 @@
 #include "uart.h"
 
 void uart_setup(void) 
-{	
-	UART_PORT.DIRSET = UART_TX;
-	UART_PORT.DIRCLR = UART_RX;
+{
+	//Disable power reduction for USARTD0 
+	PR.PRPD &= ~0x10;
+		
+	PORTD.DIRSET = UART_TX;
+	PORTD.DIRCLR = UART_RX;
+	//PORTD.PIN2CTRL = PORT_OPC_PULLUP_gc;
 	
-	USARTD0.CTRLA = USART_RXCINTLVL_MED_gc;
+	USARTD0.CTRLA	  = USART_RXCINTLVL_MED_gc;
 	USARTD0.BAUDCTRLA = 2094;
 	USARTD0.BAUDCTRLB = (-7 << 4) | (2094 >> 8);
-	USARTD0.CTRLC = USART_CHSIZE_8BIT_gc;
+	USARTD0.CTRLC	  = USART_CHSIZE_8BIT_gc;
+	USARTD0.CTRLB	  = USART_RXEN_bm | USART_TXEN_bm;
+}
 
-	USARTD0.CTRLB = USART_RXEN_bm | USART_TXEN_bm;
+void uart_disable(void)
+{	
+	USARTD0.CTRLB = 0;
+	
+	PORTD.DIRCLR   = UART_TX | UART_RX;
+	PORTD.PIN2CTRL = PORT_OPC_PULLUP_gc;
+	PORTD.PIN3CTRL = PORT_OPC_PULLUP_gc;
+	
+	//Enable power reduction for USARTD0 
+	PR.PRPD |= 0x10;
 }
 
 void uart_put_char(char c) 
 {
-	while (!(USARTD0.STATUS & USART_DREIF_bm)){}
+	while (!(USARTD0.STATUS & USART_DREIF_bm));
 	USARTD0.DATA = c;
 }
 

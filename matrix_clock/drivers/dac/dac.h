@@ -11,14 +11,14 @@
 
 #include "../../global.h"
 
-#define DAC_PORT	PORTB
 #define DAC0		PIN2_bm
 #define DAC1		PIN3_bm
+#define SPEAKER_EN	PIN1_bm
 
 void dac_speaker_on(void);
 void dac_speaker_off(void);
 void dac_setup(bool dual_channel);
-void dac_off(void);
+void dac_disable(void);
 
 static inline void dac_ch0_write(uint16_t data) {
 	DACB.CH0DATA = data;

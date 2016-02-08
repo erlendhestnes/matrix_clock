@@ -12,11 +12,11 @@
 
 static volatile bool disp_time = true;
 
-#define TOP_HALF		9
-#define BOTTOM_HALF		0
-
 void rtc_setup(void) 
 {
+	//Disable power reduction for RTC
+	PR.PRGEN &= ~0x40;
+	
 	CCP = CCP_IOREG_gc;
 	CLK.RTCCTRL = CLK_RTCSRC_TOSC32_gc | CLK_RTCEN_bm;
 	while (RTC.STATUS & RTC_SYNCBUSY_bm);
@@ -37,21 +37,21 @@ void rtc_force_update(void)
 
 void rtc_show_hours(void) 
 {
-	rtc_update_display(TOP_HALF,env_var.time.hours);
+	rtc_update_display(TOP_HALF,env.time.hours);
 	disp_time = false;
 }
 
 void rtc_show_minutes(void) 
 {
-	rtc_update_display(BOTTOM_HALF,env_var.time.minutes);
+	rtc_update_display(BOTTOM_HALF,env.time.minutes);
 	disp_time = false;
 }
 
 void rtc_enable_time_render(void) 
 {
-	env_var.menu_id = 0;
-	rtc_update_display(BOTTOM_HALF,env_var.time.minutes);
-	rtc_update_display(TOP_HALF,env_var.time.hours);
+	env.menu_id = 0;
+	rtc_update_display(BOTTOM_HALF,env.time.minutes);
+	rtc_update_display(TOP_HALF,env.time.hours);
 	disp_time = true;
 }
 
@@ -89,51 +89,50 @@ void rtc_update_display(uint8_t pos, uint8_t time)
 ISR(RTC_OVF_vect) 
 {
 	//Variable to check system-runtime
-	env_var.runtime++;
+	env.runtime++;
 	
-	if (++env_var.time.minutes >= 60) {
+	if (++env.time.minutes >= 60) {
 		
-		env_var.time.minutes = 0;
+		env.time.minutes = 0;
 		if (disp_time) {
-			rtc_update_display(BOTTOM_HALF,env_var.time.minutes);
+			rtc_update_display(BOTTOM_HALF,env.time.minutes);
 			display_refresh_screen();
 		}
-		
-		//Todo: implement DST - Daylight Saving Time
-		
-		if (++env_var.time.hours >= 24) {
-			if (env_var.time.weekday++ >= Sunday) {
-				env_var.time.weekday = Monday;
-				env_var.time.week++;
-			}
-			if (env_var.time.day++ >= time_get_days_in_month(env_var.time.month,env_var.time.year)) {
-				env_var.time.day = 1;
-				if (env_var.time.month++ >= December) {
-					env_var.time.month = January;
-					env_var.time.week = 1;
-					env_var.time.year++;
+		if (++env.time.hours >= 24) {
+			if (env.time.weekday++ >= Sunday) {
+				env.time.weekday = Monday;
+				if (env.time.week++ >= 53) {
+					env.time.week = 1;
 				}
 			}
-			env_var.time.hours = 0;
+			if (env.time.day++ >= time_get_days_in_month(env.time.month,env.time.year)) {
+				env.time.day = 1;
+				if (env.time.month++ >= December) {
+					env.time.month = January;
+					env.time.year++;
+					env.time.week = time_get_weeknumber(env.time.day,env.time.month,env.time.year);
+				}
+			}
+			env.time.hours = 0;
 			if (disp_time) {
-				rtc_update_display(TOP_HALF,env_var.time.hours);
+				rtc_update_display(TOP_HALF,env.time.hours);
 				display_refresh_screen();
 			}
 		} else {
 			if (disp_time) {
-				rtc_update_display(TOP_HALF,env_var.time.hours);
+				rtc_update_display(TOP_HALF,env.time.hours);
 				display_refresh_screen();
 			}
 		}
-		env_var.time.minutes = 0;
+		env.time.minutes = 0;
 	} else {
 		if (disp_time) {
-			rtc_update_display(BOTTOM_HALF,env_var.time.minutes);
+			rtc_update_display(BOTTOM_HALF,env.time.minutes);
 			display_refresh_screen();
 		}
 	}
-	if (env_var.time.hours == env_var.alarm.hours) {
-		if (env_var.time.minutes == env_var.alarm.minutes)
+	if (env.time.hours == env.alarm.hours) {
+		if (env.time.minutes == env.alarm.minutes)
 		{
 			//Alarm code goes here
 		}	

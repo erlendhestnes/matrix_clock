@@ -107,36 +107,27 @@ uint8_t time_get_days_in_month(months_t month, uint16_t year)
 
 uint8_t time_get_weekday(uint8_t day, uint8_t month, uint16_t year)
 {
-	int16_t yyyy = year;
-	int16_t mm = month;
-	int16_t dd = day;
-
-	// Declare other required variables
-	int16_t day_of_year_number;
-	int16_t jan_1_weekday;
-	int16_t weekday;
-
-	int16_t i,j,k,l;
-	int16_t mnth[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
-
-	// Set DayofYear Number for yyyy mm dd
-	day_of_year_number = dd + mnth[mm-1];
-
-	// Increase of Dayof Year Number by 1, if year is leapyear and month is february
-	if ((time_is_leap_year(yyyy) == true) && (mm == 2))
-	day_of_year_number += 1;
-
-	// Find the Jan1WeekDay for year
-	i = (yyyy - 1) % 100;
-	j = (yyyy - 1) - i;
-	k = i + i/4;
-	jan_1_weekday = 1 + (((((j / 100) % 4) * 5) + k) % 7);
-
-	// Calcuate the WeekDay for the given date
-	l= day_of_year_number + (jan_1_weekday - 1);
-	weekday = 1 + ((l - 1) % 7);
-
-	return weekday;
+	static int t[] = { 0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4 };
+	year -= month < 3;
+	switch (( year + year/4 - year/100 + year/400 + t[month-1] + day) % 7) {
+		case 0:
+			return Sunday;
+		case 1:
+			return Monday;
+		case 2:
+			return Tuesday;
+		case 3:
+			return Wednesday;
+		case 4:
+			return Thursday;
+		case 5:
+			return Friday;
+		case 6:
+			return Saturday;
+		default:
+			return 0;
+	}
+	return 0;
 }
 
 uint16_t time_get_days_in_year(uint8_t day, uint8_t month, uint16_t year)
@@ -222,7 +213,7 @@ int16_t time_get_weeknumber(uint8_t day, uint8_t month, uint16_t year)
 	}
 	    
 	if (year_number==yyyy) {
-		n=day_of_year_number + (7 - weekday) + (jan_1_weekday -1);
+		n = day_of_year_number + (7 - weekday) + (jan_1_weekday -1);
 		week_number = n / 7;
 		if (jan_1_weekday > 4)
 		week_number -= 1;

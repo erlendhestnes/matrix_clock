@@ -14,80 +14,74 @@
 #include "../../modules/fatfs/ff.h"
 #include "../../modules/display/display.h"
 
-#include <stdlib.h>
-
 volatile bool json_found = false;
-volatile bool wdt_triggered = false;
 volatile char link_channel = '0';
-
 volatile static uint16_t rx_ptr = 0;
 static char rx_buffer[RX_BUFFER];
-
 char ip_address[19];
-
 esp8266_status_t status;
 
 static inline void esp8266_send_cmd(char *str, uint16_t timeout_ms) 
 {
 	status = ESP8266_NONE;
 	uart_write_str(str);
-	_delay_ms(timeout_ms);
+	delay_ms(timeout_ms);
 }
 
 void esp8266_on(void) 
 {
-	PORTD.DIRSET = CH_EN;
-	PORTD.OUTSET = CH_EN;
-	_delay_ms(500);
+	PORTD.DIRSET = CH_EN | ESP_RST;
+	PORTD.OUTSET = CH_EN | ESP_RST;
+	_delay_ms(100);
 }
 
 void esp8266_off(void) 
 {
+	PORTD.DIRSET = CH_EN;
 	PORTD.OUTCLR = CH_EN;
+}
+
+void esp8266_deep_sleep(void)
+{
+	esp8266_send_cmd("AT+GSLP=50",250);
 }
 
 void esp8266_reset(void) 
 {
+	PORTD.DIRSET = ESP_RST;
 	PORTD.OUTSET = ESP_RST;
-	_delay_ms(500);
+	_delay_ms(100);
 	PORTD.OUTCLR = ESP_RST;
-	_delay_ms(500);
+	_delay_ms(100);
+	PORTD.OUTSET = ESP_RST;
+	_delay_ms(2000);
 }
 
 esp8266_status_t esp8266_setup(void) 
 {	
 	//Reset module
-	esp8266_send_cmd("AT+RST",5000);
+	esp8266_send_cmd("AT+RST",2000);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
-	/*
-	esp8266_send_cmd("AT+IPR=115200",5000);
-	if (status != ESP8266_SUCCESS) {
-		return status;
-	}
-	*/
-	
-	//Show firmware info
-	//esp8266_send_cmd("AT+GMR",1000);
-	//if (status != ESP8266_SUCCESS) {
-	//	return status;
-	//}
+
+	//For ESP8266 crash detection
+	wdt_triggered = false;
 	
 	//Set Data Mode
-	esp8266_send_cmd("AT+CIPMODE=0",1000);
+	esp8266_send_cmd("AT+CIPMODE=0",100);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Single connection mode
-	esp8266_send_cmd("AT+CIPMUX=0",250);
+	esp8266_send_cmd("AT+CIPMUX=0",100);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Select STA mode
-	esp8266_send_cmd("AT+CWMODE=1",250);
+	esp8266_send_cmd("AT+CWMODE=1",100);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
@@ -116,10 +110,9 @@ esp8266_status_t esp8266_join_ap(char *ssid, char *pass)
 	strcat(cmd,"\",\"");
 	strcat(cmd,pass);
 	strcat(cmd,"\"");
-	esp8266_send_cmd(cmd,250);
+	esp8266_send_cmd(cmd,100);
 	
-	while (status != ESP8266_SUCCESS)
-	{
+	while (status != ESP8266_SUCCESS) {
 		_delay_ms(100);
 		
 		if (cnt++ > timeout) {
@@ -136,32 +129,35 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 {	
 	uint16_t timeout = 300;
 	uint16_t cnt = 0;
-	//Try to make this dynamic?
-	char cmd[150];
+	char cmd[100];
 	
 	//Set up TCP connection to host
 	strcpy(cmd,"AT+CIPSTART=\"TCP\",\"");
 	strcat(cmd,host);
 	strcat(cmd,"\",80");
-	esp8266_send_cmd(cmd,250);
-	
-	if ((status != ESP8266_SUCCESS) || (status != ESP8266_CONNECT)) {
+	esp8266_send_cmd(cmd,100);
+	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Count number of bytes to send
 	char *number_of_bytes;
-	itoa(strlen(addr) + 25, number_of_bytes, 10);
+	itoa_simple(number_of_bytes,strlen(addr) + 25);
+	//itoa(strlen(addr) + 25, number_of_bytes, 10);
 	strcpy(cmd, "AT+CIPSEND=");
 	strcat(cmd,number_of_bytes);
 	strcat(cmd,"\r"); //needs to be here...
-	esp8266_send_cmd(cmd,50);
+	esp8266_send_cmd(cmd,100);
 	
 	//Request data by sending a GET
 	strcpy(cmd,"GET ");
-	strcat(cmd,addr);
+	if (strlen(cmd) < sizeof(cmd)) {
+		strcat(cmd,addr);
+	} else {
+		return ESP8266_ERROR;
+	}
 	strcat(cmd," HTTP/1.0\r\n");
-	esp8266_send_cmd(cmd,50);
+	esp8266_send_cmd(cmd,100);
 	
 	while (status != ESP8266_SUCCESS)
 	{
@@ -198,6 +194,8 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 		memset(rx_buffer,0,RX_BUFFER);
 		json_found = false;
 		rx_ptr = 0;	
+	} else {
+		return ESP8266_ERROR;
 	}
 	
 	esp8266_send_cmd("AT+CIPCLOSE",50);
@@ -208,23 +206,41 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 esp8266_status_t esp8266_setup_webserver(bool sta, bool ap) 
 {	
 	//Reset module
-	esp8266_reset();
-	
-	//Set Data Mode
-	esp8266_send_cmd("AT+CIPMODE=0",250);
+	esp8266_send_cmd("AT+RST",2000);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
-	//Select mode
-	if (sta) {
-		esp8266_send_cmd("AT+CWMODE=1",250);
-	} else if (ap) {
-		esp8266_send_cmd("AT+CWMODE=2",250);
+	wdt_triggered = false;
+	
+	//Set Data Mode
+	esp8266_send_cmd("AT+CIPMODE=0",100);
+	if (status != ESP8266_SUCCESS) {
+		return status;
+	}
+	
+	//Select mode (this can be more streamlined)
+	if (sta && !ap) {
+		esp8266_send_cmd("AT+CWMODE=1",100);
+	} else if (ap && !sta) {
+		esp8266_send_cmd("AT+CWMODE=2",100);
 	} else if (ap && sta) {
-		esp8266_send_cmd("AT+CWMODE=3",250);
+		esp8266_send_cmd("AT+CWMODE=3",100);
 	} else {
 		return ESP8266_ERROR;
+	}
+	
+	//Set Data Mode
+	if (ap) {
+		esp8266_send_cmd("AT+CWSAP=\"SMART_CLOCK\",\"123\",5,0",100);
+		if (status != ESP8266_SUCCESS) {
+			return status;
+		}
+			
+		esp8266_send_cmd("AT+CIPAP=\"192.168.0.1\"",100);
+		if (status != ESP8266_SUCCESS) {
+			return status;
+		}
 	}
 	
 	if (status != ESP8266_SUCCESS) {
@@ -232,11 +248,11 @@ esp8266_status_t esp8266_setup_webserver(bool sta, bool ap)
 	}
 	
 	if (sta || (sta && ap)) {
-		esp8266_join_ap(env_var.wifi_ssid,env_var.wifi_pswd);
+		esp8266_join_ap(env.wifi_ssid,env.wifi_pswd);
 	}
 	
 	//List ip addresses
-	esp8266_send_cmd("AT+CIFSR", 250);
+	esp8266_send_cmd("AT+CIFSR", 100);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
@@ -245,14 +261,15 @@ esp8266_status_t esp8266_setup_webserver(bool sta, bool ap)
 #ifdef SHOW_MANUAL
 	display_print_scrolling_text(ip_address,false);
 #endif
+
 	//Configure multiple connections
-	esp8266_send_cmd("AT+CIPMUX=1",250);
+	esp8266_send_cmd("AT+CIPMUX=1",100);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Start server
-	esp8266_send_cmd("AT+CIPSERVER=1,80",250);	
+	esp8266_send_cmd("AT+CIPSERVER=1,80",100);	
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
@@ -260,32 +277,45 @@ esp8266_status_t esp8266_setup_webserver(bool sta, bool ap)
 	return ESP8266_SUCCESS;
 }
 
-static inline void at_cipsend(char channel, char *str) 
+static void at_cipsend(char channel, char *str) 
 {
-	char number_of_bytes[5];
-	char cmd[50];
 	uint16_t timeout = 0;
+	char number_of_bytes[5];
+	char cmd[25];
 	
-	itoa(strlen(str),number_of_bytes,10);
-	if (channel == '0') {
-		strcpy(cmd, "AT+CIPSEND=0,");
-	} else {
+	itoa_simple(number_of_bytes,strlen(str));
+	//itoa(strlen(str),number_of_bytes,10);
+	if (channel == '1') {
 		strcpy(cmd, "AT+CIPSEND=1,");
+	} else if (channel == '2') {
+		strcpy(cmd, "AT+CIPSEND=2,");
+	} else if (channel == '3') {
+		strcpy(cmd, "AT+CIPSEND=3,");
+	} else {
+		strcpy(cmd, "AT+CIPSEND=0,");
 	}
 	strcat(cmd,number_of_bytes);
-	strcat(cmd,"\r");
 
 	esp8266_send_cmd(cmd,100);
 	while((rx_buffer[0] != '>') && (timeout++ < 50)) {
 		_delay_ms(100);
 	}
+	
 	printf("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n%s\r\n\r\n",str);
+	/*
+	esp8266_send_cmd("HTTP/1.1 200 OK",0);
+	esp8266_send_cmd("Content-Type: text/html",0);
+	esp8266_send_cmd("Connection: close",0);
+	esp8266_send_cmd(str,0);
+	*/
 	_delay_ms(100);
+	
+	esp8266_send_cmd("AT+CIPSTO=5",100);
 }
 
 static inline void at_cipsend_from_sd_card(void) 
 {
-	char cmd[50];
+	//char cmd[50];
 	
 	FATFS FatFs;		// FatFs work area needed for each volume
 	FIL Fil;			// File object needed for each open file
@@ -297,7 +327,7 @@ static inline void at_cipsend_from_sd_card(void)
 	memset(line,0,1024);
 	
 	if (f_open(&Fil, "comp.txt", FA_READ | FA_OPEN_EXISTING) == FR_OK) {
-		uint32_t filesize = f_size(&Fil);
+		//uint32_t filesize = f_size(&Fil);
 		do 
 		{ 
 			f_read(&Fil,line,1024,&br);
@@ -312,7 +342,7 @@ static inline void at_cipsend_from_sd_card(void)
 	}
 	
 	if (f_open(&Fil, "zepto.txt", FA_READ | FA_OPEN_EXISTING) == FR_OK) {
-		uint32_t filesize = f_size(&Fil);
+		//uint32_t filesize = f_size(&Fil);
 		do { 
 			f_read(&Fil,line,1024,&br);
 			esp8266_send_cmd("AT+CIPSEND=0,1024\r",0);
@@ -339,7 +369,6 @@ esp8266_status_t esp8266_configure_ssid_and_password(void)
 		<form method=\"post\" target=\"_self\">\
 		SSID: <input type=\"text\" name=\"my_ssid\"><br>\
 		PASS: <input type=\"password\" name=\"my_password\"><br>\
-		ZIP-Code:<input type=\"text\" name=\"zip\"><br>\
 		NAME:<input type=\"text\" name=\"name\"><br>\
 		<input type=\"submit\" value=\"Submit\">\
 		</form>\
@@ -347,26 +376,17 @@ esp8266_status_t esp8266_configure_ssid_and_password(void)
 		</body>\
 		</html>");
 		
-		_delay_ms(1000);
-		
-		if (link_channel == '0') {
-			esp8266_send_cmd("AT+CIPCLOSE=0\r", 100);
-		} else {
-			esp8266_send_cmd("AT+CIPCLOSE=1\r", 100);	
-		}
-		
 	} else if(status == ESP8266_POST_REQ) {
-		uint16_t timeout = 0;
-		
+		uint16_t timeout = 0;	
 		while(timeout++ < 30) {
 			_delay_ms(100);
 			if (strstr(rx_buffer,"my_password") != NULL) {
 				
-				uint8_t ssid_len = sizeof(env_var.wifi_ssid);
-				uint8_t pass_len = sizeof(env_var.wifi_pswd);
+				uint8_t ssid_len = sizeof(env.wifi_ssid);
+				uint8_t pass_len = sizeof(env.wifi_pswd);
 				
-				memset(env_var.wifi_ssid,0,ssid_len);
-				memset(env_var.wifi_pswd,0,pass_len);
+				memset(env.wifi_ssid,0,ssid_len);
+				memset(env.wifi_pswd,0,pass_len);
 				
 				uint16_t len = strlen(rx_buffer);
 				uint8_t n = 0;
@@ -382,24 +402,18 @@ esp8266_status_t esp8266_configure_ssid_and_password(void)
 						}
 						if (n == 1) {
 							if (strlen(temp) < ssid_len)
-								strcpy(env_var.wifi_ssid,temp);
+								strcpy(env.wifi_ssid,temp);
 						} else if (n == 2) {
 							if (strlen(temp) < pass_len)
-								strcpy(env_var.wifi_pswd,temp);
-							break;
-						}
+								strcpy(env.wifi_pswd,temp);
+						} 
 					}
 				}
-				
-				if (link_channel == '0') {
-					esp8266_send_cmd("AT+CIPCLOSE=0\r", 100);
-				} else {
-					esp8266_send_cmd("AT+CIPCLOSE=1\r", 100);
-				}
-				
+
 				esp8266_off();
 				_delay_ms(1000);
 				esp8266_on();
+
 				status = esp8266_setup();
 				if (status != ESP8266_SUCCESS) {
 #ifdef SHOW_MANUAL
@@ -408,7 +422,7 @@ esp8266_status_t esp8266_configure_ssid_and_password(void)
 					return ESP8266_TIMEOUT;
 				}
 				
-				status = esp8266_join_ap(env_var.wifi_ssid,env_var.wifi_pswd);
+				status = esp8266_join_ap(env.wifi_ssid,env.wifi_pswd);
 				if (status != ESP8266_SUCCESS) {
 #ifdef SHOW_MANUAL
 					display_print_scrolling_text("COULD NOT JOIN AP",false);
@@ -427,13 +441,12 @@ esp8266_status_t esp8266_configure_ssid_and_password(void)
 
 ISR(USARTD0_RXC_vect) 
 {
-	
 	char rx_temp = USARTD0.DATA;
 	
 	if (rx_temp == '\n') {
 		if (strstr(rx_buffer,"OK") || strstr(rx_buffer,"ready")) {
 			status = ESP8266_SUCCESS;
-		} else if (strstr(rx_buffer,"ERROR") || strstr(rx_buffer,"FAIL")) {
+		} else if (strstr(rx_buffer,"ERROR")) {
 			status = ESP8266_ERROR;
 		} else if (strstr(rx_buffer,"CONNECT")) {
 			status = ESP8266_CONNECT;
@@ -446,7 +459,10 @@ ISR(USARTD0_RXC_vect)
 			status = ESP8266_POST_REQ;
 		} else if (strstr(rx_buffer,"192")) {
 			strncpy(ip_address,strchr(rx_buffer,'\"'),19);
-		} 
+		} else if (strstr(rx_buffer,"wdt")) {
+			wdt_triggered = true;
+		}
+		 
 		if (strstr(rx_buffer,"{")) {
 			json_found = true;	
 		} else {

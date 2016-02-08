@@ -16,7 +16,7 @@
 }
 
 #define DISABLE_GEN( ) { \
-	PR.PRGEN |= PR_AES_bm | PR_DMA_bm | PR_EVSYS_bm | PR_RTC_bm; \
+	PR.PRGEN |= PR_AES_bm | PR_DMA_bm | PR_EVSYS_bm | PR_EBI_bm; \
 }
 
 #define DISABLE_TC( ) { \
@@ -44,5 +44,7 @@
 	__PORT_PULLUP(PORTE, 0x0F); \
 	__PORT_PULLUP(PORTR, 0x03); \
 }
+
+void lowpower_init(void);
 
 #endif

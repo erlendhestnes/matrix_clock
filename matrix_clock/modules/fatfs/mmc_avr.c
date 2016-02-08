@@ -17,12 +17,12 @@
 #include "../../global.h"
 
 /* Port controls  (Platform dependent) */
-#define CS_LOW()	SD_PORT.OUTCLR |= SD_CS			/* CS=low */
-#define	CS_HIGH()	SD_PORT.OUTSET |= SD_CS			/* CS=high */
-#define MMC_CD		(!(SD_PORT.IN & SD_CD))			/* Card detected.   yes:true, no:false, default:true */
+#define CS_LOW()	PORTC.OUTCLR = SD_CS			/* CS=low */
+#define	CS_HIGH()	PORTC.OUTSET = SD_CS			/* CS=high */
+#define MMC_CD		(!(PORTC.IN & SD_CD))			/* Card detected.   yes:true, no:false, default:true */
 #define MMC_WP		0								/* Write protected. yes:true, no:false, default:false */
-#define	FCLK_SLOW()	SD_SPI.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV64_gc		/* Set slow clock (F_CPU / 64) */
-#define	FCLK_FAST()	SD_SPI.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV4_gc		/* Set fast clock (F_CPU / 2) */
+#define	FCLK_SLOW()	SPIC.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV64_gc		/* Set slow clock (F_CPU / 64) */
+#define	FCLK_FAST()	SPIC.CTRL = SPI_ENABLE_bm | SPI_MASTER_bm | SPI_CLK2X_bm | SPI_PRESCALER_DIV4_gc		/* Set fast clock (F_CPU / 2) */
 
 
 /*--------------------------------------------------------------------------
@@ -73,6 +73,8 @@ BYTE CardType;			/* Card type flags */
 static
 void power_on (void)
 {
+	PR.PRPC &= ~0x01;
+	
 	TCC0.CNT = 0;
 	TCC0.PER = 1250;
 	TCC0.CTRLA = TC_CLKSEL_DIV256_gc;
@@ -81,11 +83,9 @@ void power_on (void)
 	TCC0.INTCTRLB |= TC_CCBINTLVL_LO_gc;
 	TCC0.CTRLB |= TC0_CCBEN_bm;
 	
-	{	/* Remove this block if no socket power control */
-		PORTB.DIRSET |= PIN1_bm;
-		PORTB.OUTCLR |= PIN1_bm;
-		for (Timer1 = 2; Timer1; );	/* Wait for 20ms */
-	}	
+	PORTB.DIRSET = PIN1_bm;
+	PORTB.OUTCLR = PIN1_bm;
+	_delay_ms(20);
 	
 	spi_setup();
 }
@@ -94,8 +94,9 @@ static
 void power_off (void)
 {
 	TCC0.CTRLA = TC_CLKSEL_OFF_gc;
-	spi_off();
-	PORTB.OUTSET |= PIN1_bm;
+	spi_disable();
+	PORTB.OUTSET = PIN1_bm;
+	PR.PRPC |= 0x01;
 	_delay_ms(20);
 }
 

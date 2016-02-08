@@ -12,8 +12,6 @@
 
 #define swap(a, b) { uint16_t t = a; a = b; b = t; }
 
-#define HT1632C_PORT PORTE
-
 #define HT1632C_CS PIN0_bm
 #define HT1632C_RD PIN1_bm
 #define HT1632C_WR PIN2_bm
@@ -23,13 +21,8 @@
 
 void ht1632c_setup(uint8_t type) 
 {
-	HT1632C_PORT.DIRSET = HT1632C_CS;
-	HT1632C_PORT.OUTSET = HT1632C_CS;
-	
-	HT1632C_PORT.DIRSET = HT1632C_WR;
-	HT1632C_PORT.OUTSET = HT1632C_WR;
-	
-	HT1632C_PORT.DIRSET = HT1632C_DATA;
+	PORTE.DIRSET = HT1632C_CS | HT1632C_WR | HT1632C_DATA;
+	PORTE.OUTSET = HT1632C_CS | HT1632C_WR;
 	
 	/* READ - Not used
 	HT1632_PORT.DIRSET = _rd;
@@ -47,15 +40,12 @@ void ht1632c_setup(uint8_t type)
 
 void ht1632c_power_down(void) 
 {
-	HT1632C_PORT.DIRCLR = HT1632C_CS;
-	HT1632C_PORT.DIRCLR = HT1632C_WR;
-	HT1632C_PORT.DIRCLR = HT1632C_RD;
-	HT1632C_PORT.DIRCLR = HT1632C_DATA;
+	PORTE.DIRCLR = HT1632C_CS | HT1632C_WR | HT1632C_RD | HT1632C_DATA;
 	
-	HT1632C_PORT.PIN0CTRL = PORT_OPC_PULLUP_gc;
-	HT1632C_PORT.PIN1CTRL = PORT_OPC_PULLUP_gc;
-	HT1632C_PORT.PIN2CTRL = PORT_OPC_PULLUP_gc;
-	HT1632C_PORT.PIN3CTRL = PORT_OPC_PULLUP_gc;
+	PORTE.PIN0CTRL = PORT_OPC_PULLUP_gc;
+	PORTE.PIN1CTRL = PORT_OPC_PULLUP_gc;
+	PORTE.PIN2CTRL = PORT_OPC_PULLUP_gc;
+	PORTE.PIN3CTRL = PORT_OPC_PULLUP_gc;
 	
 	ht1632c_write_command(HT1632_LED_OFF);
 	ht1632c_write_command(HT1632_SYS_DIS);
@@ -95,7 +85,7 @@ void ht1632c_clr_pixel(uint16_t i)
 
 void ht1632c_fill_screen(void) 
 {
-	for (uint8_t i=0; i<(DISPLAY_WIDTH*DISPLAY_HEIGHT/8); i++) {
+	for (uint8_t i = 0; i < (DISPLAY_WIDTH*DISPLAY_HEIGHT/8); i++) {
 		ledmatrix[i] = 0xFF;
 	}
 	display_refresh_screen();
@@ -103,7 +93,7 @@ void ht1632c_fill_screen(void)
 
 void ht1632c_clear_screen(void) 
 {
-	for (uint8_t i=0; i<(DISPLAY_WIDTH*DISPLAY_HEIGHT/8); i++) {
+	for (uint8_t i = 0; i < (DISPLAY_WIDTH*DISPLAY_HEIGHT/8); i++) {
 		ledmatrix[i] = 0;
 	}
 	display_refresh_screen();
@@ -111,42 +101,42 @@ void ht1632c_clear_screen(void)
 
 void ht1632c_refresh_screen(void) 
 {
-	HT1632C_PORT.OUTCLR = HT1632C_CS;
+	PORTE.OUTCLR = HT1632C_CS;
 
 	ht1632c_write_data(HT1632_WRITE, 3);
 	// send with address 0
 	ht1632c_write_data(0, 7);
 
-	for (uint16_t i=0; i < 32; i+=2) {
+	for (uint16_t i = 0; i < 32; i += 2) {
 		uint16_t d = ledmatrix[i];
 		d <<= 8;
 		d |= ledmatrix[i+1];
 
 		ht1632c_write_data(d, 16);
 	}
-	HT1632C_PORT.OUTSET = HT1632C_CS;
+	PORTE.OUTSET = HT1632C_CS;
 }
 
-static inline void ht1632c_clear_buffer(void) 
+void ht1632c_clear_buffer(void) 
 {
-	for (uint8_t i=0; i<(DISPLAY_WIDTH*DISPLAY_HEIGHT/8); i++) {
+	for (uint8_t i = 0; i < (DISPLAY_WIDTH*DISPLAY_HEIGHT/8); i++) {
 		ledmatrix[i] = 0;
 	}
 }
 
 void ht1632c_write_data(uint16_t data, uint8_t bits) 
 {
-	HT1632C_PORT.DIRSET = HT1632C_DATA;
+	PORTE.DIRSET = HT1632C_DATA;
 	for (uint8_t i = bits; i > 0; i--) {
-		HT1632C_PORT.OUTCLR = HT1632C_WR;
+		PORTE.OUTCLR = HT1632C_WR;
 		if (data & _BV(i-1)) {
-			HT1632C_PORT.OUTSET = HT1632C_DATA;
+			PORTE.OUTSET = HT1632C_DATA;
 		} else {
-			HT1632C_PORT.OUTCLR = HT1632C_DATA;
+			PORTE.OUTCLR = HT1632C_DATA;
 		}
-		HT1632C_PORT.OUTSET = HT1632C_WR;
+		PORTE.OUTSET = HT1632C_WR;
 	}
-	HT1632C_PORT.OUTCLR = HT1632C_DATA;
+	PORTE.OUTCLR = HT1632C_DATA;
 }
 
 void ht1632c_write_ram(uint8_t addr, uint8_t data) 
@@ -157,9 +147,9 @@ void ht1632c_write_ram(uint8_t addr, uint8_t data)
 	d <<= 4;
 	d |= data & 0xF;
 		
-	HT1632C_PORT.OUTCLR = HT1632C_CS;
+	PORTE.OUTCLR = HT1632C_CS;
 	ht1632c_write_data(d, 14);
-	HT1632C_PORT.OUTSET = HT1632C_CS;
+	PORTE.OUTSET = HT1632C_CS;
 }
 
 void ht1632c_write_command(uint8_t cmd) 
@@ -170,9 +160,9 @@ void ht1632c_write_command(uint8_t cmd)
 	data |= cmd;
 	data <<= 1;
 		
-	HT1632C_PORT.OUTCLR = HT1632C_CS;
+	PORTE.OUTCLR = HT1632C_CS;
 	ht1632c_write_data(data, 12);
-	HT1632C_PORT.OUTSET = HT1632C_CS;
+	PORTE.OUTSET = HT1632C_CS;
 }
 
 
@@ -293,7 +283,6 @@ void ht1632c_slide_in_from_left(void)
 		ht1632c_shift_right();
 	}
 	
-	//TODO: This should really be 16
 	for (i = 30; i >= 16; i -= 2) {
 		ledmatrix[0] = temp[i-16];
 		ledmatrix[16] = temp[i];
@@ -317,18 +306,21 @@ void ht1632c_slide_in_from_right(void)
 	
 	for (i = 0; i <= 14; i += 2)
 	{
-		ht1632c_shift_left();
 		ledmatrix[15] = temp[i];
 		ledmatrix[31] = temp[i+16];
+		ht1632c_shift_left();
 	}
 	
-	//This should be 15, not 13
 	for (i = 1; i <= 15; i += 2)
 	{
-		//Alignment hack
-		ht1632c_shift_left();
 		ledmatrix[15] = temp[i];
 		ledmatrix[31] = temp[i+16];
+	
+		if (i == 15) {
+			display_refresh_screen();
+		} else {
+			ht1632c_shift_left();
+		}
 	}
 }
 
@@ -397,7 +389,7 @@ void ht1632c_print_buffer(char *buffer, uint16_t length)
 		ht1632c_shift_left();
 		ledmatrix[15] = buffer[i] >> 3;
 		ledmatrix[31] = buffer[i] << 5;
-		_delay_ms(30);
+		_delay_ms(25);
 	}
 	
 	//Shift buffer out of visible area
@@ -405,12 +397,12 @@ void ht1632c_print_buffer(char *buffer, uint16_t length)
 	if ((length/4) < 15) {
 		for (i = 0; i < 30; i++) {
 			ht1632c_shift_left();
-			_delay_ms(30);
+			_delay_ms(25);
 		}
 	} else {
 		for (i = 0; i < (length/4); i++) {
 			ht1632c_shift_left();
-			_delay_ms(30);
+			_delay_ms(25);
 		}
 	}
 }
