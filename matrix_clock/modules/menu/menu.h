@@ -51,6 +51,11 @@ void	menu_configure_brightnesss(void);
 uint8_t menu_set_time(void);
 uint8_t menu_set_alarm(void);
 
+void start_wifi_indication(void);
+void stop_wifi_indication(void);
+
+void menu_alarm(void);
+
 void play_sound(void);
 
 #endif /* MENU_H_ */

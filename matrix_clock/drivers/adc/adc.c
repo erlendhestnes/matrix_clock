@@ -1,18 +1,18 @@
 #include "adc.h"
 
+int16_t offset = 0;
+
 void adc_setup(void) 
 {	
+	unsigned char samples = 16;
+	
 	//Disable power reduction for ADCA 
 	PR.PRPA &= ~0x02;
 	
-	ADCA.CALL = 0x36;
-	ADCA.CALH = 0x03;
-	//ADCA.CALL = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL0) );
-	//ADCA.CALH = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL1) );
-	//ADCA.CALL = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL0) );
-	//ADCA.CALH = ReadCalibrationByte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL1) );	
+	ADCA.CALL = read_signature_byte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL0) );
+	ADCA.CALH = read_signature_byte( offsetof(NVM_PROD_SIGNATURES_t, ADCACAL1) );
 
-	ADCA.CH0.CTRL	 = ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	ADCA.CH0.CTRL	 = ADC_CH_GAIN_1X_gc | ADC_CH_INPUTMODE_SINGLEENDED_gc;
 	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
 	ADCA.CTRLB		 = ADC_RESOLUTION_12BIT_gc;
 	ADCA.PRESCALER	 = ADC_PRESCALER_DIV256_gc;
@@ -21,6 +21,29 @@ void adc_setup(void)
 	ADCA.INTFLAGS	 = ADC_CH0IF_bm;
 	ADCA.CH0.INTCTRL = ADC_CH_INTLVL_OFF_gc;
 	ADCA.CTRLA		 = ADC_ENABLE_bm;
+	_delay_ms(4);
+	
+	while (samples > 0) {
+		ADCA.CH0.CTRL |= (1 << ADC_CH_START_bp);
+		while(!(ADCA.CH0.INTFLAGS & ADC_CH_CHIF_bm));
+		ADCA.CH0.INTFLAGS = ADC_CH_CHIF_bm;
+		offset += ADCA.CH0.RES;
+		samples--;
+	}
+	
+	ADCA.CTRLA &= ~(ADC_ENABLE_bm);
+	offset >>= 4;
+	ADCA.CMP = 0x0000;
+	ADCA.CH0.CTRL = ADC_CH_GAIN_1X_gc | ADC_CH_INPUTMODE_SINGLEENDED_gc;
+	ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
+	ADCA.EVCTRL	= ADC_SWEEP_0_gc | ADC_EVACT_NONE_gc;
+	ADCA.CH0.INTCTRL = ADC_CH_INTMODE_COMPLETE_gc | ADC_CH_INTLVL_OFF_gc;
+	ADCA.CH1.INTCTRL = ADC_CH_INTLVL_OFF_gc;
+	ADCA.CH2.INTCTRL = ADC_CH_INTLVL_OFF_gc;
+	ADCA.CH3.INTCTRL = ADC_CH_INTLVL_OFF_gc;
+	
+	ADCA.CTRLA |= ADC_ENABLE_bm;
+	_delay_ms(10);
 }
 
 void adc_disable(void) 
@@ -34,8 +57,8 @@ void adc_disable(void)
 uint16_t adc_read_voltage(void) 
 {	
 	adc_enable_current_measurement();
-	uint16_t val = 0;
-	for (uint8_t i = 0; i < 10; i++) {
+	uint32_t val = 0;
+	for (uint8_t i = 0; i < 25; i++) {
 		ADCA.CH0.CTRL |= (1 << ADC_CH_START_bp);
 		while(!(ADCA.CH0.INTFLAGS & ADC_CH_CHIF_bm));
 		ADCA.CH0.INTFLAGS = ADC_CH_CHIF_bm;
@@ -43,18 +66,32 @@ uint16_t adc_read_voltage(void)
 	}
 	adc_disable_current_measurement();
 
-	return val/10;
+	return val/25;
+}
+
+float adc_get_battery_voltage(void) 
+{
+	adc_setup();
+	
+	float offset_error = 0.33;
+	float measured_voltage;
+	float battery_voltage;
+	
+	measured_voltage = (float)adc_read_voltage();
+	battery_voltage = ((measured_voltage * 2.05f)/(4095.0f)) * 32.0f/10.0f;
+	
+	adc_disable();
+	
+	return (battery_voltage - offset_error);
 }
 
 uint8_t adc_get_battery_percentage(void) 
 {	
-	adc_setup();
-
-	float voltage;
-	voltage = (float)adc_read_voltage();
-	voltage /= 6.6f;
+	uint16_t voltage;
+	float battery_voltage;
 	
-	adc_disable();
+	battery_voltage = (adc_get_battery_voltage() * 100.0f);
+	voltage = (uint16_t)battery_voltage;
 	
 	if (voltage > 600) {
 		return 99;
@@ -78,9 +115,8 @@ uint8_t adc_get_battery_percentage(void)
 		return 20;
 	} else if (voltage > 375) {
 		return 10;
-	//This is critical level, should display somekind of warning
 	} else if (voltage > 350) {
-		return 10;
+		return 5;
 	}
 	
 	return 0;
@@ -104,13 +140,4 @@ void adc_disable_current_measurement(void)
 	//Test
 	//PORTA.DIRCLR = PIN1_bm;
 	//PORTA.PIN1CTRL = PORT_OPC_PULLUP_gc;
-}
-
-uint8_t read_calibration_byte(uint8_t index) 
-{	
-	uint8_t result;
-	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
-	result	= pgm_read_byte(index);
-	NVM_CMD = NVM_CMD_NO_OPERATION_gc;
-	return(result);
 }

@@ -45,6 +45,6 @@
 	__PORT_PULLUP(PORTR, 0x03); \
 }
 
-void lowpower_init(void);
+void lowpower_setup(void);
 
 #endif

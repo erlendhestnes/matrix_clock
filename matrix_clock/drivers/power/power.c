@@ -7,11 +7,10 @@
 
 #include "power.h"
 
-void lowpower_init(void) 
+void lowpower_setup(void) 
 {
 	DISABLE_GEN();
 	DISABLE_TC();
 	DISABLE_COM();
 	DISABLE_ANLG();
-	//ENABLE_PULLUP();
 }

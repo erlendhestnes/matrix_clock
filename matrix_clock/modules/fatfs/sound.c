@@ -48,6 +48,9 @@ static inline uint8_t smooth(uint8_t data, float filterVal, float smoothedVal){
 /*-----------------------------------------------------*/
 /* Sound sampling ISR                                  */
 
+#define SOUND_VOLUME 8
+#define SOUND_OFFSET 2048
+
 ISR(TCC0_OVF_vect)
 {
 	WAVFIFO *fcb = WavFifo;	/* Pointer to FIFO controls */
@@ -82,8 +85,8 @@ ISR(TCC0_OVF_vect)
 	fcb->ct = ct;
 	fcb->ri = ri & (fcb->sz_buff - 1);
 	
-	dac_ch0_write((1<<1)+(l<<3));
-	dac_ch1_write((1<<1)-(l<<3));
+	dac_ch0_write(SOUND_OFFSET+(l*SOUND_VOLUME));
+	dac_ch1_write(SOUND_OFFSET-(l*SOUND_VOLUME));
 }
 
 /*-----------------------------------------------------*/

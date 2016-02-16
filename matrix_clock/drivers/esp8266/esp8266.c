@@ -101,9 +101,10 @@ void esp8266_update(void)
 
 esp8266_status_t esp8266_join_ap(char *ssid, char *pass) 
 {	
-	uint16_t timeout = 300;
 	uint16_t cnt = 0;
 	char cmd[100];
+	
+	memset(cmd,0,sizeof(cmd));
 	
 	strcpy(cmd,"AT+CWJAP=\"");
 	strcat(cmd,ssid);
@@ -115,7 +116,7 @@ esp8266_status_t esp8266_join_ap(char *ssid, char *pass)
 	while (status != ESP8266_SUCCESS) {
 		_delay_ms(100);
 		
-		if (cnt++ > timeout) {
+		if (cnt++ > 300) {
 			return ESP8266_TIMEOUT;
 		} else if (status == ESP8266_ERROR) {
 			return status;
@@ -125,25 +126,26 @@ esp8266_status_t esp8266_join_ap(char *ssid, char *pass)
 	return ESP8266_SUCCESS;
 }
 
-esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t json_length) 
+esp8266_status_t esp8266_get_json(char *host, char *addr, char *buffer, uint8_t buffer_length) 
 {	
-	uint16_t timeout = 300;
 	uint16_t cnt = 0;
-	char cmd[100];
+	char *number_of_bytes;
+	char cmd[150];
+	
+	memset(cmd,0,sizeof(cmd));
 	
 	//Set up TCP connection to host
 	strcpy(cmd,"AT+CIPSTART=\"TCP\",\"");
 	strcat(cmd,host);
 	strcat(cmd,"\",80");
-	esp8266_send_cmd(cmd,100);
+	esp8266_send_cmd(cmd,250);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
 	
 	//Count number of bytes to send
-	char *number_of_bytes;
-	itoa_simple(number_of_bytes,strlen(addr) + 25);
-	//itoa(strlen(addr) + 25, number_of_bytes, 10);
+	//itoa_simple(number_of_bytes,strlen(addr) + 25);
+	itoa(strlen(addr) + 25, number_of_bytes, 10);
 	strcpy(cmd, "AT+CIPSEND=");
 	strcat(cmd,number_of_bytes);
 	strcat(cmd,"\r"); //needs to be here...
@@ -159,11 +161,10 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 	strcat(cmd," HTTP/1.0\r\n");
 	esp8266_send_cmd(cmd,100);
 	
-	while (status != ESP8266_SUCCESS)
-	{
+	while (status != ESP8266_SUCCESS) {
 		esp8266_send_cmd("",100);
 		
-		if (cnt++ > timeout) {
+		if (cnt++ > 30) {
 			return ESP8266_TIMEOUT;
 		} else if (status == ESP8266_ERROR) {
 			break;
@@ -171,11 +172,10 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 	}
 	
 	//Waiting for all the data
-	while (status != ESP8266_CLOSED)
-	{
+	while (status != ESP8266_CLOSED) {
 		_delay_ms(100);
 		
-		if (cnt++ > timeout) {
+		if (cnt++ > 30) {
 			return ESP8266_TIMEOUT;
 		} else if (status == ESP8266_ERROR) {
 			break;
@@ -183,14 +183,14 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *json, uint8_t js
 	}
 	
 	if (json_found) {
-		uint16_t start_addr = (uint16_t)rx_buffer;
-		uint16_t end_addr = (uint16_t)strrchr(rx_buffer,'}');
-		uint16_t len = (end_addr-start_addr)+1;
-		if (len > json_length) {
+		uint16_t json_start_addr = (uint16_t)rx_buffer;
+		uint16_t json_end_addr = (uint16_t)strrchr(rx_buffer,'}');
+		uint16_t json_length = (json_end_addr-json_start_addr)+1;
+		if (json_length > buffer_length) {
 			return ESP8266_ERROR;
 		}
-		memset(json,0,json_length);
-		strncpy(json,rx_buffer,len);
+		memset(buffer,0,buffer_length);
+		strncpy(buffer,rx_buffer,json_length);
 		memset(rx_buffer,0,RX_BUFFER);
 		json_found = false;
 		rx_ptr = 0;	
@@ -219,7 +219,6 @@ esp8266_status_t esp8266_setup_webserver(bool sta, bool ap)
 		return status;
 	}
 	
-	//Select mode (this can be more streamlined)
 	if (sta && !ap) {
 		esp8266_send_cmd("AT+CWMODE=1",100);
 	} else if (ap && !sta) {
@@ -230,7 +229,6 @@ esp8266_status_t esp8266_setup_webserver(bool sta, bool ap)
 		return ESP8266_ERROR;
 	}
 	
-	//Set Data Mode
 	if (ap) {
 		esp8266_send_cmd("AT+CWSAP=\"SMART_CLOCK\",\"123\",5,0",100);
 		if (status != ESP8266_SUCCESS) {
@@ -251,7 +249,7 @@ esp8266_status_t esp8266_setup_webserver(bool sta, bool ap)
 		esp8266_join_ap(env.wifi_ssid,env.wifi_pswd);
 	}
 	
-	//List ip addresses
+	//List IP addresses
 	esp8266_send_cmd("AT+CIFSR", 100);
 	if (status != ESP8266_SUCCESS) {
 		return status;
@@ -279,12 +277,12 @@ esp8266_status_t esp8266_setup_webserver(bool sta, bool ap)
 
 static void at_cipsend(char channel, char *str) 
 {
-	uint16_t timeout = 0;
+	uint16_t cnt = 0;
 	char number_of_bytes[5];
 	char cmd[25];
 	
-	itoa_simple(number_of_bytes,strlen(str));
-	//itoa(strlen(str),number_of_bytes,10);
+	//itoa_simple(number_of_bytes,strlen(str));
+	itoa(strlen(str),number_of_bytes,10);
 	if (channel == '1') {
 		strcpy(cmd, "AT+CIPSEND=1,");
 	} else if (channel == '2') {
@@ -297,7 +295,7 @@ static void at_cipsend(char channel, char *str)
 	strcat(cmd,number_of_bytes);
 
 	esp8266_send_cmd(cmd,100);
-	while((rx_buffer[0] != '>') && (timeout++ < 50)) {
+	while((rx_buffer[0] != '>') && (cnt++ < 50)) {
 		_delay_ms(100);
 	}
 	
@@ -313,72 +311,26 @@ static void at_cipsend(char channel, char *str)
 	esp8266_send_cmd("AT+CIPSTO=5",100);
 }
 
-static inline void at_cipsend_from_sd_card(void) 
-{
-	//char cmd[50];
-	
-	FATFS FatFs;		// FatFs work area needed for each volume
-	FIL Fil;			// File object needed for each open file
-	UINT br;
-	
-	f_mount(&FatFs, "", 0);
-	
-	char line[1024];
-	memset(line,0,1024);
-	
-	if (f_open(&Fil, "comp.txt", FA_READ | FA_OPEN_EXISTING) == FR_OK) {
-		//uint32_t filesize = f_size(&Fil);
-		do 
-		{ 
-			f_read(&Fil,line,1024,&br);
-			esp8266_send_cmd("AT+CIPSEND=0,1024\r",25);
-			printf("%s",line);
-			_delay_ms(25);
-		} while (f_eof(&Fil) == 0);
-		
-		f_close(&Fil);
-	} else {
-		uart_write_str("Could not access sd card...");
-	}
-	
-	if (f_open(&Fil, "zepto.txt", FA_READ | FA_OPEN_EXISTING) == FR_OK) {
-		//uint32_t filesize = f_size(&Fil);
-		do { 
-			f_read(&Fil,line,1024,&br);
-			esp8266_send_cmd("AT+CIPSEND=0,1024\r",0);
-			while(status != ESP8266_SUCCESS);
-			status = ESP8266_NONE;
-			printf("%s",line);
-			while(status != ESP8266_SUCCESS);
-		} while (f_eof(&Fil) == 0);
-		
-		f_close(&Fil);
-	} else {
-		uart_write_str("Could not access sd card...");
-	}
-}
-
 esp8266_status_t esp8266_configure_ssid_and_password(void) 
 {
 	if (status == ESP8266_GET_REQ) {
-		
 		at_cipsend(link_channel,"<!DOCTYPE html>\
 		<html>\
 		<body>\
-		<p>Smart Clock - Configuration</p>\
+		<p>SQUARECLOCK - Config</p>\
 		<form method=\"post\" target=\"_self\">\
 		SSID: <input type=\"text\" name=\"my_ssid\"><br>\
 		PASS: <input type=\"password\" name=\"my_password\"><br>\
 		NAME:<input type=\"text\" name=\"name\"><br>\
 		<input type=\"submit\" value=\"Submit\">\
 		</form>\
-		<p>Input network name (SSID) and password for your router. Then click submit.</p>\
+		<p>Input network name (SSID) and password</p>\
+		<p>for your router. Then click submit.</p>\
 		</body>\
 		</html>");
-		
 	} else if(status == ESP8266_POST_REQ) {
-		uint16_t timeout = 0;	
-		while(timeout++ < 30) {
+		uint16_t cnt = 0;	
+		while(cnt++ < 30) {
 			_delay_ms(100);
 			if (strstr(rx_buffer,"my_password") != NULL) {
 				
@@ -416,6 +368,7 @@ esp8266_status_t esp8266_configure_ssid_and_password(void)
 
 				status = esp8266_setup();
 				if (status != ESP8266_SUCCESS) {
+					stop_wifi_indication();
 #ifdef SHOW_MANUAL
 					display_print_scrolling_text("COULD NOT JOIN AP",false);
 #endif
@@ -424,11 +377,13 @@ esp8266_status_t esp8266_configure_ssid_and_password(void)
 				
 				status = esp8266_join_ap(env.wifi_ssid,env.wifi_pswd);
 				if (status != ESP8266_SUCCESS) {
+					stop_wifi_indication();
 #ifdef SHOW_MANUAL
 					display_print_scrolling_text("COULD NOT JOIN AP",false);
 #endif
 					return ESP8266_TIMEOUT;
 				}
+				stop_wifi_indication();
 #ifdef SHOW_MANUAL
 				display_print_scrolling_text("WIFI CONFIGURED",false);
 #endif

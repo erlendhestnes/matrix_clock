@@ -39,18 +39,11 @@ void dac_setup(bool dual_channel)
 		DACB.CTRLB |= DAC_CHSEL_SINGLE_gc;
 	}
 	
-	//From calibration rows
-	DACB.CH0OFFSETCAL = 0x07;
-	DACB.CH0GAINCAL   = 0x1B;
-	DACB.CH1GAINCAL   = 0x0C;
-	DACB.CH1OFFSETCAL = 0x13;
-
-	/*
-	DACB.CH0OFFSETCAL = 0xE8;
-	DACB.CH0GAINCAL = 0xB6;
-	DACB.CH1GAINCAL = 0x0C;
-	DACB.CH1OFFSETCAL = 0x13;
-	*/
+	DACB.CH0OFFSETCAL = read_signature_byte( offsetof(NVM_PROD_SIGNATURES_t, DACB0OFFCAL) );
+	DACB.CH0GAINCAL = read_signature_byte( offsetof(NVM_PROD_SIGNATURES_t, DACB0GAINCAL) );
+	
+	DACB.CH1OFFSETCAL = read_signature_byte( offsetof(NVM_PROD_SIGNATURES_t, DACB1OFFCAL) );
+	DACB.CH1GAINCAL = read_signature_byte( offsetof(NVM_PROD_SIGNATURES_t, DACB1GAINCAL) );
 	
 	DACB.CTRLA |= DAC_ENABLE_bm;
 	
@@ -61,17 +54,12 @@ void dac_disable(void)
 {
 	PORTB.DIRCLR = DAC0 | DAC1;
 	
+	PORTB.PIN2CTRL = PORT_OPC_PULLUP_gc;
+	PORTB.PIN3CTRL = PORT_OPC_PULLUP_gc;
+	
 	DACB.CTRLA &= ~(DAC_ENABLE_bm);
 	dac_speaker_off();
 	
 	//Enable power reduction for DACB
 	PR.PRPB |= 0x04;
-}
-
-static inline uint8_t read_signature_byte(uint16_t Address) {
-	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
-	uint8_t Result;
-	__asm__ ("lpm %0, Z\n" : "=r" (Result) : "z" (Address));
-	NVM_CMD = NVM_CMD_NO_OPERATION_gc;
-	return Result;
 }

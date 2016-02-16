@@ -330,6 +330,7 @@ void EEPROM_EraseAll( void )
 
 uint8_t EEPROM_WriteEnv(void) 
 {	
+	/*
 	uint8_t temp[sizeof(env)];
 	uint16_t page_addr;
 	uint8_t byte_addr;
@@ -346,15 +347,20 @@ uint8_t EEPROM_WriteEnv(void)
 			}
 		}
 	}
+	*/
 	
-	//eeprom_update_block(&env_var,MAPPED_EEPROM_START,sizeof(env_var));
+	eeprom_update_block(&env,EEPROM_START,sizeof(env));
 	
 	return 1;
 }
 
 uint8_t EEPROM_ReadEnv(void) 
 {
-	//eeprom_read_block(&env_var,MAPPED_EEPROM_START,sizeof(env_var));		
+	env_variables_t temp;
+	memset(&temp,0,sizeof(temp));
+	eeprom_read_block(&temp,EEPROM_START,sizeof(temp));
+	
+	/*		
 	uint8_t temp[sizeof(env)];
 	uint16_t page_addr;
 	uint8_t byte_addr;
@@ -367,9 +373,12 @@ uint8_t EEPROM_ReadEnv(void)
 			}
 		}
 	}
+	
 	memcpy(&env, temp, sizeof(temp));
-
-	if (env.id != 0) {
+	*/
+	
+	if (temp.id != 0 && temp.id != 0xff) {
+		memcpy(&env,&temp,sizeof(temp));
 		return 1;
 	}
 	

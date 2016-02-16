@@ -12,10 +12,10 @@
 
 #define swap(a, b) { uint16_t t = a; a = b; b = t; }
 
-#define HT1632C_CS PIN0_bm
-#define HT1632C_RD PIN1_bm
-#define HT1632C_WR PIN2_bm
-#define HT1632C_DATA PIN3_bm
+#define HT1632C_CS		PIN0_bm
+#define HT1632C_RD		PIN1_bm
+#define HT1632C_WR		PIN2_bm
+#define HT1632C_DATA	PIN3_bm
 
 /*--------------------------------SETUP-----------------------------------*/
 
@@ -40,15 +40,15 @@ void ht1632c_setup(uint8_t type)
 
 void ht1632c_power_down(void) 
 {
+	ht1632c_write_command(HT1632_LED_OFF);
+	ht1632c_write_command(HT1632_SYS_DIS);
+	
 	PORTE.DIRCLR = HT1632C_CS | HT1632C_WR | HT1632C_RD | HT1632C_DATA;
 	
 	PORTE.PIN0CTRL = PORT_OPC_PULLUP_gc;
 	PORTE.PIN1CTRL = PORT_OPC_PULLUP_gc;
 	PORTE.PIN2CTRL = PORT_OPC_PULLUP_gc;
 	PORTE.PIN3CTRL = PORT_OPC_PULLUP_gc;
-	
-	ht1632c_write_command(HT1632_LED_OFF);
-	ht1632c_write_command(HT1632_SYS_DIS);
 }
 
 void ht1632c_set_brightness(int8_t pwm) 
@@ -126,7 +126,6 @@ void ht1632c_clear_buffer(void)
 
 void ht1632c_write_data(uint16_t data, uint8_t bits) 
 {
-	PORTE.DIRSET = HT1632C_DATA;
 	for (uint8_t i = bits; i > 0; i--) {
 		PORTE.OUTCLR = HT1632C_WR;
 		if (data & _BV(i-1)) {
@@ -136,7 +135,6 @@ void ht1632c_write_data(uint16_t data, uint8_t bits)
 		}
 		PORTE.OUTSET = HT1632C_WR;
 	}
-	PORTE.OUTCLR = HT1632C_DATA;
 }
 
 void ht1632c_write_ram(uint8_t addr, uint8_t data) 
@@ -194,6 +192,23 @@ void ht1632c_shift_left(void)
 			ledmatrix[i] = ledmatrix[i+2];
 		}
 	}
+	
+	/*
+	//Why does not this work??
+	for (i = 0; i <= 31; i++) {
+		if (i == 14) {
+			ledmatrix[14] = ledmatrix[1];
+		} else if (i == 15) {
+			ledmatrix[15] = 0;
+		} else if(i == 30) {
+			ledmatrix[30] = ledmatrix[17];
+		} else if (i == 31) {
+			ledmatrix[31] = 0;
+		} else {
+			ledmatrix[i] = ledmatrix[i+2];
+		}
+	}
+	*/
 }
 
 void ht1632c_shift_right(void) 
@@ -221,6 +236,21 @@ void ht1632c_shift_right(void)
 			ledmatrix[i] = ledmatrix[i-2];
 		}
 	}
+	/*
+	for (i = 31; i > 0; i--) {
+		if(i == 17) {
+			ledmatrix[17] = ledmatrix[30];
+		} else if(i == 16) {
+			ledmatrix[16] = 0;
+		} else if (i == 1) {
+			ledmatrix[1] = ledmatrix[14];
+		} else if (i == 0) {
+			ledmatrix[0] = 0;
+		} else {
+			ledmatrix[i] = ledmatrix[i-2];
+		}
+	}
+	*/
 }
 
 void ht1632c_shift_up(void) 
@@ -393,7 +423,6 @@ void ht1632c_print_buffer(char *buffer, uint16_t length)
 	}
 	
 	//Shift buffer out of visible area
-	
 	if ((length/4) < 15) {
 		for (i = 0; i < 30; i++) {
 			ht1632c_shift_left();

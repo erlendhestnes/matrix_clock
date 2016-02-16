@@ -25,6 +25,9 @@ typedef enum {
 	PS1_INT = 4
 } si114x_int_t;
 
+#define INTERRUPT_MODE true
+#define POLL_MODE	   false
+
 volatile button_t btn_status;
 volatile si114x_int_t si114x_status;
 

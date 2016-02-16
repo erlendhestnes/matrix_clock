@@ -13,7 +13,7 @@
 #define RAND_MAX 255
 
 #define PROXIMITY_THRESHOLD2 1600
-#define PROXIMITY_THRESHOLD 280
+#define PROXIMITY_THRESHOLD 360
 #define MENU_TIMEOUT 7000
 
 #include <avr/io.h>
@@ -66,8 +66,6 @@ typedef struct {
 	uint8_t week;
 	months_t month;
 	uint16_t year;
-	int8_t timezone;
-	uint8_t DST;
 } time_env_t;
 
 typedef struct {
@@ -77,26 +75,28 @@ typedef struct {
 } alarm_t;
 
 typedef struct {
-	uint16_t id;
+	uint8_t id;
+	uint8_t menu_id;
+	uint8_t battery;
+	int8_t brightness;
+	uint16_t ps1;
+	uint16_t baseline[3];
 	uint32_t runtime;
 	char name[25];
-	time_env_t time;
 	char temperature[3];
 	char weather_info[40];
 	char city[25];
-	int8_t brightness;
-	uint16_t ps1;
 	char wifi_pswd[25];
 	char wifi_ssid[25];
-	uint8_t menu_id;
 	alarm_t alarm;
-	uint16_t baseline[3];
+	time_env_t time;
 } env_variables_t;
 
 env_variables_t env;
 
 #define SHOW_MANUAL
 #define DEBUG_ON
+//#define IR_SLIDER_ALGORITHM
 
 #define CLOCK_NAME "MARK"
 #define CLOCK_ID   1
@@ -148,6 +148,14 @@ static inline char* itoa_simple( char *s, long num ) {
 	reverse_string( rev, s - rev);
 
 	return (char*)(s - begin);
+}
+
+static uint8_t read_signature_byte(uint16_t Address) {
+	NVM_CMD = NVM_CMD_READ_CALIB_ROW_gc;
+	uint8_t Result;
+	__asm__ ("lpm %0, Z\n" : "=r" (Result) : "z" (Address));
+	NVM_CMD = NVM_CMD_NO_OPERATION_gc;
+	return Result;
 }
 
 #endif

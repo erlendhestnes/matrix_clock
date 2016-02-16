@@ -45,10 +45,7 @@ void ultra_power_saving_mode_test(void)
 	//si114x_setup_ps1();
 	twi_off();
 	uart_disable();
-	rtc_enable_time_render();
-	display_refresh_screen();
-	display_fade(3);
-	display_fade(0);
+	display_clear_screen();
 	ht1632c_power_down();
 	SLEEP.CTRL |= SLEEP_MODE_PWR_SAVE;
 	SLEEP.CTRL |= SLEEP_SEN_bm;
@@ -58,21 +55,25 @@ void ultra_power_saving_mode_test(void)
 
 int main(void) 
 {	
-	lowpower_init();
-	
 	//Structures
 	SI114X_IRQ_SAMPLE sensor_data;
 	
 	//System
 	clock_setup_32_mhz_pll();
+	
+	lowpower_setup();
 	display_setup();
 	esp8266_off();
 	spi_disable();
+	uart_disable();
+	btn_setup(POLL_MODE);
+	
+	SLEEP.CTRL |= SLEEP_MODE_PWR_SAVE;
 	
 	//Init env variables
-	if(1)
-	//if (!EEPROM_ReadEnv())
-	{
+	btn_status = btn_check_press();
+	
+	if (!EEPROM_ReadEnv() || (btn_status == BTN1)) {
 		menu_set_env_variables();
 	} 
 	
@@ -81,38 +82,21 @@ int main(void)
 	stdout = stdin = &mystdout;
 
 #ifdef DEBUG_ON
-	puts("SMART Clock - By: Erlend Hestnes\r\n");
+	puts("SQUARECLOCK - By: Erlend Hestnes (2016)\r\n");
 #endif
 
 	//Enable interrupts
 	pmic_setup();
-	btn_setup(true);
-	
-	twi_setup(&TWIC);
-
-	SLEEP.CTRL |= SLEEP_MODE_PWR_SAVE;
-	
 	sei();
 	
-	/*
-	//Ultra low power test
-	ultra_power_saving_mode_test();
-	while(1);
-	*/
-	
-	si114x_baseline_calibration(&sensor_data);
-	
 	//Turn on proximity channel 1 with ISR and threshold
-	si114x_setup_ps1();
+	twi_setup(&TWIC);
+
+#ifdef IR_SLIDER_ALGORITHM
+	si114x_baseline_calibration(&sensor_data);
+#endif
 	
-	/*
-	//Si114x test
-	while(1) {
-		si114x_get_data(&sensor_data);
-		printf("PS1: %d \r\n",sensor_data.ps1);
-		//_delay_ms(500);
-	}
-	*/
+	si114x_setup_ps1();
 	
 	//Turn on RTC
 	display_fade(0);
@@ -125,15 +109,14 @@ int main(void)
 	//This should flip MOSI and SCK, if DMA should be used at some point...
 	//PORTC.REMAP |= PORT_SPI_bm;
 	
-	bool display = true;
+	bool led_on = true;
 	
 	while (1) { 	
 		if (si114x_status == PS1_INT) {
-			uint16_t timeout_ms = 0;
+			uint16_t cnt = 0;
 			bool timeout = false;
 			env.menu_id = 0;
 			
-			btn_setup(false);
 			btn_disable_si114x_interrupt();
 			
 			display_fade(MAX_BRIGHTNESS);
@@ -141,25 +124,28 @@ int main(void)
 			puts("DEBUG: Entered gesture mode.");
 #endif
 			si114x_setup();
-			_delay_ms(500);
+			//_delay_ms(250);
 			
 			while(!timeout) {
 				si114x_get_data(&sensor_data);
+#ifdef IR_SLIDER_ALGORITHM
 				si114x_process_samples((HANDLE)SI114X_ADDR,&sensor_data);
-				
+#else
+				slider_algorithm_v2((HANDLE)SI114X_ADDR,&sensor_data,1);
+#endif
 				menu_state_machine(&sensor_data);
 				
 				if (sensor_data.ps1 < PROXIMITY_THRESHOLD2) {
-					if (timeout_ms++ > MENU_TIMEOUT) {
+					if (cnt++ > MENU_TIMEOUT) {
 						timeout = true;
 					}
 				} else {
-					timeout_ms = 0;
+					cnt = 0;
 				}
+				
 			}
-			//Should not write too often to EEPROM
+			//WARNING: Should not write too often to EEPROM
 		    EEPROM_WriteEnv();
-			timeout_ms = 0;
 #ifdef DEBUG_ON
 			puts("DEBUG: Timeout! Leaving gesture mode.");
 #endif
@@ -169,7 +155,6 @@ int main(void)
 				display_slide_in_from_top();
 			}
 			display_fade(env.brightness);
-			btn_setup(true);
 			btn_si114x_enable_interrupt();
 			si114x_setup_ps1();
 		} else if (si114x_status == ALS_INT_2) {
@@ -177,14 +162,8 @@ int main(void)
 #ifdef DEBUG_ON
 			puts("DEBUG: Somebody turned off the lights!");
 #endif
-		} else if (btn_status == (BTN1 | BTN4)) {
-			//Calculate baseline for Si114x
-			display_slide_out_to_bottom();
-			si114x_baseline_calibration(&sensor_data);
-			rtc_enable_time_render();
-			display_slide_in_from_top();
 		} else if (btn_status == BTN4) {
-			if (display) {
+			if (led_on) {
 				display_off();
 				_delay_ms(1000);
 			} else {
@@ -192,8 +171,12 @@ int main(void)
 				_delay_ms(1000);
 			}
 			btn_status = NO_BTN;
-			display ^= true;
+			led_on ^= true;
+		} else if (alarm_status == ALARM_TRIGGERED) {
+			alarm_status = ALARM_OFF;
+			menu_alarm();
 		}
+		
 		si114x_status = 0;
 		
 		SLEEP.CTRL |= SLEEP_SEN_bm;

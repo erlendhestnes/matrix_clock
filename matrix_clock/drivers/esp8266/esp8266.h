@@ -13,21 +13,17 @@
 
 static volatile bool wdt_triggered = false;
 
-//Arkitekt Christies Gt 11
+//My router (this is food for hackers...)
 #define SSID        "Inteno_68"
 #define PASS        "A26A411568"
 
-//Lundaasen 12
-//#define SSID        "Loqal_43"
-//#define PASS        "892B9A1758"
+#define WEATHER_IP		"www.squareclock.io"
+#define WEATHER_ADDR	"http://www.squareclock.io/json/forecast.php"
 
-#define WEATHER_IP "www.grenaderen.no"
-#define WEATHER_ADDR "http://grenaderen.no/test/weather.php"
+#define TIME_IP		"www.squareclock.io"
+#define TIME_ADDR	"http://www.squareclock.io/json/ntp.php"
 
-#define TIME_IP "www.grenaderen.no"
-#define TIME_ADDR "http://grenaderen.no/test/ntp.php"
-
-#define RX_BUFFER	250
+#define RX_BUFFER	200
 
 #define ESP_RST		PIN4_bm
 #define CH_EN		PIN5_bm

@@ -1,5 +1,10 @@
 #include "slider_algorithm.h"
+
+#define F_CPU 32000000UL
+
 #include <stdio.h>
+#include <stdbool.h>
+#include <util/delay.h>
 
 //-----------------------------------------------------------------------------
 // QS_Counts_to_Distance
@@ -86,15 +91,93 @@ s16 QS_Counts_to_Distance (u16 counts, u8 led)
     return (distance.u16[LSB]);
 }
 
-s16 QS_Counts_to_Distance_2(u16 counts, u8 led) {
-	double distance = 0;
+s16 QS_Counts_to_Distance_2(u16 counts, u8 led) 
+{
+	float distance = 0.0f;
 	
 	if (led == 1) {
-		distance = 139739*pow(counts,-0.88);
+		distance = 139739*powf((float)counts,-0.88f);
 	} else if (led == 2) {
-		distance = 155790*pow(counts,-0.91);
+		distance = 155790*powf((float)counts,-0.91f);
 	}
 	return (s16)distance;
+}
+
+#define LEFT_RADIUS 15
+#define RIGHT_RADIUS -15
+#define RADIUS 1000
+
+void slider_algorithm_v2(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale) 
+{
+	s16 ps1_mm = QS_Counts_to_Distance_2(samples->ps1,1);
+	s16 ps2_mm = QS_Counts_to_Distance_2(samples->ps2,2);
+	
+	static bool left_entry = false;
+	static bool right_entry = false;
+	static bool center_entry = false;
+	
+	static uint16_t entry_timestamp = 0;
+	
+	s16 ps_distance = (ps1_mm + ps2_mm) / 2;
+	
+	samples->gesture = NO_GESTURE;
+	
+	if (ps_distance < 240) {
+		 s16 x = (ps1_mm*ps1_mm - ps2_mm*ps2_mm) / 120;
+		 //printf("x: %d \r\n",x);
+		 //return;
+		 
+		 if (!left_entry && !right_entry && !center_entry) {
+			if (x > LEFT_RADIUS) {
+				printf("left entry \r\n");
+				left_entry = true;
+				entry_timestamp = samples->timestamp;
+			} else if (x < RIGHT_RADIUS) {
+				printf("right entry \r\n");
+				right_entry = true;
+				entry_timestamp = samples->timestamp;
+			} else {
+				printf("center entry \r\n");
+				center_entry = true;
+				entry_timestamp = samples->timestamp;	
+			}
+		 } else {
+			if (left_entry) {
+				//wait for right exit
+				if (x < RIGHT_RADIUS) {
+					printf("right exit! \r\n");
+					samples->gesture = LEFT_SWIPE;
+					left_entry = false;
+					return;
+				}
+			} else if (right_entry) {
+				//wait for left exit
+				if (x > LEFT_RADIUS) {
+					printf("left exit! \r\n");
+					samples->gesture = RIGHT_SWIPE;
+					right_entry = false;
+					return;
+				}
+			}
+			if (samples->timestamp - entry_timestamp > 2000) {
+				if (center_entry) {
+					printf("Selected! \r\n");
+					samples->gesture = PAUSE;	
+				} else {
+					printf("Timeout! \r\n");	
+				}
+				left_entry = false;
+				right_entry = false;
+				center_entry = false;
+			}
+			
+		 } 
+	} else {
+		//Out of range
+		left_entry = false;
+		right_entry = false;
+		center_entry = false;
+	}
 }
 
 void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale)

@@ -13,6 +13,14 @@
 #define TOP_HALF		9
 #define BOTTOM_HALF		0
 
+typedef enum {
+	ALARM_TRIGGERED,
+	ALARM_ON,
+	ALARM_OFF
+} alarm_status_t;
+
+alarm_status_t alarm_status;
+
 void rtc_setup(void);
 void rtc_show_hours(void);
 void rtc_show_minutes(void);
@@ -20,5 +28,6 @@ void rtc_enable_time_render(void);
 void rtc_disable_time_render(void);
 void rtc_update_display(uint8_t pos, uint8_t time);
 void rtc_force_update(void);
+void rtc_update_seconds(uint16_t seconds);
 
 #endif

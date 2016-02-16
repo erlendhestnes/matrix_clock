@@ -17,6 +17,8 @@ void rtc_setup(void)
 	//Disable power reduction for RTC
 	PR.PRGEN &= ~0x40;
 	
+	alarm_status = ALARM_OFF;
+	
 	CCP = CCP_IOREG_gc;
 	CLK.RTCCTRL = CLK_RTCSRC_TOSC32_gc | CLK_RTCEN_bm;
 	while (RTC.STATUS & RTC_SYNCBUSY_bm);
@@ -33,6 +35,17 @@ void rtc_setup(void)
 void rtc_force_update(void) 
 {
 	RTC.CNT = 1920;
+}
+
+void rtc_update_seconds(uint16_t seconds)
+{
+	//cli();
+	if (seconds < 60) {
+		RTC.CNT = 32*seconds;
+	} else {
+		RTC.CNT = 1920;
+	}
+	//sei();
 }
 
 void rtc_show_hours(void) 
@@ -131,10 +144,12 @@ ISR(RTC_OVF_vect)
 			display_refresh_screen();
 		}
 	}
-	if (env.time.hours == env.alarm.hours) {
-		if (env.time.minutes == env.alarm.minutes)
-		{
-			//Alarm code goes here
-		}	
+	if (alarm_status == ALARM_ON) {
+		if (env.time.hours == env.alarm.hours) {
+			if (env.time.minutes == env.alarm.minutes)
+			{
+				alarm_status = ALARM_TRIGGERED;
+			}
+		}
 	}
 }

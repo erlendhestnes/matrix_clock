@@ -25,8 +25,7 @@
 
 #include <ctype.h>
 
-static volatile uint16_t counter = 0;
-static volatile bool GET_request = false;
+static uint32_t timestamp = 0;
 
 #define TOKEN_BUFFER_SIZE 30
 
@@ -35,20 +34,21 @@ void play_sound(void)
 	FATFS FatFs;		// FatFs work area needed for each volume
 	FIL Fil;			// File object needed for each open file
 	BYTE Buff[512];		// Working buffer 1024
-	UINT bw;
+	//UINT bw;
 	
+	/*
 	if (f_open(&Fil, "newfilea2.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {	// Create a file
 		
 		f_write(&Fil, "It works!\r\n", 11, &bw);	// Write data to the file
 		
 		f_close(&Fil);								// Close the file
 	}
-	
-	
+	*/
+
 	f_mount(&FatFs, "", 0);
 	
 	BYTE res;
-	res = f_open(&Fil, "rath3.wav", FA_READ);
+	res = f_open(&Fil, "johnm16.wav", FA_READ);
 	if (!res) {
 		load_wav(&Fil, "**** WAV PLAYER ****", Buff, sizeof Buff);
 		f_close(&Fil);
@@ -62,10 +62,10 @@ void start_wifi_indication(void)
 	PR.PRPC &= ~0x01;
 	
 	TCC0.CNT = 0;
-	TCC0.PER = 0xffff;
+	TCC0.PER = 20000;
 	TCC0.CTRLA = TC_CLKSEL_DIV1024_gc;
 	
-	TCC0.CCD = 0xffff;
+	TCC0.CCD = 20000;
 	TCC0.INTCTRLB |= TC_CCDINTLVL_LO_gc;
 	TCC0.CTRLB |= TC0_CCDEN_bm;
 }
@@ -73,6 +73,8 @@ void start_wifi_indication(void)
 void stop_wifi_indication(void)
 {
 	TCC0.CTRLA = TC_CLKSEL_OFF_gc;
+	TCC0.INTCTRLB &= ~TC_CCDINTLVL_LO_gc;
+	TCC0.CTRLB &= ~TC0_CCDEN_bm;
 	display_clear_screen();
 	PR.PRPC |= 0x01;
 }
@@ -95,6 +97,8 @@ void start_loading(void)
 void stop_loading(void) 
 {
 	TCC0.CTRLA = TC_CLKSEL_OFF_gc;
+	TCC0.INTCTRLB &= ~TC_CCAINTLVL_LO_gc;
+	TCC0.CTRLB &= ~TC0_CCAEN_bm;
 	display_clear_screen();
 	PR.PRPC |= 0x01;
 }
@@ -113,10 +117,12 @@ esp8266_status_t get_internet_variables(bool get_time, bool get_temperature)
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
+	
 	status = esp8266_join_ap(env.wifi_ssid,env.wifi_pswd);
 	if (status != ESP8266_SUCCESS) {
 		return status;
 	}
+	
 	if (get_time) {
 		status = esp8266_get_json(TIME_IP,TIME_ADDR,json_string, sizeof(json_string));
 	} else if (get_temperature) {
@@ -154,24 +160,11 @@ esp8266_status_t get_internet_variables(bool get_time, bool get_temperature)
 			env.time.year = year;
 			env.time.month = month;
 			env.time.day = day;
-			env.time.hours = hour + env.time.timezone + env.time.DST;
+			env.time.hours = hour;
 			env.time.minutes = minute;
 			env.time.seconds = second;
+			rtc_update_seconds(second);
 			env.time.weekday = time_get_weekday(day,month,year);
-			
-			if (env.time.hours >= 24) {
-				env.time.hours -= 24;
-				if (env.time.weekday++ >= Sunday) {
-					env.time.weekday = Monday;
-				}
-				if (env.time.day++ >= time_get_days_in_month(env.time.month,env.time.year)) {
-					env.time.day = 1;
-					if (env.time.month++ >= December) {
-						env.time.month = January;
-						env.time.year++;
-					}
-				}
-			}
 			env.time.week = time_get_weeknumber(env.time.day,env.time.month,env.time.year);
 		}
 	}
@@ -181,6 +174,7 @@ esp8266_status_t get_internet_variables(bool get_time, bool get_temperature)
 		puts(token_buffer);
 #endif
 		if (strlen(token_buffer) <= sizeof(env.temperature)) {
+			memset(env.temperature,0,sizeof(env.temperature));
 			strncpy(env.temperature,token_buffer,strlen(token_buffer));
 		} else {
 			return ESP8266_ERROR;
@@ -190,6 +184,7 @@ esp8266_status_t get_internet_variables(bool get_time, bool get_temperature)
 		puts(token_buffer);
 #endif
 		if (strlen(token_buffer) < sizeof(env.weather_info)) {
+			memset(env.weather_info,0,sizeof(env.weather_info));
 			strncpy(env.weather_info,token_buffer,strlen(token_buffer));
 		} else {
 			return ESP8266_ERROR;
@@ -327,13 +322,15 @@ void menu_set_env_variables(void)
 	strncpy(env.name,CLOCK_NAME,sizeof(env.name));
 	env.id = CLOCK_ID;
 	env.menu_id = 0;
-	env.temperature[0] = '0';
 	env.brightness = 0;
+	env.runtime = 0;
+	
 	strncpy(env.wifi_pswd,PASS, strlen(PASS));
 	strncpy(env.wifi_ssid,SSID, strlen(SSID));
 	
-	env.time.timezone = 1;
-	env.time.DST = 0;
+	env.temperature[0] = '0';
+	env.city[0] = '0';
+	
 	env.time.seconds = 0;
 	env.time.minutes = 0;
 	env.time.hours = 0;
@@ -346,7 +343,22 @@ void menu_set_env_variables(void)
 	env.alarm.hours = 0;
 	env.alarm.minutes = 0;
 	
-	env.runtime = 0;
+	eeprom_write_block(&env,EEPROM_START,sizeof(env));
+	
+}
+
+void menu_alarm(void) 
+{
+	rtc_disable_time_render();
+	display_slide_out_to_bottom();
+	display_fill_screen();
+	display_refresh_screen();
+	display_fade_blink();
+	display_fade_blink();
+	display_fade_blink();
+	display_clear_screen();
+	rtc_enable_time_render();
+	display_slide_in_from_bottom();
 }
 
 menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples) 
@@ -432,15 +444,22 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 		} else if (env.menu_id == MENU_TEMP) {
 			esp8266_status_t status;
 			Si114xPauseAll((HANDLE)SI114X_ADDR);
-			display_fade_blink();			
+			display_fade_blink();
 			display_slide_out_to_top();
-			start_loading();
-			esp8266_on();
-			status = get_internet_variables(false,true);
-			esp8266_off();
-			stop_loading();
+			
+			//Weather don`t change that much
+			if (timestamp == 0 || (env.runtime - timestamp > 15)) {
+				start_loading();
+				esp8266_on();
+				status = get_internet_variables(false,true);
+				esp8266_off();
+				stop_loading();	
+			} else {
+				status = ESP8266_SUCCESS;
+			}
 			
 			if (status == ESP8266_SUCCESS) {
+				timestamp = env.runtime; 
 				uint8_t i = 0;
 				char weather_info[60];
 				strcpy(weather_info, "WEATHER FOR ");
@@ -461,7 +480,9 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 #ifdef SHOW_MANUAL
 				display_print_scrolling_text(weather_info, false);
 #endif
+				EEPROM_WriteEnv();
 			} else {
+				timestamp = 0;
 #ifdef SHOW_MANUAL
 				display_print_scrolling_text("COULD NOT GET TEMPERATURE", false);
 #endif
@@ -469,7 +490,25 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 			menu_draw_temperature_frame();
 			display_slide_in_from_top();
 			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
-		} 
+		} else if (env.menu_id == MENU_DATE) {
+			esp8266_status_t status;
+			Si114xPauseAll((HANDLE)SI114X_ADDR);
+			display_fade_blink();
+			display_slide_out_to_top();
+			start_loading();
+			esp8266_on();
+			status = get_internet_variables(true,false);
+			esp8266_off();
+			stop_loading();
+			if (status == ESP8266_SUCCESS) {
+				display_print_scrolling_text("TIME AND DATE UPDATED", false);
+			} else {
+				display_print_scrolling_text("COULD NOT GET TIME",false);
+			}
+			menu_draw_date_frame();
+			display_slide_in_from_top();
+			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
+		}
 	}
 	return MENU_SUCCESS;
 }
@@ -561,23 +600,28 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 				//Feature: Should draw wifi lines on display here.
 				esp8266_on();
 				if (esp8266_setup_webserver(false,true) == ESP8266_SUCCESS) {
-					//start_wifi_indication();
+					start_wifi_indication();
 					while(esp8266_configure_ssid_and_password() != ESP8266_TIMEOUT) {
 						btn_status = btn_check_press();
 						if (btn_status == BTN4) {
+							stop_wifi_indication();
+#ifdef SHOW_MANUAL
+							display_print_scrolling_text("CANCELLED",false);
+#endif							
 							break;
 						}
 						if (wdt_triggered) {
-							//stop_wifi_indication();
+							stop_wifi_indication();
 #ifdef SHOW_MANUAL
 							display_print_scrolling_text("SOMETHING WENT WRONG",false);
 #endif
 						}
 					}
-					//stop_wifi_indication();
+					EEPROM_WriteEnv();
+					stop_wifi_indication();
 				} else {
 #ifdef SHOW_MANUAL
-					display_print_scrolling_text("SOMETHING WENT WRONG",false);
+					display_print_scrolling_text("COULD NOT CONFIGURE WEBSERVER",false);
 #endif					
 				}
 				esp8266_off();
@@ -645,7 +689,7 @@ void menu_configure_brightnesss(void)
 				_delay_ms(100);
 				break;
 			case BTN3:
-				display_slide_out_to_bottom();
+				display_clear_screen();
 #ifdef SHOW_MANUAL
 				display_print_scrolling_text("BRIGHTNESS SET",false);
 #endif
@@ -668,137 +712,7 @@ void menu_configure_brightnesss(void)
 uint8_t menu_set_time(void) 
 {	
 	bool next = false;
-	char buffer[3];
 	
-	display_draw_three_letter_word("GMT");
-	display_slide_in_from_right();
-	_delay_ms(1000);
-	display_slide_out_to_left();
-	itoa_simple(buffer,env.time.timezone);
-	display_draw_small_char(3,10,'G',1,1);
-	display_draw_small_char(7,10,'M',1,1);
-	display_draw_small_char(11,10,'T',1,1);
-	if (env.time.timezone > 0) {
-		display_draw_small_char(5,3,'+',1,1);
-		} else if (env.time.timezone < 0) {
-		display_draw_small_char(5,3,'-',1,1);
-	}
-	display_draw_small_char(9,3,buffer[0],1,1);
-	display_slide_in_from_right();
-	//ht1632c_blink(true);
-	
-	while(!next) {
-		btn_status = btn_check_press();
-		switch(btn_status) {
-			case BTN4:
-				if (env.time.timezone < 9) {
-					display_clear_buffer();
-					env.time.timezone++;
-					itoa_simple(buffer,env.time.timezone);
-					display_draw_small_char(3,10,'G',1,1);
-					display_draw_small_char(7,10,'M',1,1);
-					display_draw_small_char(11,10,'T',1,1);
-					if (env.time.timezone > 0) {
-						display_draw_small_char(5,3,'+',1,1);
-						display_draw_small_char(9,3,buffer[0],1,1);
-					} else if (env.time.timezone < 0) {
-						display_draw_small_char(5,3,'-',1,1);
-						display_draw_small_char(9,3,buffer[1],1,1);
-					} else {
-						display_draw_small_char(8,3,'0',1,1);
-					}
-					display_refresh_screen();
-				}
-				_delay_ms(250);
-				break;
-			case BTN1:
-				if (env.time.timezone > -9) {
-					display_clear_buffer();
-					env.time.timezone--;
-					itoa_simple(buffer,env.time.timezone);
-					display_draw_small_char(3,10,'G',1,1);
-					display_draw_small_char(7,10,'M',1,1);
-					display_draw_small_char(11,10,'T',1,1);
-					if (env.time.timezone > 0) {
-						display_draw_small_char(5,3,'+',1,1);
-						display_draw_small_char(9,3,buffer[0],1,1);
-					} else if (env.time.timezone < 0) {
-						display_draw_small_char(5,3,'-',1,1);
-						display_draw_small_char(9,3,buffer[1],1,1);
-					} else {
-						display_draw_small_char(8,3,'0',1,1);
-					}
-					display_refresh_screen();
-				}
-				_delay_ms(250);
-				break;
-			case BTN3:
-				next = true;
-				//ht1632c_blink(false);
-				_delay_ms(250);
-				break;
-			case BTN2:
-				//ht1632c_blink(false);
-				display_slide_out_to_bottom();
-#ifdef SHOW_MANUAL
-				display_print_scrolling_text("CANCELLED",false);
-#endif
-				return 0;
-			default:
-				btn_status = NO_BTN;
-				break;
-		}
-	}
-	next = false;
-	display_slide_out_to_left();
-	display_draw_three_letter_word("DST");
-	display_slide_in_from_right();
-	_delay_ms(1000);
-	display_slide_out_to_left();
-	if (env.time.DST) {
-		display_draw_four_letter_word(" ON ");
-	} else {
-		display_draw_three_letter_word("OFF");
-	}
-	display_slide_in_from_right();
-	//ht1632c_blink(true);
-	
-	//Set hours
-	while(!next) {
-		btn_status = btn_check_press();
-		switch(btn_status) {
-			case BTN4:
-				display_clear_buffer();
-				env.time.DST = 1;
-				display_draw_four_letter_word(" ON ");
-				display_refresh_screen();
-				_delay_ms(250);
-				break;
-			case BTN1:
-				display_clear_buffer();
-				env.time.DST = 0;
-				display_draw_three_letter_word("OFF");
-				display_refresh_screen();
-				_delay_ms(250);
-				break;
-			case BTN3:
-				next = true;
-				//ht1632c_blink(false);
-				_delay_ms(250);
-				break;
-			case BTN2:
-				//ht1632c_blink(false);
-				display_slide_out_to_bottom();
-#ifdef SHOW_MANUAL
-				display_print_scrolling_text("CANCELLED",false);
-#endif
-				return 0;
-			default:
-				btn_status = NO_BTN;
-				break;
-		}
-	}
-	next = false;
 	display_slide_out_to_left();
 	display_draw_three_letter_word("HRS");
 	display_slide_in_from_right();
@@ -1112,6 +1026,7 @@ uint8_t menu_set_alarm(void)
 	next = false;
 	
 	//ht1632c_blink(false);
+	alarm_status = ALARM_ON;
 	EEPROM_WriteEnv();
 	display_slide_out_to_bottom();
 	

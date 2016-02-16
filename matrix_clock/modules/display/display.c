@@ -31,6 +31,7 @@ void display_off(void)
 {
 	display_slide_out_to_top();
 	ht1632c_write_command(HT1632_LED_OFF);
+	ht1632c_power_down();
 }
 
 void display_fill_screen(void) 
@@ -56,19 +57,17 @@ void display_refresh_screen(void)
 
 static inline void display_fade_up(uint8_t pwm, uint8_t prev_pwm) 
 {
-	while (prev_pwm < pwm) {
+	while (prev_pwm++ < pwm) {
 		ht1632c_set_brightness(prev_pwm);
 		_delay_ms(15);
-		prev_pwm++;
 	}
 }
 
 static inline void display_fade_down(uint8_t pwm, uint8_t prev_pwm) 
 {
-	while (prev_pwm > pwm) {
+	while (prev_pwm-- > pwm) {
 		ht1632c_set_brightness(prev_pwm);
 		_delay_ms(15);
-		prev_pwm--;
 	}
 }
 
@@ -507,45 +506,43 @@ void display_draw_button_info(void)
 void display_draw_wifi_icon(void) {
 	static uint8_t n = 0;
 
-	while(1) {
-		switch(n) {
-			case 0:
-			display_draw_pixel(7,1,1);
-			display_draw_pixel(8,1,1);
+	switch(n) {
+		case 0:
+			display_draw_pixel(7,3,1);
+			display_draw_pixel(8,3,1);
 			break;
-			case 1:
-			display_draw_pixel(6,3,1);
-			display_draw_pixel(7,4,1);
-			display_draw_pixel(8,4,1);
-			display_draw_pixel(9,3,1);
+		case 1:
+			display_draw_pixel(6,5,1);
+			display_draw_pixel(7,6,1);
+			display_draw_pixel(8,6,1);
+			display_draw_pixel(9,5,1);
 			break;
-			case 2:
-			display_draw_pixel(4,5,1);
-			display_draw_pixel(5,6,1);
-			display_draw_pixel(6,7,1);
-			display_draw_pixel(7,7,1);
-			display_draw_pixel(8,7,1);
-			display_draw_pixel(9,7,1);
-			display_draw_pixel(10,6,1);
-			display_draw_pixel(11,5,1);
+		case 2:
+			display_draw_pixel(4,7,1);
+			display_draw_pixel(5,8,1);
+			display_draw_pixel(6,9,1);
+			display_draw_pixel(7,9,1);
+			display_draw_pixel(8,9,1);
+			display_draw_pixel(9,9,1);
+			display_draw_pixel(10,8,1);
+			display_draw_pixel(11,7,1);
 			break;
-			
-			case 3:
-			display_draw_pixel(2,8,1);
-			display_draw_pixel(3,9,1);
-			display_draw_pixel(4,10,1);
-			display_draw_pixel(5,10,1);
-			display_draw_pixel(6,11,1);
-			display_draw_pixel(7,11,1);
-			display_draw_pixel(8,11,1);
-			display_draw_pixel(9,11,1);
-			display_draw_pixel(10,10,1);
-			display_draw_pixel(11,10,1);
-			display_draw_pixel(12,9,1);
-			display_draw_pixel(13,8,1);
+		case 3:
+			display_draw_pixel(2,10,1);
+			display_draw_pixel(3,11,1);
+			display_draw_pixel(4,12,1);
+			display_draw_pixel(5,12,1);
+			display_draw_pixel(6,13,1);
+			display_draw_pixel(7,13,1);
+			display_draw_pixel(8,13,1);
+			display_draw_pixel(9,13,1);
+			display_draw_pixel(10,12,1);
+			display_draw_pixel(11,12,1);
+			display_draw_pixel(12,11,1);
+			display_draw_pixel(13,10,1);
 			break;
 /*
-			case 4:
+		case 4:
 			display_draw_pixel(0,11,1);
 			display_draw_pixel(1,12,1);
 			display_draw_pixel(2,13,1);
@@ -564,15 +561,14 @@ void display_draw_wifi_icon(void) {
 			display_draw_pixel(15,11,1);
 			break;
 */
-		}
-		display_refresh_screen();
-		n++;
+	}
 		
-		if (n == 4) {
-			n = 0;
-			display_clear_screen();
-		}
-	}	
+	if (n++ == 4) {
+		n = 0;
+		display_clear_screen();
+	} else {
+		display_refresh_screen();
+	}
 }
 
 

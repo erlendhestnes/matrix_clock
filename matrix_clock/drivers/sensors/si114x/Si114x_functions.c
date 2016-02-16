@@ -60,10 +60,8 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 #endif
 	do {
 		//Draw square
-		display_draw_line(10,10,10,5,1);
-		display_draw_line(5,10,10,10,1);
-		display_draw_line(5,5,5,10,1);
-		display_draw_line(5,5,10,5,1);
+		display_draw_filled_rect(6,6,4,4,1);
+		display_draw_filled_rect(7,7,2,2,0);
 		display_refresh_screen();
 		si114x_get_data(sensor_data);
 #ifdef DEBUG_ON
@@ -112,7 +110,7 @@ u8 si114x_get_data(SI114X_IRQ_SAMPLE *sensor_data)
 	//Timestamp
 	sensor_data->timestamp = counter;
 	
-	//NOTE: This could be simplified as one read!
+	//NOTE: This could be simplified as one large bulk read
 	
 	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_PS1_DATA0,data_8,2);
 	data_16 = ((u16)data_8[1] << 8) | data_8[0];
@@ -141,11 +139,11 @@ s16 si114x_init_ps1(HANDLE si114x_handle)
 {
 	s16 retval   = 0;
 
-	u8  code current_LED1  = 0x02;   // 0-359 mA
+	u8  code current_LED1  = 0x03;   // 0-359 mA
 
 	u8  tasklist      = 0x01;   // PS1 only
 
-	u8  measrate      = 0xDF;   // Samplingsrate
+	u8  measrate      = 0xA0;   // Samplingsrate
 
 	u8  psrate        = 0x08;
 
