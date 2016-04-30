@@ -62,7 +62,7 @@ int main(void)
 	clock_setup_32_mhz_pll();
 	
 	lowpower_setup();
-	display_setup();
+	display_setup();	
 	esp8266_off();
 	spi_disable();
 	uart_disable();
@@ -78,10 +78,9 @@ int main(void)
 	} 
 	
 	//Debug interface
+#ifdef DEBUG_ON
 	uart_setup();
 	stdout = stdin = &mystdout;
-
-#ifdef DEBUG_ON
 	puts("SQUARECLOCK - By: Erlend Hestnes (2016)\r\n");
 #endif
 

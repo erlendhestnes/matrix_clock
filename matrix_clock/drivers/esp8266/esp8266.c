@@ -30,15 +30,17 @@ static inline void esp8266_send_cmd(char *str, uint16_t timeout_ms)
 
 void esp8266_on(void) 
 {
-	PORTD.DIRSET = CH_EN | ESP_RST;
+	PORTD.DIRSET = CH_EN | ESP_RST | EXT_POWER;
 	PORTD.OUTSET = CH_EN | ESP_RST;
-	_delay_ms(100);
+	PORTD.OUTCLR = EXT_POWER;
+	_delay_ms(1000);
 }
 
 void esp8266_off(void) 
 {
-	PORTD.DIRSET = CH_EN;
+	PORTD.DIRSET = CH_EN | EXT_POWER;
 	PORTD.OUTCLR = CH_EN;
+	PORTD.OUTSET = EXT_POWER;
 }
 
 void esp8266_deep_sleep(void)
@@ -60,10 +62,10 @@ void esp8266_reset(void)
 esp8266_status_t esp8266_setup(void) 
 {	
 	//Reset module
-	esp8266_send_cmd("AT+RST",2000);
-	if (status != ESP8266_SUCCESS) {
-		return status;
-	}
+	//esp8266_send_cmd("AT+RST",2000);
+	//if (status != ESP8266_SUCCESS) {
+	//	return status;
+	//}
 
 	//For ESP8266 crash detection
 	wdt_triggered = false;
@@ -203,13 +205,26 @@ esp8266_status_t esp8266_get_json(char *host, char *addr, char *buffer, uint8_t 
 	return ESP8266_SUCCESS;
 }
 
+esp8266_status_t esp8266_smart_connect(void)
+{
+	//Set Data Mode
+	esp8266_send_cmd("AT+CIPMODE=0",100);
+	if (status != ESP8266_SUCCESS) {
+		return status;
+	}
+	esp8266_send_cmd("AT+CWMODE=2",100);
+	
+	esp8266_send_cmd("AT+CWSMARTSTART",100);
+
+}
+
 esp8266_status_t esp8266_setup_webserver(bool sta, bool ap) 
 {	
 	//Reset module
 	esp8266_send_cmd("AT+RST",2000);
-	if (status != ESP8266_SUCCESS) {
-		return status;
-	}
+	//if (status != ESP8266_SUCCESS) {
+	//	return status;
+	//}
 	
 	wdt_triggered = false;
 	

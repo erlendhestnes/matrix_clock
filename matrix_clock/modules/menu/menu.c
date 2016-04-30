@@ -48,7 +48,7 @@ void play_sound(void)
 	f_mount(&FatFs, "", 0);
 	
 	BYTE res;
-	res = f_open(&Fil, "johnm16.wav", FA_READ);
+	res = f_open(&Fil, "business.wav", FA_READ);
 	if (!res) {
 		load_wav(&Fil, "**** WAV PLAYER ****", Buff, sizeof Buff);
 		f_close(&Fil);
@@ -301,15 +301,20 @@ void menu_draw_battery_frame(void)
 	display_draw_small_char(9,10,'T',1,1);
 	display_draw_small_char(13,10,'T',1,1);
 	
-	uint8_t battery = adc_get_battery_percentage();
-	
-	char buffer[5];
-	itoa_simple(buffer,battery);
-	
-	display_draw_small_char(3,3,buffer[0],1,1);
-	display_draw_small_char(7,3,buffer[1],1,1);
-	display_draw_small_char(11,3,'%',1,1);
-	
+	if (PORTA.IN & PIN3_bm) {
+		display_draw_small_char(3,3,'U',1,1);
+		display_draw_small_char(7,3,'S',1,1);
+		display_draw_small_char(11,3,'B',1,1);
+	} else {
+		uint8_t battery = adc_get_battery_percentage();
+		
+		char buffer[5];
+		itoa_simple(buffer,battery);
+		
+		display_draw_small_char(3,3,buffer[0],1,1);
+		display_draw_small_char(7,3,buffer[1],1,1);
+		display_draw_small_char(11,3,'%',1,1);	
+	}
 }
 
 void menu_draw_config_frame(void) 
@@ -431,11 +436,13 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 #ifdef SHOW_MANUAL
 			display_print_scrolling_text("USE BACK BUTTONS",false);
 #endif
+			btn_turn_on_leds(true);
 			display_draw_four_letter_word("<  >");
 			display_slide_in_from_bottom();
 			env.menu_id = 0;
 			while(menu_configuration(samples) == MENU_SUCCESS);
 			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
+			btn_turn_on_leds(false);
 			env.menu_id = 0;
 			rtc_enable_time_render();
 			display_slide_in_from_top();
@@ -486,6 +493,7 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 #ifdef SHOW_MANUAL
 				display_print_scrolling_text("COULD NOT GET TEMPERATURE", false);
 #endif
+				esp8266_off();
 			}
 			menu_draw_temperature_frame();
 			display_slide_in_from_top();

@@ -12,9 +12,9 @@
 
 #define RAND_MAX 255
 
-#define PROXIMITY_THRESHOLD2 1600
+#define PROXIMITY_THRESHOLD2 1000
 #define PROXIMITY_THRESHOLD 360
-#define MENU_TIMEOUT 7000
+#define MENU_TIMEOUT 12000
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
@@ -96,7 +96,7 @@ env_variables_t env;
 
 #define SHOW_MANUAL
 #define DEBUG_ON
-//#define IR_SLIDER_ALGORITHM
+#define IR_SLIDER_ALGORITHM
 
 #define CLOCK_NAME "MARK"
 #define CLOCK_ID   1

@@ -25,6 +25,7 @@ static volatile bool wdt_triggered = false;
 
 #define RX_BUFFER	200
 
+#define EXT_POWER	PIN0_bm
 #define ESP_RST		PIN4_bm
 #define CH_EN		PIN5_bm
 

@@ -16,6 +16,7 @@
 #define BUTTON4	   PIN0_bm
 #define TOP_BUTTON PIN2_bm
 #define SI114X_INT PIN2_bm
+#define BTN_LEDS   PIN4_bm
 
 void btn_setup(bool enable_interrupt) 
 {	
@@ -40,6 +41,15 @@ void btn_setup(bool enable_interrupt)
 		PORTA.INTCTRL &= ~(PORT_INT0LVL_HI_gc);
 		PORTB.INTCTRL &= ~(PORT_INT0LVL_HI_gc);
 	}
+}
+
+void btn_turn_on_leds(bool leds_on)
+{
+	PORTA.DIRSET = PIN4_bm;
+	if (leds_on)
+		PORTA.OUTCLR = PIN4_bm;
+	else
+		PORTA.OUTSET = PIN4_bm;
 }
 
 void btn_si114x_enable_interrupt(void) 

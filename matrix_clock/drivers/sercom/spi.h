@@ -11,6 +11,7 @@
 
 #include "../../global.h"
 
+#define SD_POWER	PIN1_bm
 #define SD_CD		PIN3_bm
 #define SD_CS		PIN4_bm
 #define SD_MOSI		PIN5_bm

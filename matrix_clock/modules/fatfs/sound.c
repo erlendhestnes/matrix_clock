@@ -48,7 +48,7 @@ static inline uint8_t smooth(uint8_t data, float filterVal, float smoothedVal){
 /*-----------------------------------------------------*/
 /* Sound sampling ISR                                  */
 
-#define SOUND_VOLUME 8
+#define SOUND_VOLUME 2
 #define SOUND_OFFSET 2048
 
 ISR(TCC0_OVF_vect)
@@ -246,6 +246,7 @@ UINT sz_work		/* Size of working buffer (must be power of 2) */
 		
 		if (btn_check_press() == BTN2)
 		{
+			sound_stop();
 			break;
 		}
 		

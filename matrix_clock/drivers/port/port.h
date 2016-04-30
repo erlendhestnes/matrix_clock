@@ -35,6 +35,7 @@ void btn_setup(bool enable_interrupt);
 void btn_top_setup(void);
 void btn_si114x_enable_interrupt(void);
 void btn_disable_si114x_interrupt(void);
+void btn_turn_on_leds(bool leds_on);
 
 button_t btn_check_press(void);
 
