@@ -13,7 +13,6 @@
 #include "../../drivers/sensors/si114x/Si114x_functions.h"
 #include "../../drivers/sensors/si114x/slider_algorithm.h"
 #include "../../drivers/eeprom/eeprom.h"
-#include "../../drivers/esp8266/esp8266.h"
 #include "../../4x6_font.c"
 
 #include "../json/jsmn.h"
@@ -23,9 +22,15 @@
 #include "../fatfs/ff.h"
 #include "../fatfs/sound.h"
 
+#include "../esp8266/esp8266.h"
+
 #include <ctype.h>
 
 static uint32_t timestamp = 0;
+
+/* ESP8266 working structure */
+ESP8266_t ESP8266;
+bool connection_open;
 
 #define TOKEN_BUFFER_SIZE 30
 
@@ -33,7 +38,7 @@ void play_sound(void)
 {
 	FATFS FatFs;		// FatFs work area needed for each volume
 	FIL Fil;			// File object needed for each open file
-	BYTE Buff[512];		// Working buffer 1024
+	BYTE Buff[1];		// Working buffer 1024
 	//UINT bw;
 	
 	/*
@@ -103,48 +108,49 @@ void stop_loading(void)
 	PR.PRPC |= 0x01;
 }
 
-esp8266_status_t get_internet_variables(bool get_time, bool get_temperature) 
+menu_status_t get_internet_variables(bool get_time, bool get_temperature) 
 {	
-	char json_string[100];
 	char token_buffer[30];
 	jsmntok_t tokens[10];
 	jsmn_parser p;
 	jsmnerr_t r;
-	
-	esp8266_status_t status;
-	
-	status = esp8266_setup();
-	if (status != ESP8266_SUCCESS) {
-		return status;
+		
+	/* Connect to wifi and save settings */
+	ESP8266_WifiConnect(&ESP8266, env.wifi_ssid, env.wifi_pswd);
+		
+	/* Wait till finish */
+	ESP8266_WaitReady(&ESP8266);
+		
+	ESP8266_Update(&ESP8266);
+		
+	if (ESP8266_StartClientConnection(&ESP8266, "www.squareclock.io", "www.squareclock.io", 80, NULL) != ESP_OK) {
+		return MENU_ERROR;
 	}
 	
-	status = esp8266_join_ap(env.wifi_ssid,env.wifi_pswd);
-	if (status != ESP8266_SUCCESS) {
-		return status;
+	// Format data to sent to server
+	if(get_temperature) 
+		sprintf(ESP8266.SendDataConnection[0].Data, "GET /json/forecast.php HTTP/1.1\r\n");
+	else
+		sprintf(ESP8266.SendDataConnection[0].Data, "GET /json/ntp.php HTTP/1.1\r\n");
+		
+	strcat(ESP8266.SendDataConnection[0].Data, "Host: www.squareclock.io\r\n");
+	strcat(ESP8266.SendDataConnection[0].Data, "Connection: close\r\n");
+	strcat(ESP8266.SendDataConnection[0].Data, "\r\n");
+	
+	connection_open = true;
+	
+	//TODO: This might be dangerous...
+	while(connection_open) {
+		ESP8266_Update(&ESP8266);
 	}
 	
-	if (get_time) {
-		status = esp8266_get_json(TIME_IP,TIME_ADDR,json_string, sizeof(json_string));
-	} else if (get_temperature) {
-		status = esp8266_get_json(WEATHER_IP,WEATHER_ADDR,json_string, sizeof(json_string));
-	} else {
-		return ESP8266_ERROR;
-	}
-	if (status != ESP8266_SUCCESS) {
-		return status;
-	}
-	
-	esp8266_off();
-	
-#ifdef DEBUG_ON
-	puts(json_string);
-#endif
+	uint16_t json_string = (uint16_t)strchr(ESP8266.SendDataConnection[0].Data,'{');
 
 	//Parse JSON
 	jsmn_init(&p);
 	r = jsmn_parse(&p,json_string,strlen(json_string),tokens,sizeof(tokens));
 	if (r < 0) {
-		return ESP8266_ERROR;
+		return MENU_ERROR;
 	}
 	
 	if (get_time) {
@@ -155,7 +161,7 @@ esp8266_status_t get_internet_variables(bool get_time, bool get_temperature)
 		puts(token_buffer);
 #endif
 		if (sscanf(token_buffer,"%d-%d-%d %s %d:%d:%d",&year, &month, &day, weekday, &hour, &minute, &second) != 7) {
-			return ESP8266_ERROR;
+			return MENU_ERROR;
 		} else {
 			env.time.year = year;
 			env.time.month = month;
@@ -177,7 +183,7 @@ esp8266_status_t get_internet_variables(bool get_time, bool get_temperature)
 			memset(env.temperature,0,sizeof(env.temperature));
 			strncpy(env.temperature,token_buffer,strlen(token_buffer));
 		} else {
-			return ESP8266_ERROR;
+			return MENU_ERROR;
 		}
 		json_get_token(tokens,json_string,token_buffer,sizeof(token_buffer),8);
 #ifdef DEBUG_ON
@@ -187,7 +193,7 @@ esp8266_status_t get_internet_variables(bool get_time, bool get_temperature)
 			memset(env.weather_info,0,sizeof(env.weather_info));
 			strncpy(env.weather_info,token_buffer,strlen(token_buffer));
 		} else {
-			return ESP8266_ERROR;
+			return MENU_ERROR;
 		}
 		json_get_token(tokens,json_string,token_buffer,sizeof(token_buffer),2);
 #ifdef DEBUG_ON
@@ -196,11 +202,26 @@ esp8266_status_t get_internet_variables(bool get_time, bool get_temperature)
 		if (strlen(token_buffer) < sizeof(env.city)) {
 			strncpy(env.city,token_buffer,strlen(token_buffer));
 		} else {
-			return ESP8266_ERROR;
+			return MENU_ERROR;
 		}
 
 	}
-	return ESP8266_SUCCESS;
+	return MENU_SUCCESS;
+}
+
+void menu_esp8266_setup(void)
+{
+	ESP8266_On();
+	ESP8266_TimerStart();
+	if(ESP8266_Init(&ESP8266,115200) != ESP_OK) {
+		return MENU_ERROR;
+	}
+	//puts("SMARTSTART!");
+	ESP8266_SmartStart(&ESP8266,1);
+	//puts("ON!");
+	while(1);
+	ESP8266_TimerStop();
+	ESP8266_Off();
 }
 
 void menu_draw_temperature_frame(void) 
@@ -330,8 +351,8 @@ void menu_set_env_variables(void)
 	env.brightness = 0;
 	env.runtime = 0;
 	
-	strncpy(env.wifi_pswd,PASS, strlen(PASS));
-	strncpy(env.wifi_ssid,SSID, strlen(SSID));
+	strncpy(env.wifi_pswd,USER_PASS, strlen(USER_PASS));
+	strncpy(env.wifi_ssid,USER_SSID, strlen(USER_SSID));
 	
 	env.temperature[0] = '0';
 	env.city[0] = '0';
@@ -449,7 +470,7 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 			//A little time to remove fingers from back buttons
 			_delay_ms(1000);
 		} else if (env.menu_id == MENU_TEMP) {
-			esp8266_status_t status;
+			menu_status_t status;
 			Si114xPauseAll((HANDLE)SI114X_ADDR);
 			display_fade_blink();
 			display_slide_out_to_top();
@@ -457,15 +478,17 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 			//Weather don`t change that much
 			if (timestamp == 0 || (env.runtime - timestamp > 15)) {
 				start_loading();
-				esp8266_on();
+				ESP8266_On();
+				ESP8266_TimerStart();
 				status = get_internet_variables(false,true);
-				esp8266_off();
+				ESP8266_TimerStop();
+				ESP8266_Off();
 				stop_loading();	
 			} else {
-				status = ESP8266_SUCCESS;
+				status = MENU_SUCCESS;
 			}
 			
-			if (status == ESP8266_SUCCESS) {
+			if (status == MENU_SUCCESS) {
 				timestamp = env.runtime; 
 				uint8_t i = 0;
 				char weather_info[60];
@@ -493,22 +516,23 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 #ifdef SHOW_MANUAL
 				display_print_scrolling_text("COULD NOT GET TEMPERATURE", false);
 #endif
-				esp8266_off();
 			}
 			menu_draw_temperature_frame();
 			display_slide_in_from_top();
 			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
 		} else if (env.menu_id == MENU_DATE) {
-			esp8266_status_t status;
+			menu_status_t status;
 			Si114xPauseAll((HANDLE)SI114X_ADDR);
 			display_fade_blink();
 			display_slide_out_to_top();
 			start_loading();
-			esp8266_on();
+			ESP8266_On();
+			ESP8266_TimerStart();
 			status = get_internet_variables(true,false);
-			esp8266_off();
+			ESP8266_TimerStop();
+			ESP8266_Off();
 			stop_loading();
-			if (status == ESP8266_SUCCESS) {
+			if (status == MENU_SUCCESS) {
 				display_print_scrolling_text("TIME AND DATE UPDATED", false);
 			} else {
 				display_print_scrolling_text("COULD NOT GET TIME",false);
@@ -603,37 +627,7 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 				menu_set_time();
 				break;
 			case CONFIG_WIFI:
-				display_slide_out_to_top();
-				display_print_scrolling_text("CONNECT TO AP AND ENTER THE UPCOMMING IP ADDRESS",false);
-				//Feature: Should draw wifi lines on display here.
-				esp8266_on();
-				if (esp8266_setup_webserver(false,true) == ESP8266_SUCCESS) {
-					start_wifi_indication();
-					while(esp8266_configure_ssid_and_password() != ESP8266_TIMEOUT) {
-						btn_status = btn_check_press();
-						if (btn_status == BTN4) {
-							stop_wifi_indication();
-#ifdef SHOW_MANUAL
-							display_print_scrolling_text("CANCELLED",false);
-#endif							
-							break;
-						}
-						if (wdt_triggered) {
-							stop_wifi_indication();
-#ifdef SHOW_MANUAL
-							display_print_scrolling_text("SOMETHING WENT WRONG",false);
-#endif
-						}
-					}
-					EEPROM_WriteEnv();
-					stop_wifi_indication();
-				} else {
-#ifdef SHOW_MANUAL
-					display_print_scrolling_text("COULD NOT CONFIGURE WEBSERVER",false);
-#endif					
-				}
-				esp8266_off();
-				break;
+				//Needs different implementation
 			case CONFIG_ALARM:
 				display_slide_out_to_top();
 				menu_set_alarm();
@@ -1053,4 +1047,137 @@ ISR(TCC0_CCA_vect)
 ISR(TCC0_CCD_vect)
 {
 	display_draw_wifi_icon();
+}
+
+/************************************/
+/*           ESP CALLBACKS          */
+/************************************/
+/* Called when ready string detected */
+void ESP8266_Callback_DeviceReady(ESP8266_t* ESP8266) {
+	printf("Device is ready\r\n");
+}
+
+/* Called when watchdog reset on ESP8266 is detected */
+void ESP8266_Callback_WatchdogReset(ESP8266_t* ESP8266) {
+	printf("Watchdog reset detected!\r\n");
+}
+
+/* Called when we are disconnected from WIFI */
+void ESP8266_Callback_WifiDisconnected(ESP8266_t* ESP8266) {
+	printf("Wifi is disconnected!\r\n");
+}
+
+void ESP8266_Callback_WifiConnected(ESP8266_t* ESP8266) {
+	printf("Wifi is connected!\r\n");
+}
+
+void ESP8266_Callback_WifiConnectFailed(ESP8266_t* ESP8266) {
+	printf("Connection to wifi network has failed. Reason %d\r\n", ESP8266->WifiConnectError);
+}
+
+void ESP8266_Callback_WifiGotIP(ESP8266_t* ESP8266) {
+	printf("Wifi got an IP address\r\n");
+	
+	/* Read that IP from module */
+	printf("Grabbing IP status: %d\r\n", ESP8266_GetSTAIP(ESP8266));
+}
+
+void ESP8266_Callback_WifiIPSet(ESP8266_t* ESP8266) {
+	/* We have STA IP set (IP set by router we are connected to) */
+	printf("We have valid IP address: %d.%d.%d.%d\r\n", ESP8266->STAIP[0], ESP8266->STAIP[1], ESP8266->STAIP[2], ESP8266->STAIP[3]);
+}
+
+void ESP8266_Callback_DHCPTimeout(ESP8266_t* ESP8266) {
+	printf("DHCP timeout!\r\n");
+}
+
+void ESP8266_Callback_WifiDetected(ESP8266_t* ESP8266, ESP8266_APs_t* ESP8266_AP) {
+	uint8_t i = 0;
+	
+	/* Print number of detected stations */
+	printf("We have detected %d AP stations\r\n", ESP8266_AP->Count);
+	
+	/* Print each AP */
+	for (i = 0; i < ESP8266_AP->Count; i++) {
+		/* Print SSID for each AP */
+		printf("%2d: %s\r\n", i, ESP8266_AP->AP[i].SSID);
+	}
+}
+
+
+/************************************/
+/*         CLIENT CALLBACKS         */
+/************************************/
+void ESP8266_Callback_ClientConnectionConnected(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection) {
+	/* We are connected to external server */
+	printf("Client connected to server! Connection number: %s\r\n", Connection->Name);
+	
+	/* We are connected to server, request to sent header data to server */
+	ESP8266_RequestSendData(ESP8266, Connection);
+}
+
+/* Called when client connection fails to server */
+void ESP8266_Callback_ClientConnectionError(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection) {
+	/* Fail with connection to server */
+	printf("An error occurred when trying to connect on connection: %d\r\n", Connection->Number);
+}
+
+/* Called when data are ready to be sent to server */
+/*
+uint16_t ESP8266_Callback_ClientConnectionSendData(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection, char* Buffer, uint16_t max_buffer_size) {
+	// Format data to sent to server
+	sprintf(Buffer, "GET /json/forecast.php HTTP/1.1\r\n");
+	strcat(Buffer, "Host: www.squareclock.io\r\n");
+	strcat(Buffer, "Connection: close\r\n");
+	strcat(Buffer, "\r\n");
+	
+	// Return length of buffer
+	return strlen(Buffer);
+}
+*/
+
+/* Called when data are send successfully */
+void ESP8266_Callback_ClientConnectionDataSent(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection) {
+	printf("Data successfully sent as client!\r\n");
+}
+
+/* Called when error returned trying to sent data */
+void ESP8266_Callback_ClientConnectionDataSentError(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection) {
+	printf("Error while sending data on connection %d!\r\n", Connection->Number);
+}
+
+void ESP8266_Callback_ClientConnectionDataReceived(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection, char* Buffer) {
+	/* Data received from server back to client */
+	printf("Data received from server on connection: %s; Number of bytes received: %lu; %lu / %lu;\r\n",
+	Connection->Name,
+	Connection->BytesReceived,
+	Connection->TotalBytesReceived,
+	Connection->ContentLength
+	);
+	
+	/* Print message when first packet */
+	if (Connection->FirstPacket) {
+		
+		/* Print first message */
+		printf("This is first packet received. Content length on this connection is: %lu\r\n", Connection->ContentLength);
+		printf("%s\r\n",Connection->Data);
+	}
+}
+
+/* Called when connection is closed */
+void ESP8266_Callback_ClientConnectionClosed(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection) {
+	printf("Client connection closed, connection: %d; Total bytes received: %lu; Content-Length header: %lu\r\n",
+	Connection->Number, Connection->TotalBytesReceived, Connection->ContentLength
+	);
+	connection_open = false;
+}
+
+/* Called when timeout is reached on connection to server */
+void ESP8266_Callback_ClientConnectionTimeout(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection) {
+	printf("Timeout reached on connection: %d\r\n", Connection->Number);
+}
+
+ISR(TCD0_CCD_vect)
+{
+	ESP8266_TimeUpdate(&ESP8266, 1);
 }

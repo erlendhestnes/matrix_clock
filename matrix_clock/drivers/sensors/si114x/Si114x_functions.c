@@ -45,7 +45,9 @@ void si114x_setup_ps1(void)
 {
 	si114x_reset((HANDLE)SI114X_ADDR);
 	_delay_ms(50);
-	si114x_init_ps1((HANDLE)SI114X_ADDR);
+	//si114x_init_ps1((HANDLE)SI114X_ADDR);
+	si114x_init_ps1_als((HANDLE)SI114X_ADDR);
+	//si114x_init_als((HANDLE)SI114X_ADDR);
 	btn_si114x_enable_interrupt();
 }
 
@@ -207,6 +209,102 @@ s16 si114x_init_ps1(HANDLE si114x_handle)
 	return retval;
 }
 
+s16 si114x_init_ps1_als(HANDLE si114x_handle)
+{
+	s16 retval   = 0;
+
+	u8  code current_LED1  = 0x03;   // 0-359 mA
+
+	u8  tasklist      = 0x31;   // IR, ALS, PS1
+
+	u8  measrate      = 0xA0;   // Samplingsrate
+
+	u8  psrate        = 0x08;
+	u8  alsrate       = 0x08;
+
+	#ifdef GENERAL
+	u8  code psrange  =  1;     // PS Range
+	#endif
+
+	#ifdef INDOORS
+	u8  code psrange  =  0;     // PS Range
+	#endif
+
+	u8  code psgain   =  0;     // PS ADC Gain
+
+	//SI114X_CAL_S xdata si114x_cal;
+
+	// Choose IR PD Size
+	u8  code ps1pdsize     = 1;      // PD Choice for PS1
+	// 0 = Small, 1= Large
+	u8  code irpd          = 1;      // PD Choice for IR Ambient
+	// 0 = Small, 1= Large
+
+	// Select which PD is enabled per PS measurement
+	u8  code ps1ledsel     = LED1_EN;
+	
+	u8  code irrange  =  1;     // IR Range
+	u8  code irgain   =  0;     // IR ADC Gain
+
+	u8  code visrange =  1;     // VIS Range
+	u8  code visgain  =  0;     // VIS ADC Gain
+
+	// Turn off RTC and reset
+	retval+=Si114xWriteToRegister(si114x_handle, REG_MEAS_RATE,     0 );
+	retval+=Si114xWriteToRegister(si114x_handle, REG_PS_RATE,       0 );
+	retval+=Si114xWriteToRegister(si114x_handle, REG_ALS_RATE,      0 );
+
+	retval+=si114x_reset(si114x_handle);
+
+	// Program LED Currents
+	u8 i21;
+	i21 = current_LED1;
+	retval+=Si114xWriteToRegister(si114x_handle, REG_PS_LED21, i21);
+
+	retval+=Si114xParamSet(si114x_handle, PARAM_CH_LIST, tasklist);
+	
+	retval+=Si114xWriteToRegister(si114x_handle, REG_INT_CFG, ICG_INTOE + ICG_INTMODE);
+	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE,IE_PS1_EXCEED_TH + 0x01);
+	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1,IM1_PS1_EXCEED_TH + IM1_ALS_IR_EXIT);
+	
+	retval+=Si114xParamSet(si114x_handle, PARAM_PS1_ADC_MUX, 0x03*ps1pdsize);
+	retval+=Si114xParamSet(si114x_handle, PARAM_IR_ADC_MUX, 0x03*irpd);
+	retval+=Si114xParamSet(si114x_handle, PARAM_PS_ADC_GAIN, psgain);
+	retval+=Si114xParamSet(si114x_handle, PARAM_PSLED12_SELECT, ps1ledsel);
+	retval+=Si114xParamSet(si114x_handle, PARAM_PS_ADC_COUNTER, RECCNT_511);
+	retval+=Si114xParamSet(si114x_handle, PARAM_PS_ADC_MISC, RANGE_EN*psrange + PS_MEAS_MODE);
+	
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSIR_ADC_GAIN, irgain);
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSVIS_ADC_GAIN, visgain);
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSIR_ADC_COUNTER, RECCNT_511);
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSVIS_ADC_COUNTER, RECCNT_511);
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSIR_ADC_MISC, RANGE_EN*irrange );
+	retval+=Si114xParamSet(si114x_handle, PARAM_ALSVIS_ADC_MISC,RANGE_EN*visrange);
+	
+	u16 threshold_val = PROXIMITY_THRESHOLD;
+	retval += Si114xWriteToRegister(si114x_handle, REG_PS1_TH_LSB,(u8)threshold_val);
+	retval += Si114xWriteToRegister(si114x_handle, REG_PS1_TH_MSB,(u8)(threshold_val >> 8));
+	
+	//ALS
+	threshold_val = 350;
+	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_LO_TH_LSB,(u8)threshold_val);
+	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_LO_TH_MSB,(u8)(threshold_val >> 8));
+	
+	threshold_val = 2000;
+	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_HI_TH_LSB,(u8)threshold_val);
+	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_HI_TH_MSB,(u8)(threshold_val >> 8));
+	//
+	
+	if( measrate > 0 )
+	{
+		retval+=Si114xWriteToRegister(si114x_handle, REG_MEAS_RATE, measrate);
+		retval+=Si114xWriteToRegister(si114x_handle, REG_PS_RATE,   psrate);
+		retval+=Si114xWriteToRegister(si114x_handle, REG_ALS_RATE,  alsrate);
+		retval+=Si114xPsAlsAuto(si114x_handle);
+	}
+	return retval;
+}
+
 s16 si114x_init_als(HANDLE si114x_handle)
 {
 	s16 retval   = 0;
@@ -247,9 +345,9 @@ s16 si114x_init_als(HANDLE si114x_handle)
 	retval+=Si114xParamSet(si114x_handle, PARAM_CH_LIST, tasklist);
 		
 	// Set IRQ Modes and INT CFG to interrupt on every sample
-	retval+=Si114xWriteToRegister(si114x_handle, REG_INT_CFG, ICG_INTOE);
-	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE, IE_ALS_EVRYSAMPLE);
-	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1, IM1_ALS_VIS_EXIT);
+	retval+=Si114xWriteToRegister(si114x_handle, REG_INT_CFG, ICG_INTOE + ICG_INTMODE);
+	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE, 0x01);
+	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1, IM1_ALS_IR_EXIT);
 
 	retval+=Si114xParamSet(si114x_handle, PARAM_IR_ADC_MUX,  0x03*irpd);
 
@@ -262,13 +360,20 @@ s16 si114x_init_als(HANDLE si114x_handle)
 	retval+=Si114xParamSet(si114x_handle, PARAM_ALSIR_ADC_MISC, RANGE_EN*irrange );
 	retval+=Si114xParamSet(si114x_handle, PARAM_ALSVIS_ADC_MISC,RANGE_EN*visrange);
 
-	u16 threshold_val = 300;
+	u16 threshold_val = 350;
 	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_LO_TH_LSB,(u8)threshold_val);
 	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_LO_TH_MSB,(u8)(threshold_val >> 8));
 	
-	threshold_val = 400;
+	u8 temp[2];
+	Si114xBlockRead(si114x_handle,REG_ALS_LO_TH_LSB,2,temp);
+	printf("Threshold LOW: %d \r\n", ((temp[1] << 8) | temp[0]));
+	
+	threshold_val = 2000;
 	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_HI_TH_LSB,(u8)threshold_val);
 	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_HI_TH_MSB,(u8)(threshold_val >> 8));
+	
+	Si114xBlockRead(si114x_handle,REG_ALS_HI_TH_LSB,2,temp);
+	printf("Threshold LOW: %d \r\n", ((temp[1] << 8) | temp[0]));
 
 	if( measrate > 0 )
 	{

@@ -33,8 +33,6 @@ main.d main.o: .././main.c .././drivers/ht1632c/ht1632c.h \
  .././drivers/adc/adc.h .././drivers/adc/../../global.h \
  .././drivers/clock/clock.h .././drivers/clock/../../global.h \
  .././drivers/eeprom/eeprom.h .././drivers/eeprom/../../global.h \
- .././drivers/esp8266/esp8266.h .././drivers/esp8266/../../global.h \
- .././drivers/esp8266/../../modules/json/jsmn.h \
  .././drivers/timer/timer.h .././drivers/timer/../../global.h \
  .././drivers/sensors/si114x/User_defs.h \
  .././drivers/sensors/si114x/Si114x_functions.h \
@@ -52,7 +50,10 @@ main.d main.o: .././main.c .././drivers/ht1632c/ht1632c.h \
  .././modules/json/../../global.h .././modules/json/jsmn.h \
  .././modules/fatfs/ff.h .././modules/fatfs/integer.h \
  .././modules/fatfs/ffconf.h .././modules/fatfs/sound.h \
- .././modules/fatfs/../../global.h .././modules/fatfs/ff.h
+ .././modules/fatfs/../../global.h .././modules/fatfs/ff.h .././global.h \
+ .././modules/esp8266/esp8266.h .././modules/esp8266/esp8266_ll.h \
+ .././modules/esp8266/../../global.h .././modules/esp8266/esp8266.h \
+ .././modules/esp8266/esp8266_conf.h .././modules/esp8266/buffer.h
 
 .././drivers/ht1632c/ht1632c.h:
 
@@ -140,12 +141,6 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 
 .././drivers/eeprom/../../global.h:
 
-.././drivers/esp8266/esp8266.h:
-
-.././drivers/esp8266/../../global.h:
-
-.././drivers/esp8266/../../modules/json/jsmn.h:
-
 .././drivers/timer/timer.h:
 
 .././drivers/timer/../../global.h:
@@ -197,3 +192,17 @@ c:\program\ files\atmel\atmel\ toolchain\avr8\ gcc\native\3.4.1056\avr8-gnu-tool
 .././modules/fatfs/../../global.h:
 
 .././modules/fatfs/ff.h:
+
+.././global.h:
+
+.././modules/esp8266/esp8266.h:
+
+.././modules/esp8266/esp8266_ll.h:
+
+.././modules/esp8266/../../global.h:
+
+.././modules/esp8266/esp8266.h:
+
+.././modules/esp8266/esp8266_conf.h:
+
+.././modules/esp8266/buffer.h:

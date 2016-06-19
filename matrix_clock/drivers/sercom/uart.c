@@ -12,15 +12,35 @@ void uart_setup(void)
 	//Disable power reduction for USARTD0 
 	PR.PRPD &= ~0x10;
 		
-	PORTD.DIRSET = UART_TX;
 	PORTD.DIRCLR = UART_RX;
-	//PORTD.PIN2CTRL = PORT_OPC_PULLUP_gc;
+	PORTD.DIRSET = UART_TX;
+	
+	PORTD.PIN2CTRL = PORT_OPC_PULLUP_gc;
+	PORTD.PIN3CTRL = PORT_OPC_PULLUP_gc;
 	
 	USARTD0.CTRLA	  = USART_RXCINTLVL_MED_gc;
 	USARTD0.BAUDCTRLA = 2094;
 	USARTD0.BAUDCTRLB = (-7 << 4) | (2094 >> 8);
 	USARTD0.CTRLC	  = USART_CHSIZE_8BIT_gc;
 	USARTD0.CTRLB	  = USART_RXEN_bm | USART_TXEN_bm;
+}
+
+void uart_setup_debug(void)
+{
+	//Disable power reduction for USARTD0
+	PR.PRPD &= ~0x20;
+	
+	PORTD.DIRCLR = PIN6_bm;
+	PORTD.DIRSET = PIN7_bm;
+	
+	PORTD.PIN6CTRL = PORT_OPC_PULLUP_gc;
+	PORTD.PIN7CTRL = PORT_OPC_PULLUP_gc;
+	
+	USARTD1.CTRLA	  = USART_RXCINTLVL_OFF_gc;
+	USARTD1.BAUDCTRLA = 2094;
+	USARTD1.BAUDCTRLB = (-7 << 4) | (2094 >> 8);
+	USARTD1.CTRLC	  = USART_CHSIZE_8BIT_gc;
+	USARTD1.CTRLB	  = USART_RXEN_bm | USART_TXEN_bm;
 }
 
 void uart_disable(void)
@@ -45,6 +65,18 @@ char uart_get_char(void)
 {
 	while (!(USARTD0.STATUS & USART_RXCIF_bm));
 	return USARTD0.DATA;
+}
+
+void uart_put_char_debug(char c)
+{
+	while (!(USARTD1.STATUS & USART_DREIF_bm));
+	USARTD1.DATA = c;
+}
+
+char uart_get_char_debug(void)
+{
+	while (!(USARTD1.STATUS & USART_RXCIF_bm));
+	return USARTD1.DATA;
 }
 
 void uart_write_str(char *str) 

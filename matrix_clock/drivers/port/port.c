@@ -118,6 +118,6 @@ ISR(PORTA_INT1_vect)
 	twi_read_packet(&TWIC,SI114X_ADDR,50,REG_IRQ_STATUS,data,1);
 	si114x_status = data[0];
 #ifdef DEBUG_ON
-	puts("DEBUG: Interrupt from Si114x! \n");
+	printf("DEBUG: Interrupt from Si114x! Code: %d \r\n", si114x_status);
 #endif
 }

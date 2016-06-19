@@ -15,7 +15,6 @@
 #include "drivers/adc/adc.h"
 #include "drivers/clock/clock.h"
 #include "drivers/eeprom/eeprom.h"
-#include "drivers/esp8266/esp8266.h"
 #include "drivers/timer/timer.h"
 #include "drivers/power/power.h"
 
@@ -31,7 +30,12 @@
 #include "modules/fatfs/ff.h"
 #include "modules/fatfs/sound.h"
 
-static FILE mystdout = FDEV_SETUP_STREAM(uart_put_char,uart_get_char,_FDEV_SETUP_WRITE);
+#include "global.h"
+
+//Experimental
+#include "modules/esp8266/esp8266.h"
+
+static FILE mystdout = FDEV_SETUP_STREAM(uart_put_char_debug,uart_get_char_debug,_FDEV_SETUP_WRITE);
 
 void pmic_setup(void) 
 {
@@ -59,11 +63,10 @@ int main(void)
 	SI114X_IRQ_SAMPLE sensor_data;
 	
 	//System
-	clock_setup_32_mhz_pll();
+	clock_setup_32_mhz();
 	
 	lowpower_setup();
 	display_setup();	
-	esp8266_off();
 	spi_disable();
 	uart_disable();
 	btn_setup(POLL_MODE);
@@ -79,14 +82,24 @@ int main(void)
 	
 	//Debug interface
 #ifdef DEBUG_ON
-	uart_setup();
+	uart_setup_debug();
 	stdout = stdin = &mystdout;
-	puts("SQUARECLOCK - By: Erlend Hestnes (2016)\r\n");
+	puts("- SQUARECLOCK - By: Erlend Hestnes (2016)\r\n");
 #endif
+	puts("Configure UART driver...\r\n");
+	uart_setup();
+	puts("Success!");
 
 	//Enable interrupts
+	puts("Enable interrupts...\r\n");
 	pmic_setup();
 	sei();
+	puts("Success!");
+
+	//Configure WIFI buffers
+	puts("Configure ESP8266 driver...\r\n");
+	menu_esp8266_setup();
+	puts("Success!");
 	
 	//Turn on proximity channel 1 with ISR and threshold
 	twi_setup(&TWIC);
@@ -96,6 +109,11 @@ int main(void)
 #endif
 	
 	si114x_setup_ps1();
+	//while(1) {
+	//	si114x_get_data(&sensor_data);
+	//	printf("ALS: %d, IR: %d, PS1: %d \r\n",sensor_data.vis, sensor_data.ir, sensor_data.ps1);
+	//	_delay_ms(200);
+	//}
 	
 	//Turn on RTC
 	display_fade(0);
@@ -156,7 +174,7 @@ int main(void)
 			display_fade(env.brightness);
 			btn_si114x_enable_interrupt();
 			si114x_setup_ps1();
-		} else if (si114x_status == ALS_INT_2) {
+		} else if (si114x_status == ALS_INT_1) {
 			//Dim light by using the light sensor
 #ifdef DEBUG_ON
 			puts("DEBUG: Somebody turned off the lights!");

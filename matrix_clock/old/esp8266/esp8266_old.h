@@ -5,8 +5,8 @@
  *  Author: Administrator
  */ 
 
-#ifndef _ESP8266_H_
-#define _ESP8266_H_
+#ifndef _ESP8266_OLD_H_
+#define _ESP8266_OLD_H_
 
 #include "../../global.h"
 #include "../../modules/json/jsmn.h"
@@ -14,8 +14,8 @@
 static volatile bool wdt_triggered = false;
 
 //My router (this is food for hackers...)
-#define SSID        "Inteno_68"
-#define PASS        "A26A411568"
+#define USER_SSID        "Inteno_68"
+#define USER_PASS        "A26A411568"
 
 #define WEATHER_IP		"www.squareclock.io"
 #define WEATHER_ADDR	"http://www.squareclock.io/json/forecast.php"
@@ -23,7 +23,7 @@ static volatile bool wdt_triggered = false;
 #define TIME_IP		"www.squareclock.io"
 #define TIME_ADDR	"http://www.squareclock.io/json/ntp.php"
 
-#define RX_BUFFER	200
+#define RX_BUFFER	1
 
 #define EXT_POWER	PIN0_bm
 #define ESP_RST		PIN4_bm

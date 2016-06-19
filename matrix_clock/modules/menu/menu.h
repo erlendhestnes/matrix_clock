@@ -12,6 +12,9 @@
 #include "../../global.h"
 #include "../../drivers/sensors/si114x/Si114x_types.h"
 
+#define USER_SSID        "Inteno_68"
+#define USER_PASS        "A26A411568"
+
 #define NUMBER_OF_MENUS 6
 #define NUMBER_OF_CONFIG_MENUS 7
 #define NO_ACTION		0xff
@@ -43,6 +46,8 @@ typedef enum {
 	MENU_CLOSE
 } menu_status_t;
 
+menu_status_t get_internet_variables(bool get_time, bool get_temperature);
+
 menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples);
 menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples);
 
@@ -57,5 +62,7 @@ void stop_wifi_indication(void);
 void menu_alarm(void);
 
 void play_sound(void);
+
+void menu_esp8266_setup(void);
 
 #endif /* MENU_H_ */

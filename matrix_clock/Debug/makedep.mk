@@ -16,8 +16,6 @@ drivers\dma\dma_functions.c
 
 drivers\eeprom\eeprom.c
 
-drivers\esp8266\esp8266.c
-
 drivers\ht1632c\ht1632c.c
 
 drivers\port\port.c
@@ -45,6 +43,12 @@ drivers\timer\timer.c
 main.c
 
 modules\display\display.c
+
+modules\esp8266\buffer.c
+
+modules\esp8266\esp8266.c
+
+modules\esp8266\esp8266_ll.c
 
 modules\fatfs\ff.c
 

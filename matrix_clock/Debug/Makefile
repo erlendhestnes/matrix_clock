@@ -35,7 +35,6 @@ SUBDIRS :=  \
 ../drivers/adc \
 ../drivers/clock \
 ../drivers/dma \
-../drivers/esp8266/ \
 ../drivers/ht1632c \
 ../drivers/eeprom \
 ../drivers/dac \
@@ -52,6 +51,7 @@ SUBDIRS :=  \
 ../modules/fatfs/ \
 ../modules/json/ \
 ../modules/menu \
+../modules/esp8266 \
 ../modules/time_functions
 
 
@@ -64,7 +64,6 @@ C_SRCS +=  \
 ../drivers/dma/dma.c \
 ../drivers/dma/dma_functions.c \
 ../drivers/eeprom/eeprom.c \
-../drivers/esp8266/esp8266.c \
 ../drivers/ht1632c/ht1632c.c \
 ../drivers/port/port.c \
 ../drivers/power/power.c \
@@ -79,6 +78,9 @@ C_SRCS +=  \
 ../drivers/timer/timer.c \
 ../main.c \
 ../modules/display/display.c \
+../modules/esp8266/buffer.c \
+../modules/esp8266/esp8266.c \
+../modules/esp8266/esp8266_ll.c \
 ../modules/fatfs/ff.c \
 ../modules/fatfs/mmc_avr.c \
 ../modules/fatfs/sound.c \
@@ -103,7 +105,6 @@ drivers/dac/dac.o \
 drivers/dma/dma.o \
 drivers/dma/dma_functions.o \
 drivers/eeprom/eeprom.o \
-drivers/esp8266/esp8266.o \
 drivers/ht1632c/ht1632c.o \
 drivers/port/port.o \
 drivers/power/power.o \
@@ -118,6 +119,9 @@ drivers/sercom/uart.o \
 drivers/timer/timer.o \
 main.o \
 modules/display/display.o \
+modules/esp8266/buffer.o \
+modules/esp8266/esp8266.o \
+modules/esp8266/esp8266_ll.o \
 modules/fatfs/ff.o \
 modules/fatfs/mmc_avr.o \
 modules/fatfs/sound.o \
@@ -135,7 +139,6 @@ drivers/dac/dac.o \
 drivers/dma/dma.o \
 drivers/dma/dma_functions.o \
 drivers/eeprom/eeprom.o \
-drivers/esp8266/esp8266.o \
 drivers/ht1632c/ht1632c.o \
 drivers/port/port.o \
 drivers/power/power.o \
@@ -150,6 +153,9 @@ drivers/sercom/uart.o \
 drivers/timer/timer.o \
 main.o \
 modules/display/display.o \
+modules/esp8266/buffer.o \
+modules/esp8266/esp8266.o \
+modules/esp8266/esp8266_ll.o \
 modules/fatfs/ff.o \
 modules/fatfs/mmc_avr.o \
 modules/fatfs/sound.o \
@@ -167,7 +173,6 @@ drivers/dac/dac.d \
 drivers/dma/dma.d \
 drivers/dma/dma_functions.d \
 drivers/eeprom/eeprom.d \
-drivers/esp8266/esp8266.d \
 drivers/ht1632c/ht1632c.d \
 drivers/port/port.d \
 drivers/power/power.d \
@@ -182,6 +187,9 @@ drivers/sercom/uart.d \
 drivers/timer/timer.d \
 main.d \
 modules/display/display.d \
+modules/esp8266/buffer.d \
+modules/esp8266/esp8266.d \
+modules/esp8266/esp8266_ll.d \
 modules/fatfs/ff.d \
 modules/fatfs/mmc_avr.d \
 modules/fatfs/sound.d \
@@ -199,7 +207,6 @@ drivers/dac/dac.d \
 drivers/dma/dma.d \
 drivers/dma/dma_functions.d \
 drivers/eeprom/eeprom.d \
-drivers/esp8266/esp8266.d \
 drivers/ht1632c/ht1632c.d \
 drivers/port/port.d \
 drivers/power/power.d \
@@ -214,6 +221,9 @@ drivers/sercom/uart.d \
 drivers/timer/timer.d \
 main.d \
 modules/display/display.d \
+modules/esp8266/buffer.d \
+modules/esp8266/esp8266.d \
+modules/esp8266/esp8266_ll.d \
 modules/fatfs/ff.d \
 modules/fatfs/mmc_avr.d \
 modules/fatfs/sound.d \
@@ -234,6 +244,10 @@ OUTPUT_FILE_DEP:= ./makedep.mk
 LIB_DEP+= 
 
 # AVR32/GNU C Compiler
+
+
+
+
 
 
 
@@ -337,13 +351,6 @@ drivers/eeprom/%.o: ../drivers/eeprom/%.c
 	@echo Finished building: $<
 	
 
-drivers/esp8266/%.o: ../drivers/esp8266/%.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 4.8.1
-	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega128a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
 drivers/ht1632c/%.o: ../drivers/ht1632c/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
@@ -394,6 +401,13 @@ drivers/timer/%.o: ../drivers/timer/%.c
 	
 
 modules/display/%.o: ../modules/display/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.8.1
+	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega128a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+modules/esp8266/%.o: ../modules/esp8266/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.8.1
 	$(QUOTE)C:\Program Files\Atmel\Atmel Toolchain\AVR8 GCC\Native\3.4.1056\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DDEBUG  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -g2 -Wall -mmcu=atxmega128a4u -c -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
