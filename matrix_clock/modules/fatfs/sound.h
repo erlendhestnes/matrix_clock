@@ -11,6 +11,7 @@ typedef struct {		/* Sound FIFO control block */
 	UINT sz_buff;		/* Size of FIFO buffer (must be power of 2) */
 } WAVFIFO;
 
+
 int sound_start (WAVFIFO* fcb, DWORD fs);
 void sound_stop (void);
 

@@ -50,13 +50,13 @@ void spi_disable(void)
 
 uint8_t spi_wr_rd(uint8_t data) 
 {	
-	uint16_t timeout = 0;
+	//uint16_t timeout = 0;
 	
 	SPIC.DATA = data;
 	while(!(SPIC.STATUS & SPI_IF_bm)) {
-		if (timeout++ == 0xffff) {
-			return 0;
-		}
+		//if (timeout++ == 0xffff) {
+		//	return 0;
+		//}
 	}
 	return SPIC.DATA;
 }

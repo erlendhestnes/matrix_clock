@@ -331,6 +331,7 @@ void EEPROM_EraseAll( void )
 uint8_t EEPROM_WriteEnv(void) 
 {	
 	/*
+	//Old implementation
 	uint8_t temp[sizeof(env)];
 	uint16_t page_addr;
 	uint8_t byte_addr;
@@ -361,6 +362,7 @@ uint8_t EEPROM_ReadEnv(void)
 	eeprom_read_block(&temp,EEPROM_START,sizeof(temp));
 	
 	/*		
+	//Old implementation
 	uint8_t temp[sizeof(env)];
 	uint16_t page_addr;
 	uint8_t byte_addr;

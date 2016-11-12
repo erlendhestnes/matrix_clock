@@ -14,6 +14,7 @@
 
 #define PROXIMITY_THRESHOLD2 1000
 #define PROXIMITY_THRESHOLD 360
+#define IR_BRIGHTNESS_THRESHOLD 300
 #define MENU_TIMEOUT 12000
 
 #include <avr/io.h>
@@ -96,7 +97,8 @@ env_variables_t env;
 
 #define SHOW_MANUAL
 #define DEBUG_ON
-#define IR_SLIDER_ALGORITHM
+#define WIFI_ON
+//#define IR_SLIDER_ALGORITHM
 
 #define CLOCK_NAME "MARK"
 #define CLOCK_ID   1

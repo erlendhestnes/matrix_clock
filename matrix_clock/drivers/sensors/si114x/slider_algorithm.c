@@ -1,4 +1,5 @@
 #include "slider_algorithm.h"
+#include "../../../global.h"
 
 #define F_CPU 32000000UL
 
@@ -91,14 +92,37 @@ s16 QS_Counts_to_Distance (u16 counts, u8 led)
     return (distance.u16[LSB]);
 }
 
-s16 QS_Counts_to_Distance_2(u16 counts, u8 led) 
+s16 QS_Counts_to_Distance_2(u16 counts, u8 led, u8 color) 
 {
 	float distance = 0.0f;
 	
-	if (led == 1) {
-		distance = 139739*powf((float)counts,-0.88f);
-	} else if (led == 2) {
-		distance = 155790*powf((float)counts,-0.91f);
+	if (color == 1) {
+		//white
+		if (led == 1) {
+			distance = 32630*powf((float)counts,-0.73f);
+		} else if (led == 2) {
+			distance = 74750*powf((float)counts,-0.84f);
+		} else if (led == 3) {
+			distance = 14612291*powf((float)counts,-1.67f);
+		}
+	} else if (color == 2) {
+		//wood
+		if (led == 1) {
+			distance = 33048*powf((float)counts,-0.74f);
+		} else if (led == 2) {
+			distance = 62809*powf((float)counts,-0.81f);
+		} else if (led == 3) {
+			distance = 3862525*powf((float)counts,-1.49f);
+		}
+	} else {
+		//black
+		if (led == 1) {
+			distance = 27591*powf((float)counts,-0.74f);
+		} else if (led == 2) {
+			distance = 77793*powf((float)counts,-0.87f);
+		} else if (led == 3) {
+			distance = 941563*powf((float)counts,-1.38f);
+		}
 	}
 	return (s16)distance;
 }
@@ -107,10 +131,34 @@ s16 QS_Counts_to_Distance_2(u16 counts, u8 led)
 #define RIGHT_RADIUS -15
 #define RADIUS 1000
 
+uint8_t color = 1;
+
 void slider_algorithm_v2(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale) 
 {
-	s16 ps1_mm = QS_Counts_to_Distance_2(samples->ps1,1);
-	s16 ps2_mm = QS_Counts_to_Distance_2(samples->ps2,2);
+	static uint8_t color = 1;
+	
+	if (samples->ps1 < 870 && samples->ps2 < 1050 && samples->ps3 < 650) {
+		if (samples->ps3 < 450) {
+			color = 1;
+			//printf("black\r\n");
+		} else if (samples->ps3 < 600) {
+			color = 2;
+			//printf("wood\r\n");
+		} else {
+			color = 3;
+			//printf("white\r\n");
+		}
+		
+	}
+		
+	s16 ps1_mm = QS_Counts_to_Distance_2(samples->ps1,1, color);
+	s16 ps2_mm = QS_Counts_to_Distance_2(samples->ps2,2, color);
+	s16 ps3_mm = QS_Counts_to_Distance_2(samples->ps3,3, color);
+	
+	//printf("ps1: %d, ps2: %d, ps3: %d \r\n",samples->ps1,samples->ps2, samples->ps3);
+	//printf("ps1: %d mm, ps2: %d mm, ps3: %d \r\n",ps1_mm,ps2_mm,ps3_mm);
+	
+	//return;
 	
 	static bool left_entry = false;
 	static bool right_entry = false;
@@ -122,22 +170,22 @@ void slider_algorithm_v2(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 s
 	
 	samples->gesture = NO_GESTURE;
 	
-	if (ps_distance < 240) {
+	if (ps_distance < 200) {
 		 s16 x = (ps1_mm*ps1_mm - ps2_mm*ps2_mm) / 120;
 		 //printf("x: %d \r\n",x);
 		 //return;
 		 
 		 if (!left_entry && !right_entry && !center_entry) {
 			if (x > LEFT_RADIUS) {
-				printf("left entry \r\n");
+				//printf("left entry \r\n");
 				left_entry = true;
 				entry_timestamp = samples->timestamp;
 			} else if (x < RIGHT_RADIUS) {
-				printf("right entry \r\n");
+				//printf("right entry \r\n");
 				right_entry = true;
 				entry_timestamp = samples->timestamp;
 			} else {
-				printf("center entry \r\n");
+				//printf("center entry \r\n");
 				center_entry = true;
 				entry_timestamp = samples->timestamp;	
 			}
@@ -145,7 +193,7 @@ void slider_algorithm_v2(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 s
 			if (left_entry) {
 				//wait for right exit
 				if (x < RIGHT_RADIUS) {
-					printf("right exit! \r\n");
+					//printf("right exit! \r\n");
 					samples->gesture = LEFT_SWIPE;
 					left_entry = false;
 					return;
@@ -153,7 +201,7 @@ void slider_algorithm_v2(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 s
 			} else if (right_entry) {
 				//wait for left exit
 				if (x > LEFT_RADIUS) {
-					printf("left exit! \r\n");
+					//printf("left exit! \r\n");
 					samples->gesture = RIGHT_SWIPE;
 					right_entry = false;
 					return;
@@ -161,10 +209,10 @@ void slider_algorithm_v2(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 s
 			}
 			if (samples->timestamp - entry_timestamp > 2000) {
 				if (center_entry) {
-					printf("Selected! \r\n");
+					//printf("Selected! \r\n");
 					samples->gesture = PAUSE;	
 				} else {
-					printf("Timeout! \r\n");	
+					//printf("Timeout! \r\n");	
 				}
 				left_entry = false;
 				right_entry = false;
@@ -177,6 +225,88 @@ void slider_algorithm_v2(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 s
 		left_entry = false;
 		right_entry = false;
 		center_entry = false;
+	}
+}
+
+void slider_algorithm_v3(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale)
+{
+	float increase_ps1 = 0.0f;
+	float increase_ps2 = 0.0f;
+	float increase_ps3 = 0.0f;
+	
+	if (samples->ps1 > env.baseline[0]) {
+		increase_ps1 = ((float)(samples->ps1 - env.baseline[0])/(float)env.baseline[0])*100.0f;
+	}
+	if (samples->ps2 > env.baseline[1]) {
+		increase_ps2 = ((float)(samples->ps2 - env.baseline[1])/(float)env.baseline[1])*100.0f;
+	}
+	if (samples->ps3 > env.baseline[2]) {
+		increase_ps3 = ((float)(samples->ps3 - env.baseline[2])/(float)env.baseline[2])*100.0f;
+	}
+
+	float diff_abs = fabsf(increase_ps2 - increase_ps1);
+	float diff = increase_ps2 - increase_ps1;
+
+	//printf("diff_abs: %.1f, diff: %.1f \r\n",diff_abs,diff);
+	//printf("ps1: %.1f %%, ps2: %.1f %%, ps3: %.1f %%, diff: %.1f \r\n",increase_ps1,increase_ps2,increase_ps3, diff_abs);
+	//printf("ps1: %d mm, ps2: %d mm, ps3: %d \r\n",ps1_baseline,ps2_baseline,ps3_baseline);
+	//printf("ps1: %d, ps2: %d, ps3: %d \r\n",samples->ps1,samples->ps2, samples->ps3);
+	
+	//return;
+
+	static bool left_entry = false;
+	static bool right_entry = false;
+	static bool center_entry = false;
+	
+	static uint16_t entry_timestamp = 0;
+	
+	samples->gesture = NO_GESTURE;
+	
+	if (!left_entry && !right_entry && !center_entry) {
+		
+		if (diff > 30.0f) {
+			//printf("left entry \r\n");
+			left_entry = true;
+			entry_timestamp = samples->timestamp;
+		} else if (diff < -30.0f) {
+			//printf("right entry \r\n");
+			right_entry = true;
+			entry_timestamp = samples->timestamp;
+		} else if (increase_ps3 > 60.0f && diff_abs < 30.0f){
+			//printf("center entry \r\n");
+			center_entry = true;
+			entry_timestamp = samples->timestamp;
+		}
+	}
+	else {
+		if (left_entry) {
+			//wait for right exit
+			if (diff < -30.0f) {
+				printf("left swipe! \r\n");
+				samples->gesture = LEFT_SWIPE;
+				left_entry = false;
+				return;
+			}
+		} else if (right_entry) {
+			//wait for left exit
+			if (diff > 30.0f) {
+				printf("right swipe! \r\n");
+				samples->gesture = RIGHT_SWIPE;
+				right_entry = false;
+				return;
+			}
+		}
+		if (samples->timestamp - entry_timestamp > 3000) {
+			if (center_entry) {
+				printf("Selected! \r\n");
+				samples->gesture = PAUSE;
+			} else {
+				printf("Timeout! \r\n");
+			}
+			left_entry = false;
+			right_entry = false;
+			center_entry = false;
+		}
 	}
 }
 

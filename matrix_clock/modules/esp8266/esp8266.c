@@ -71,7 +71,7 @@
 #define ESP8266_COMMAND_SSLBUFFERSIZE  32
 #define ESP8266_COMMAND_RFPOWER        33
 
-#define ESP8266_COMMAND_SMARTSTART	   34
+#define ESP8266_COMMAND_STARTSMART	   34
 
 /* User custom commands */
 #if ESP8266_USE_SNTP == 1
@@ -233,28 +233,36 @@ void ESP8266_TimerStop(void) {
 	PR.PRPD |= 0x01;
 }
 
-ESP8266_Result_t ESP8266_SmartStart(ESP8266_t* ESP8266, uint8_t mode) {
+ESP8266_Result_t ESP8266_StartSmart(ESP8266_t* ESP8266, uint8_t mode) {
 	
-	SendCommand(ESP8266, ESP8266_COMMAND_SMARTSTART, "AT+CWMODE=1\r\n", "OK\r\n");
+	_delay_ms(500);
+
+	SendCommand(ESP8266, ESP8266_COMMAND_CWMODE, "AT+CWMODE=1\r\n", "OK\r\n");
 	
 	ESP8266_WaitReady(ESP8266);
 	
 	switch(mode) {
 		case 0:
-			SendCommand(ESP8266, ESP8266_COMMAND_SMARTSTART, "AT+CWSTARTSMART=0\r\n", "OK\r\n");
+			SendCommand(ESP8266, ESP8266_COMMAND_STARTSMART, "AT+CWSTARTSMART=0\r\n", "OK\r\n");
 			break;
 		case 1:
-			SendCommand(ESP8266, ESP8266_COMMAND_SMARTSTART, "AT+CWSTARTSMART=1\r\n", "OK\r\n");
+			SendCommand(ESP8266, ESP8266_COMMAND_STARTSMART, "AT+CWSTARTSMART=1\r\n", "OK\r\n");
 			break;
 		case 2:
-			SendCommand(ESP8266, ESP8266_COMMAND_SMARTSTART, "AT+CWSTARTSMART=2\r\n", "OK\r\n");
+			SendCommand(ESP8266, ESP8266_COMMAND_STARTSMART, "AT+CWSTARTSMART=2\r\n", "OK\r\n");
 			break;
 		default:
-			SendCommand(ESP8266, ESP8266_COMMAND_SMARTSTART, "AT+CWSTARTSMART=1\r\n", "OK\r\n");
+			SendCommand(ESP8266, ESP8266_COMMAND_STARTSMART, "AT+CWSTARTSMART=1\r\n", "OK\r\n");
 			break;
 	}
+	return ESP8266_WaitReady(ESP8266);
+}
+
+ESP8266_Result_t ESP8266_StopSmart(ESP8266_t* ESP8266) {
+	SendCommand(ESP8266, ESP8266_COMMAND_STARTSMART, "AT+CWSTOPSMART\r\n", "OK\r\n");
+
 	/* Wait till idle */
-	//return ESP8266_WaitReady(ESP8266);
+	return ESP8266_WaitReady(ESP8266);
 }
 
 /******************************************/
@@ -1550,6 +1558,13 @@ uint16_t ESP8266_DataReceived(uint8_t* ch, uint16_t count) {
 /******************************************/
 /*                CALLBACKS               */
 /******************************************/
+
+__weak void ESP8266_Callback_SmartConfig(ESP8266_t* ESP8266) {
+	/* NOTE: This function Should not be modified, when the callback is needed,
+           the ESP8266_Callback_SmartConfig could be implemented in the user file
+	*/
+}
+
 /* Called when ready string detected */
 __weak void ESP8266_Callback_DeviceReady(ESP8266_t* ESP8266) {
 	/* NOTE: This function Should not be modified, when the callback is needed,
@@ -2279,9 +2294,17 @@ void ParseReceived(ESP8266_t* ESP8266, char* Received, uint8_t from_usart_buffer
 		}
 	}
 	
-	/*SMARTCONFIG detected*/
-	if (strcmp(Received, "smartconfig type:ESPTOUCH\r\n") == 0) {
-		//Implementation goes here...
+	if (strcmp(Received, "smartconfig connected wifi\r\n") == 0) {
+		ESP8266_Callback_SmartConfig(ESP8266);
+	}
+	
+	if (strncmp(Received, "ssid:", 5) == 0) {
+		uint8_t len = strlen(Received);
+		strncpy(env.wifi_ssid,Received + 5, len-7);
+	}
+	if (strncmp(Received, "password:", 9) == 0) {
+		uint8_t len = strlen(Received);
+		strncpy(env.wifi_pswd,Received + 9, len-11);
 	}
 	
 	/* Device is ready */
@@ -2532,8 +2555,15 @@ void ParseReceived(ESP8266_t* ESP8266, char* Received, uint8_t from_usart_buffer
 	
 	/* Check commands we have sent */
 	switch (ESP8266->ActiveCommand) {
-		case ESP8266_COMMAND_SMARTSTART:
-			//Implementation goes here...
+		case ESP8266_COMMAND_STARTSMART:
+			if (strcmp(Received, "OK\r\n") == 0) {
+				/* Reset active command */
+				ESP8266->ActiveCommand = ESP8266_COMMAND_IDLE;
+			}
+			if (strcmp(Received, "ERROR\r\n") == 0) {
+				/* Reset active command */
+				ESP8266->ActiveCommand = ESP8266_COMMAND_IDLE;
+			}
 			break;		
 		
 		case ESP8266_COMMAND_CWJAP:			
@@ -2678,6 +2708,11 @@ void ParseReceived(ESP8266_t* ESP8266, char* Received, uint8_t from_usart_buffer
 		case ESP8266_COMMAND_GSLP:
 		case ESP8266_COMMAND_CIPSTO:
 		case ESP8266_COMMAND_RESTORE:
+			if (strcmp(Received, "ready\r\n") == 0) {
+				/* Reset active command */
+				ESP8266->ActiveCommand = ESP8266_COMMAND_IDLE;
+			}
+			break;
 		case ESP8266_COMMAND_AUTOCONN:
 		case ESP8266_COMMAND_CWQAP:
 		case ESP8266_COMMAND_SSLBUFFERSIZE:

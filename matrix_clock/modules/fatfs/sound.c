@@ -16,14 +16,29 @@
 /  to lower sampling frequency, 8-bit.
 */
 
+
+#include <string.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include "sound.h"
+//#include "xitoa.h"
+//#include "uart.h"
+
 #include "sound.h"
 #include "../../drivers/dac/dac.h"
 #include "../../drivers/port/port.h"
 
 #define NBSIZE 32
-#define FCC(c1,c2,c3,c4)	(((DWORD)c4<<24)+((DWORD)c3<<16)+(c2<<8)+c1)	/* FourCC */
 
-static WAVFIFO *WavFifo;	/* Pointer to sound FIFO control block */
+#define FCC(c1,c2,c3,c4)	(((DWORD)c4<<24)+((DWORD)c3<<16)+(c2<<8)+c1)	/* FourCC */
+#define	LD_WORD(ptr)		(WORD)(*(WORD*)(BYTE*)(ptr))
+#define	LD_DWORD(ptr)		(DWORD)(*(DWORD*)(BYTE*)(ptr))
+
+
+
+static
+WAVFIFO *WavFifo;	/* Pointer to sound FIFO control block */
+
 
 uint16_t convert_16bit_to_12bit(uint16_t integer)
 {
@@ -63,24 +78,24 @@ ISR(TCC0_OVF_vect)
 
 	switch (fcb->mode) {
 		case 0:		/* Mono, 8bit */
-			if (ct < 1) return;
-			l = r = buff[0];
-			ct -= 1; ri += 1;
-			break;
-		case 1:		/* Stereo, 8bit */
-			if (ct < 2) return;
-			l = buff[0]; r = buff[1];
-			ct -= 2; ri += 2;
-			break;
-		case 2:		/* Mono, 16bit */
-			if (ct < 2) return;
-			l = r = buff[1] + 128;
-			ct -= 2; ri += 2;
-			break;
-		default:	/* Stereo, 16bit */
-			if (ct < 4) return;
-			l = buff[1]; r = buff[3];
-			ct -= 4; ri += 4;
+		if (ct < 1) return;
+		l = r = buff[0];
+		ct -= 1; ri += 1;
+		break;
+	case 1:		/* Stereo, 8bit */
+		if (ct < 2) return;
+		l = buff[0]; r = buff[1];
+		ct -= 2; ri += 2;
+		break;
+	case 2:		/* Mono, 16bit */
+		if (ct < 2) return;
+		l = r = buff[1] + 128;
+		ct -= 2; ri += 2;
+		break;
+	default:	/* Stereo, 16bit */
+		if (ct < 4) return;
+		l = buff[1]; r = buff[3];
+		ct -= 4; ri += 4;
 	}
 	fcb->ct = ct;
 	fcb->ri = ri & (fcb->sz_buff - 1);
@@ -93,8 +108,8 @@ ISR(TCC0_OVF_vect)
 /* Enable sound output stream                          */
 
 int sound_start (
-	WAVFIFO* fcb,	/* Pointer to the sound FIFO control structure */
-	DWORD fs		/* Sampling frequency [Hz] */
+WAVFIFO* fcb,	/* Pointer to the sound FIFO control structure */
+DWORD fs		/* Sampling frequency [Hz] */
 )
 {
 	if (fs < 8000 || fs > 44100) return 0;	/* Check fs range */
@@ -104,7 +119,7 @@ int sound_start (
 	
 	dac_setup(true);
 	
-	//Disable power reduction for TCC0 
+	//Disable power reduction for TCC0
 	PR.PRPC &= ~0x01;
 	
 	TCC0.CNT = 0;
@@ -123,11 +138,13 @@ void sound_stop (void)
 	TCC0.INTCTRLA = TC_OVFINTLVL_OFF_gc;
 	dac_disable();
 	
-	//Enable power reduction for TCC0 
+	//Enable power reduction for TCC0
 	PR.PRPC |= 0x01;
 
 	WavFifo = 0;		/* Unregister FIFO control structure */
 }
+
+
 
 /*-----------------------------------------------------*/
 /* WAV file loader                                     */
@@ -239,17 +256,15 @@ UINT sz_work		/* Size of working buffer (must be power of 2) */
 			fcb.ct += br;
 			sei();
 		}
-		//if (uart_test()) {		/* Exit if a command arrived */
+		//if (uart_test()) {		/* Exit if any key hit */
 		//	k = uart_getc();
 		//	break;
 		//}
-		
 		if (btn_check_press() == BTN2)
 		{
 			sound_stop();
 			break;
 		}
-		
 		t = (f_tell(fp) - offw - fcb.ct) / fsmp / wsmp;	/* Refresh time display every 1 sec */
 		if (t != tc) {
 			tc = t;
@@ -262,4 +277,5 @@ UINT sz_work		/* Size of working buffer (must be power of 2) */
 	//xputc('\n');
 	return k;	/* Terminated due to -1:error, 0:eot, >0:key code */
 }
+
 

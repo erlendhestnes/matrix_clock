@@ -19,6 +19,7 @@
 
 #include "Si114x_types.h"
 #include "User_defs.h"
+#include <stdbool.h>
 
 //
 // Function Prototypes
@@ -26,9 +27,13 @@
 
 void si114x_setup(void);
 void si114x_setup_ps1(void);
-s16 si114x_init_ps1_als(HANDLE si114x_handle);
+s16 si114x_init_ps1_als(HANDLE si114x_handle, bool enter_threshold);
+
+s16 si114x_enter_threshold(HANDLE si114x_handle);
+s16 si114x_exit_threshold(HANDLE si114x_handle);
 
 void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data);
+void si114x_baseline_calibration_v3(SI114X_IRQ_SAMPLE *sensor_data);
 
 s16 si114x_init(HANDLE si114x_handle);
 s16 si114x_init_ps1(HANDLE si114x_handle);

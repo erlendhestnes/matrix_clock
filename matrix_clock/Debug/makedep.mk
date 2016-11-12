@@ -50,9 +50,11 @@ modules\esp8266\esp8266.c
 
 modules\esp8266\esp8266_ll.c
 
+modules\fatfs\diskio.c
+
 modules\fatfs\ff.c
 
-modules\fatfs\mmc_avr.c
+modules\fatfs\mmc_avr_spi.c
 
 modules\fatfs\sound.c
 

@@ -22,6 +22,7 @@
 #include "../../../modules/display/display.h"
 #include <avr/io.h>
 #include <util/delay.h>
+#include "../../../global.h"
 
 static volatile uint16_t counter = 0;
 
@@ -46,9 +47,66 @@ void si114x_setup_ps1(void)
 	si114x_reset((HANDLE)SI114X_ADDR);
 	_delay_ms(50);
 	//si114x_init_ps1((HANDLE)SI114X_ADDR);
-	si114x_init_ps1_als((HANDLE)SI114X_ADDR);
+	si114x_init_ps1_als((HANDLE)SI114X_ADDR, false);
 	//si114x_init_als((HANDLE)SI114X_ADDR);
 	btn_si114x_enable_interrupt();
+	
+	printf("PART_ID: %d\r\n",Si114xReadFromRegister((HANDLE)SI114X_ADDR,0x00));
+	printf("REV_ID: %d\r\n",Si114xReadFromRegister((HANDLE)SI114X_ADDR,0x01));
+	printf("SEQ_ID: %d\r\n",Si114xReadFromRegister((HANDLE)SI114X_ADDR,0x02));
+}
+
+void si114x_baseline_calibration_v3(SI114X_IRQ_SAMPLE *sensor_data)
+{
+	si114x_setup();
+	play_sound("calib.wav");
+	//#ifdef SHOW_MANUAL
+	//display_print_scrolling_text("CALIBRATING. HANDS AWAY FROM DISPLAY",false);
+	//#endif
+	
+	//Draw square
+	display_draw_filled_rect(6,6,4,4,1);
+	display_draw_filled_rect(7,7,2,2,0);
+	display_refresh_screen();
+	
+	uint32_t ps1_baseline = 0;
+	uint32_t ps2_baseline = 0;
+	uint32_t ps3_baseline = 0;
+	
+	//Discard 100 first samples
+	for (uint8_t i = 0; i < 100; i++) {
+		si114x_get_data(sensor_data);
+	}
+	
+	uint16_t calibrate = 128;
+	
+	while (calibrate != 0) {
+		si114x_get_data(sensor_data);
+		
+		ps1_baseline += sensor_data->ps1;
+		ps2_baseline += sensor_data->ps2;
+		ps3_baseline += sensor_data->ps3;
+		
+		calibrate--;
+		
+		if (calibrate == 0) {
+			
+			ps1_baseline /= 128;
+			ps2_baseline /= 128;
+			ps3_baseline /= 128;
+			
+			env.baseline[0] = (uint16_t)ps1_baseline;
+			env.baseline[1] = (uint16_t)ps2_baseline;
+			env.baseline[2] = (uint16_t)ps3_baseline;
+			
+			printf("Calibration values \r\n");
+			printf("ps1: %d", env.baseline[0]);
+			printf("ps2: %d", env.baseline[1]);
+			printf("ps3: %d \r\n \r\n", env.baseline[2]);
+			
+			_delay_ms(1000);
+		}
+	}
 }
 
 void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data) 
@@ -58,7 +116,7 @@ void si114x_baseline_calibration(SI114X_IRQ_SAMPLE *sensor_data)
 	initial_baseline_counter = 128;
 	
 #ifdef SHOW_MANUAL
-	display_print_scrolling_text("CALIBRATING. HANDS AWAY FROM DISPLAY",false);
+	//display_print_scrolling_text("CALIBRATING. HANDS AWAY FROM DISPLAY",false);
 #endif
 	do {
 		//Draw square
@@ -209,7 +267,19 @@ s16 si114x_init_ps1(HANDLE si114x_handle)
 	return retval;
 }
 
-s16 si114x_init_ps1_als(HANDLE si114x_handle)
+s16 si114x_enter_threshold(HANDLE si114x_handle)
+{
+	Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE,IE_PS1_EXCEED_TH + 0x02);
+	Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1,IM1_PS1_EXCEED_TH + IM1_ALS_IR_ENTER);
+}
+
+s16 si114x_exit_threshold(HANDLE si114x_handle)
+{
+	Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE,IE_PS1_EXCEED_TH + 0x01);
+	Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1,IM1_PS1_EXCEED_TH + IM1_ALS_IR_EXIT);
+}
+
+s16 si114x_init_ps1_als(HANDLE si114x_handle, bool enter_threshold)
 {
 	s16 retval   = 0;
 
@@ -264,8 +334,13 @@ s16 si114x_init_ps1_als(HANDLE si114x_handle)
 	retval+=Si114xParamSet(si114x_handle, PARAM_CH_LIST, tasklist);
 	
 	retval+=Si114xWriteToRegister(si114x_handle, REG_INT_CFG, ICG_INTOE + ICG_INTMODE);
-	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE,IE_PS1_EXCEED_TH + 0x01);
-	retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1,IM1_PS1_EXCEED_TH + IM1_ALS_IR_EXIT);
+	if (enter_threshold) {
+		retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE,IE_PS1_EXCEED_TH + 0x02);
+		retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1,IM1_PS1_EXCEED_TH + IM1_ALS_IR_ENTER);
+	} else {
+		retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_ENABLE,IE_PS1_EXCEED_TH + 0x01);
+		retval+=Si114xWriteToRegister(si114x_handle, REG_IRQ_MODE1,IM1_PS1_EXCEED_TH + IM1_ALS_IR_EXIT);		
+	}
 	
 	retval+=Si114xParamSet(si114x_handle, PARAM_PS1_ADC_MUX, 0x03*ps1pdsize);
 	retval+=Si114xParamSet(si114x_handle, PARAM_IR_ADC_MUX, 0x03*irpd);
@@ -286,13 +361,22 @@ s16 si114x_init_ps1_als(HANDLE si114x_handle)
 	retval += Si114xWriteToRegister(si114x_handle, REG_PS1_TH_MSB,(u8)(threshold_val >> 8));
 	
 	//ALS
-	threshold_val = 350;
+	threshold_val = IR_BRIGHTNESS_THRESHOLD;
 	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_LO_TH_LSB,(u8)threshold_val);
 	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_LO_TH_MSB,(u8)(threshold_val >> 8));
-	
+#ifdef DEBUG_ON
+	u8 threshold_read[2];
+	Si114xBlockRead(si114x_handle,REG_ALS_LO_TH_LSB,2,threshold_read);
+	printf("ALS low threshold: %d \r\n", ((threshold_read[1] << 8) | threshold_read[0]));
+#endif
 	threshold_val = 2000;
 	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_HI_TH_LSB,(u8)threshold_val);
 	retval += Si114xWriteToRegister(si114x_handle, REG_ALS_HI_TH_MSB,(u8)(threshold_val >> 8));
+#ifdef DEBUG_ON	
+	Si114xBlockRead(si114x_handle,REG_ALS_HI_TH_LSB,2,threshold_read);
+	printf("ALS high threshold: %d \r\n", ((threshold_read[1] << 8) | threshold_read[0]));
+#endif
+	
 	//
 	
 	if( measrate > 0 )
@@ -390,7 +474,7 @@ s16 si114x_init(HANDLE si114x_handle)
 
 	u8  code current_LED1  = 0x0f;   // 359 mA
 	u8  code current_LED2  = 0x0f;   // 359 mA
-	u8  code current_LED3  = 0x00;   //   0 mA
+	u8  code current_LED3  = 0x0f;   //   0 mA
 
 	u8  tasklist      = 0x77;   // IR, PS1, PS2
 

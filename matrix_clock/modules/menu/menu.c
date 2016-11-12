@@ -28,35 +28,38 @@
 
 static uint32_t timestamp = 0;
 
+volatile bool forecast = false;
+
 /* ESP8266 working structure */
 ESP8266_t ESP8266;
 bool connection_open;
 
 #define TOKEN_BUFFER_SIZE 30
 
-void play_sound(void)
+uint8_t status = 10;
+
+void play_sound(char *str)
 {
 	FATFS FatFs;		// FatFs work area needed for each volume
-	FIL Fil;			// File object needed for each open file
-	BYTE Buff[1];		// Working buffer 1024
-	//UINT bw;
+	FIL File;			// File object needed for each open file
+	BYTE Buff[512];		// Working buffer 1024
+	UINT bw;
 	
+	status = f_mount(&FatFs, "", 0);
 	/*
-	if (f_open(&Fil, "newfilea2.txt", FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {	// Create a file
-		
-		f_write(&Fil, "It works!\r\n", 11, &bw);	// Write data to the file
-		
-		f_close(&Fil);								// Close the file
+	status = f_open(&File, "newfile.txt", FA_WRITE | FA_CREATE_ALWAYS);
+	
+	if (status == FR_OK) {	// Create a file
+		status = f_write(&File, "It works!\r\n", 11, &bw);	// Write data to the file
+		status = f_close(&File);								// Close the file
 	}
 	*/
 
-	f_mount(&FatFs, "", 0);
-	
-	BYTE res;
-	res = f_open(&Fil, "business.wav", FA_READ);
-	if (!res) {
-		load_wav(&Fil, "**** WAV PLAYER ****", Buff, sizeof Buff);
-		f_close(&Fil);
+	if (!status) {
+		status = f_open(&File, str, FA_READ);
+		load_wav(&File, "**** WAV PLAYER ****", Buff, sizeof Buff);
+		f_close(&File);
+		return;
 	}
 }
 
@@ -108,43 +111,67 @@ void stop_loading(void)
 	PR.PRPC |= 0x01;
 }
 
-menu_status_t get_internet_variables(bool get_time, bool get_temperature) 
+menu_status_t get_access_points(void)
+{
+	ESP8266_SetMode(&ESP8266, ESP8266_Mode_STA);
+	
+	ESP8266_SetMux(&ESP8266,1);
+	
+	ESP8266_ListWifiStations(&ESP8266);
+	
+	ESP8266_WaitReady(&ESP8266);
+	
+	while(1);
+}
+
+menu_status_t get_internet_variables(bool get_time, bool get_forecast) 
 {	
 	char token_buffer[30];
 	jsmntok_t tokens[10];
 	jsmn_parser p;
 	jsmnerr_t r;
-		
+	
+	memset(ESP8266.SendDataConnection[0].Data,0,strlen(ESP8266.SendDataConnection[0].Data));
+	
+	ESP8266_SetMode(&ESP8266, ESP8266_Mode_STA);
+	
+	ESP8266_SetMux(&ESP8266,1);
+	
 	/* Connect to wifi and save settings */
 	ESP8266_WifiConnect(&ESP8266, env.wifi_ssid, env.wifi_pswd);
+	//ESP8266_WifiConnectDefault(&ESP8266, env.wifi_ssid, env.wifi_pswd);
 		
 	/* Wait till finish */
 	ESP8266_WaitReady(&ESP8266);
-		
-	ESP8266_Update(&ESP8266);
 		
 	if (ESP8266_StartClientConnection(&ESP8266, "www.squareclock.io", "www.squareclock.io", 80, NULL) != ESP_OK) {
 		return MENU_ERROR;
 	}
 	
+	ESP8266_Connection_t* Connection = ESP8266.SendDataConnection;
+	
 	// Format data to sent to server
-	if(get_temperature) 
-		sprintf(ESP8266.SendDataConnection[0].Data, "GET /json/forecast.php HTTP/1.1\r\n");
+	if(get_forecast) 
+		forecast = true;
 	else
-		sprintf(ESP8266.SendDataConnection[0].Data, "GET /json/ntp.php HTTP/1.1\r\n");
-		
-	strcat(ESP8266.SendDataConnection[0].Data, "Host: www.squareclock.io\r\n");
-	strcat(ESP8266.SendDataConnection[0].Data, "Connection: close\r\n");
-	strcat(ESP8266.SendDataConnection[0].Data, "\r\n");
+		forecast = false;
 	
 	connection_open = true;
 	
 	//TODO: This might be dangerous...
 	while(connection_open) {
 		ESP8266_Update(&ESP8266);
+		if (&ESP8266.Timeout == 0) {
+			return MENU_ERROR;
+		}
 	}
 	
 	uint16_t json_string = (uint16_t)strchr(ESP8266.SendDataConnection[0].Data,'{');
+		
+#ifdef DEBUG_ON
+	printf("json_string: ");
+	puts(json_string);
+#endif
 
 	//Parse JSON
 	jsmn_init(&p);
@@ -158,6 +185,7 @@ menu_status_t get_internet_variables(bool get_time, bool get_temperature)
 		char weekday[10];
 		json_get_token(tokens,json_string,token_buffer,sizeof(token_buffer),2);
 #ifdef DEBUG_ON
+		printf("token_buffer: ");
 		puts(token_buffer);
 #endif
 		if (sscanf(token_buffer,"%d-%d-%d %s %d:%d:%d",&year, &month, &day, weekday, &hour, &minute, &second) != 7) {
@@ -174,7 +202,7 @@ menu_status_t get_internet_variables(bool get_time, bool get_temperature)
 			env.time.week = time_get_weeknumber(env.time.day,env.time.month,env.time.year);
 		}
 	}
-	if (get_temperature) {
+	if (get_forecast) {
 		json_get_token(tokens,json_string,token_buffer,sizeof(token_buffer),6);
 #ifdef DEBUG_ON
 		puts(token_buffer);
@@ -209,19 +237,23 @@ menu_status_t get_internet_variables(bool get_time, bool get_temperature)
 	return MENU_SUCCESS;
 }
 
-void menu_esp8266_setup(void)
+menu_status_t menu_esp8266_setup(void)
 {
 	ESP8266_On();
 	ESP8266_TimerStart();
+	//if(ESP8266_Init(&ESP8266,115200) != ESP_OK) {
+	//	return MENU_ERROR;
+	//}
+	//ESP8266_SetAutoConnect(&ESP8266, ESP8266_AutoConnect_Off);
+	//ESP8266_RestoreDefault(&ESP8266);
 	if(ESP8266_Init(&ESP8266,115200) != ESP_OK) {
 		return MENU_ERROR;
 	}
-	//puts("SMARTSTART!");
-	ESP8266_SmartStart(&ESP8266,1);
-	//puts("ON!");
-	while(1);
+
 	ESP8266_TimerStop();
 	ESP8266_Off();
+	
+	return MENU_SUCCESS;
 }
 
 void menu_draw_temperature_frame(void) 
@@ -348,7 +380,7 @@ void menu_set_env_variables(void)
 	strncpy(env.name,CLOCK_NAME,sizeof(env.name));
 	env.id = CLOCK_ID;
 	env.menu_id = 0;
-	env.brightness = 0;
+	env.brightness = 2;
 	env.runtime = 0;
 	
 	strncpy(env.wifi_pswd,USER_PASS, strlen(USER_PASS));
@@ -375,16 +407,8 @@ void menu_set_env_variables(void)
 
 void menu_alarm(void) 
 {
-	rtc_disable_time_render();
-	display_slide_out_to_bottom();
-	display_fill_screen();
-	display_refresh_screen();
-	display_fade_blink();
-	display_fade_blink();
-	display_fade_blink();
-	display_clear_screen();
-	rtc_enable_time_render();
-	display_slide_in_from_bottom();
+	play_sound("goodm.wav");
+	play_sound("alarm1.wav");
 }
 
 menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples) 
@@ -476,7 +500,7 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 			display_slide_out_to_top();
 			
 			//Weather don`t change that much
-			if (timestamp == 0 || (env.runtime - timestamp > 15)) {
+			if (timestamp == 0 || (env.runtime - timestamp >= 15)) {
 				start_loading();
 				ESP8266_On();
 				ESP8266_TimerStart();
@@ -520,27 +544,8 @@ menu_status_t menu_state_machine(SI114X_IRQ_SAMPLE *samples)
 			menu_draw_temperature_frame();
 			display_slide_in_from_top();
 			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
-		} else if (env.menu_id == MENU_DATE) {
-			menu_status_t status;
-			Si114xPauseAll((HANDLE)SI114X_ADDR);
-			display_fade_blink();
-			display_slide_out_to_top();
-			start_loading();
-			ESP8266_On();
-			ESP8266_TimerStart();
-			status = get_internet_variables(true,false);
-			ESP8266_TimerStop();
-			ESP8266_Off();
-			stop_loading();
-			if (status == MENU_SUCCESS) {
-				display_print_scrolling_text("TIME AND DATE UPDATED", false);
-			} else {
-				display_print_scrolling_text("COULD NOT GET TIME",false);
-			}
-			menu_draw_date_frame();
-			display_slide_in_from_top();
-			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
-		}
+			_delay_ms(500);
+		} 
 	}
 	return MENU_SUCCESS;
 }
@@ -623,28 +628,83 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 				ht1632c_set_brightness(MAX_BRIGHTNESS);
 				break;
 			case CONFIG_TIME:
-				display_slide_out_to_top();
-				menu_set_time();
+				display_slide_out_to_left();
+				display_draw_four_letter_word("WIFI");
+				display_slide_in_from_right();
+				_delay_ms(1000);
+				display_slide_out_to_left();
+				uint8_t answear = menu_yes_no();
+				if (answear == 1) {
+					menu_status_t status;
+					display_slide_out_to_left();
+					start_loading();
+					ESP8266_On();
+					ESP8266_TimerStart();
+					status = get_internet_variables(true,false);
+					ESP8266_TimerStop();
+					ESP8266_Off();
+					stop_loading();
+					if (status == MENU_SUCCESS) {
+						display_print_scrolling_text("TIME AND DATE UPDATED", false);
+					} else {
+						display_print_scrolling_text("COULD NOT GET TIME FROM NTP SERVER",false);
+					}
+				} else if (answear == 0) {
+					menu_set_time();
+				}
 				break;
 			case CONFIG_WIFI:
-				//Needs different implementation
+				display_slide_out_to_top();
+				menu_type_wifi_password();
+				/*
+				start_wifi_indication();
+				ESP8266_On();
+				ESP8266_TimerStart();
+				ESP8266_StartSmart(&ESP8266,1);
+				
+				ESP8266.Flags.F.WifiGotIP = 0;
+				
+				while(1) {
+					ESP8266_Update(&ESP8266);
+					btn_status = btn_check_press();
+					if (ESP8266.Flags.F.WifiGotIP) {
+						_delay_ms(2000);
+						stop_wifi_indication();
+						display_clear_screen();
+						display_print_scrolling_text("WIFI CONFIGURED",false);
+						break;
+					}
+					if (btn_status == BTN2) {
+						stop_wifi_indication();
+						display_clear_screen();
+						display_print_scrolling_text("CANCELLED",false);
+						break;
+					}
+				}
+				
+				ESP8266_StopSmart(&ESP8266);
+				ESP8266_TimerStop();
+				ESP8266_Off();
+				stop_wifi_indication();
+				*/
+				break;
 			case CONFIG_ALARM:
 				display_slide_out_to_top();
 				menu_set_alarm();
 				break;
 			case CONFIG_CALIBRATE:
 				display_slide_out_to_top();
-				si114x_baseline_calibration(samples);
+				si114x_baseline_calibration_v3(samples);
 				break;
 			case CONFIG_INFO:
 				display_slide_out_to_top();
-				display_print_scrolling_text("MADE BY: ERLEND HESTNES",false);
+				display_print_scrolling_text("MADE BY: ERLEND HESTNES (2016)",false);
 				break;
 			case CONFIG_MUSIC:
 				display_slide_out_to_bottom();
 				display_draw_bitmap(5,4,IMG_SPEAKER_A,IMG_SPEAKER_WIDTH,IMG_SPEAKER_HEIGHT,1);
 				display_slide_in_from_bottom();
-				play_sound();
+				play_sound("cold.wav");
 				break;
 			case CONFIG_EXIT:
 				display_slide_out_to_bottom();
@@ -658,6 +718,45 @@ menu_status_t menu_configuration(SI114X_IRQ_SAMPLE *samples)
 		display_slide_in_from_top();
 	}	
 	return MENU_SUCCESS;
+}
+
+void menu_type_wifi_password(void)
+{
+	bool quit = false;
+	display_draw_small_char(3,7,'<',1,1);
+	display_draw_small_char(7,7,'a',1,1);
+	display_draw_small_char(11,7,'>',1,1);
+	display_refresh_screen();
+	
+	while(!quit) {
+		btn_status = btn_check_press();
+
+		switch(btn_status) {
+			case BTN4:
+				_delay_ms(100);
+				break;
+			case BTN1:
+				_delay_ms(100);
+				break;
+			case BTN3:
+				display_clear_screen();
+#ifdef SHOW_MANUAL
+				display_print_scrolling_text("WIFI PASSWORD SET",false);
+#endif
+				quit = true;
+				EEPROM_WriteEnv();
+				break;
+			case BTN2:
+#ifdef SHOW_MANUAL
+				display_print_scrolling_text("EXIT",false);
+#endif
+				return;
+			default:
+				_delay_ms(100);
+				btn_status = NO_BTN;
+				break;
+		}
+	}
 }
 
 void menu_configure_brightnesss(void) 
@@ -941,6 +1040,49 @@ uint8_t menu_set_time(void)
 	return 1;
 }
 
+uint8_t menu_yes_no(void) {
+	bool selected = false;
+	bool yes = true;
+	display_draw_three_letter_word("YES");
+	display_slide_in_from_right();
+	
+	//Set hours
+	while(!selected) {
+		btn_status = btn_check_press();
+		switch(btn_status) {
+			case BTN4:
+				display_clear_buffer();
+				display_draw_four_letter_word(" NO ");
+				display_refresh_screen();
+				yes = false;
+				_delay_ms(150);
+				break;
+			case BTN1:
+				display_clear_buffer();
+				display_draw_three_letter_word("YES");
+				display_refresh_screen();
+				yes = true;
+				_delay_ms(150);
+				break;
+			case BTN3:
+				selected = true;
+				_delay_ms(250);
+				break;
+			case BTN2:
+				//ht1632c_blink(false);
+				display_slide_out_to_bottom();
+				#ifdef SHOW_MANUAL
+				display_print_scrolling_text("CANCELLED",false);
+				#endif
+				return 2;
+			default:
+				btn_status = NO_BTN;
+				break;
+		}
+	}
+	return yes;
+}
+
 uint8_t menu_set_alarm(void) 
 {
 	bool next = false;
@@ -1052,6 +1194,11 @@ ISR(TCC0_CCD_vect)
 /************************************/
 /*           ESP CALLBACKS          */
 /************************************/
+
+void ESP8266_Callback_SmartConfig(ESP8266_t* ESP8266) {
+	printf("SSID: %s, PASS: %s \r\n",env.wifi_ssid, env.wifi_pswd);
+}
+
 /* Called when ready string detected */
 void ESP8266_Callback_DeviceReady(ESP8266_t* ESP8266) {
 	printf("Device is ready\r\n");
@@ -1123,10 +1270,13 @@ void ESP8266_Callback_ClientConnectionError(ESP8266_t* ESP8266, ESP8266_Connecti
 }
 
 /* Called when data are ready to be sent to server */
-/*
 uint16_t ESP8266_Callback_ClientConnectionSendData(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection, char* Buffer, uint16_t max_buffer_size) {
 	// Format data to sent to server
-	sprintf(Buffer, "GET /json/forecast.php HTTP/1.1\r\n");
+	if (forecast)
+		sprintf(Buffer, "GET /json/forecast.php HTTP/1.1\r\n");
+	else
+		sprintf(Connection->Data, "GET /json/ntp.php HTTP/1.1\r\n");
+
 	strcat(Buffer, "Host: www.squareclock.io\r\n");
 	strcat(Buffer, "Connection: close\r\n");
 	strcat(Buffer, "\r\n");
@@ -1134,7 +1284,6 @@ uint16_t ESP8266_Callback_ClientConnectionSendData(ESP8266_t* ESP8266, ESP8266_C
 	// Return length of buffer
 	return strlen(Buffer);
 }
-*/
 
 /* Called when data are send successfully */
 void ESP8266_Callback_ClientConnectionDataSent(ESP8266_t* ESP8266, ESP8266_Connection_t* Connection) {

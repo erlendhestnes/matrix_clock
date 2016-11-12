@@ -398,6 +398,9 @@ void ESP8266_Off(void);
 void ESP8266_TimerStart(void);
 void ESP8266_TimerStop(void);
 
+ESP8266_Result_t ESP8266_StartSmart(ESP8266_t* ESP8266, uint8_t mode);
+ESP8266_Result_t ESP8266_StopSmart(ESP8266_t* ESP8266);
+
 /**
  * \brief  Initializes ESP8266 module
  * \param  *ESP8266: Pointer to working \ref ESP8266_t structure
@@ -850,6 +853,8 @@ uint16_t ESP8266_DataReceived(uint8_t* ch, uint16_t count);
  *           Callback functions are called from ESP stack to user which should implement it when he needs them.
  * \{
  */
+
+void ESP8266_Callback_SmartConfig(ESP8266_t* ESP8266);
  
 /**
  * \brief  Device is ready callback

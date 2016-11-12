@@ -37,3 +37,4 @@ extern u16 xdata baseline[3];
 s16 QS_Counts_to_Distance (u16 counts, u8 led);
 void SliderAlgorithm(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale);
 void slider_algorithm_v2(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale);
+void slider_algorithm_v3(HANDLE si114x_handle, SI114X_IRQ_SAMPLE *samples, u16 scale);

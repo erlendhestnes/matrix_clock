@@ -46,7 +46,7 @@ void ultra_power_saving_mode_test(void)
 {	
 	//maybe add pullups
 	si114x_reset((HANDLE)SI114X_ADDR);
-	//si114x_setup_ps1();
+	si114x_setup_ps1();
 	twi_off();
 	uart_disable();
 	display_clear_screen();
@@ -65,7 +65,7 @@ int main(void)
 	//System
 	clock_setup_32_mhz();
 	
-	lowpower_setup();
+	//lowpower_setup();
 	display_setup();	
 	spi_disable();
 	uart_disable();
@@ -86,6 +86,7 @@ int main(void)
 	stdout = stdin = &mystdout;
 	puts("- SQUARECLOCK - By: Erlend Hestnes (2016)\r\n");
 #endif
+
 	puts("Configure UART driver...\r\n");
 	uart_setup();
 	puts("Success!");
@@ -95,28 +96,96 @@ int main(void)
 	pmic_setup();
 	sei();
 	puts("Success!");
+	
+	
+	
+	/*
+	char wifi_password[30];
+	memset(wifi_password,0,strlen(wifi_password));
+	char charachter = 65;
+	uint8_t char_counter = 0;
+	
+	display_draw_char(0,5,'<',1,1);
+	display_draw_char(6,5,charachter,1,1);
+	display_draw_char(11,5,'>',1,1);
+	display_refresh_screen();
+	
+	while(1) {
+		btn_status = btn_check_press();
 
+		switch(btn_status) {
+			case BTN4:
+				if (charachter <= 126) {
+					display_draw_char(6,5,charachter,0,1);
+					display_draw_char(6,5,++charachter,1,1);
+					display_refresh_screen();
+				}
+				_delay_ms(100);
+				break;
+			case BTN1:
+				if (charachter >= 1) {
+					display_draw_char(6,5,charachter,0,1);
+					display_draw_char(6,5,--charachter,1,1);
+					display_refresh_screen();
+				}
+				_delay_ms(100);
+				break;
+			case BTN3:
+				wifi_password[char_counter++] = charachter;
+				display_slide_out_to_left();
+				display_draw_char(0,5,charachter,1,1);
+				charachter = 65;
+				display_draw_char(6,5,charachter,1,1);
+				display_draw_char(11,5,'>',1,1);
+				display_slide_in_from_right();
+				break;
+			case BTN2:
+				display_slide_out_to_left();
+				display_print_scrolling_text(wifi_password,true);
+				return;
+			default:
+				_delay_ms(100);
+				btn_status = NO_BTN;
+				break;
+		}
+	}
+	*/
+
+#ifdef WIFI_ON
 	//Configure WIFI buffers
 	puts("Configure ESP8266 driver...\r\n");
-	menu_esp8266_setup();
-	puts("Success!");
+	if (menu_esp8266_setup() == MENU_SUCCESS) {
+		puts("Success!");	
+	} else {
+		puts("Error!");
+	}
+#endif
+	
+	/*
+	ESP8266_On();
+	ESP8266_TimerStart();
+	get_access_points();
+	ESP8266_TimerStop();
+	ESP8266_Off();
+	*/
 	
 	//Turn on proximity channel 1 with ISR and threshold
+	puts("Configure TWI driver...\r\n");
 	twi_setup(&TWIC);
+	puts("Success!");
+	
+	ultra_power_saving_mode_test();
 
 #ifdef IR_SLIDER_ALGORITHM
 	si114x_baseline_calibration(&sensor_data);
+#else
+	si114x_baseline_calibration_v3(&sensor_data);
 #endif
 	
 	si114x_setup_ps1();
-	//while(1) {
-	//	si114x_get_data(&sensor_data);
-	//	printf("ALS: %d, IR: %d, PS1: %d \r\n",sensor_data.vis, sensor_data.ir, sensor_data.ps1);
-	//	_delay_ms(200);
-	//}
 	
 	//Turn on RTC
-	display_fade(0);
+	display_fade(env.brightness);
 	rtc_enable_time_render();
 	display_refresh_screen();
 	rtc_setup();
@@ -136,19 +205,18 @@ int main(void)
 			
 			btn_disable_si114x_interrupt();
 			
-			display_fade(MAX_BRIGHTNESS);
+			display_fade(env.brightness + 10);
 #ifdef DEBUG_ON
 			puts("DEBUG: Entered gesture mode.");
 #endif
 			si114x_setup();
-			//_delay_ms(250);
 			
 			while(!timeout) {
 				si114x_get_data(&sensor_data);
 #ifdef IR_SLIDER_ALGORITHM
 				si114x_process_samples((HANDLE)SI114X_ADDR,&sensor_data);
 #else
-				slider_algorithm_v2((HANDLE)SI114X_ADDR,&sensor_data,1);
+				slider_algorithm_v3((HANDLE)SI114X_ADDR,&sensor_data,1);
 #endif
 				menu_state_machine(&sensor_data);
 				
@@ -171,14 +239,48 @@ int main(void)
 				rtc_enable_time_render();
 				display_slide_in_from_top();
 			}
-			display_fade(env.brightness);
-			btn_si114x_enable_interrupt();
-			si114x_setup_ps1();
+			
+			btn_si114x_enable_interrupt();	
+			
+			if (sensor_data.ir < IR_BRIGHTNESS_THRESHOLD) {
+				si114x_reset((HANDLE)SI114X_ADDR);
+				_delay_ms(50);
+				si114x_init_ps1_als((HANDLE)SI114X_ADDR, true);
+				env.brightness = 0;
+				si114x_status = 0;
+				display_fade(env.brightness);
+			} else {
+				si114x_reset((HANDLE)SI114X_ADDR);
+				_delay_ms(50);
+				si114x_init_ps1_als((HANDLE)SI114X_ADDR, false);
+				env.brightness = 5;
+				si114x_status = 0;
+				display_fade(env.brightness);
+			}
+			
 		} else if (si114x_status == ALS_INT_1) {
 			//Dim light by using the light sensor
 #ifdef DEBUG_ON
 			puts("DEBUG: Somebody turned off the lights!");
 #endif
+			Si114xPauseAll((HANDLE)SI114X_ADDR);
+			si114x_enter_threshold((HANDLE)SI114X_ADDR);
+			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
+			
+			env.brightness = 0;
+			si114x_status = 0;
+			display_fade(env.brightness);
+		} else if (si114x_status == ALS_INT_2) {
+#ifdef DEBUG_ON
+			puts("DEBUG: Somebody turned on the lights!");
+#endif
+			Si114xPauseAll((HANDLE)SI114X_ADDR);
+			si114x_exit_threshold((HANDLE)SI114X_ADDR);
+			Si114xPsAlsAuto((HANDLE)SI114X_ADDR);
+			
+			env.brightness = 5;
+			si114x_status = 0;
+			display_fade(env.brightness);
 		} else if (btn_status == BTN4) {
 			if (led_on) {
 				display_off();
